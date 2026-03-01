@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlanWise | Malaysia Road Trip Architect</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header>
+        <div class="logo">PlanWise 🌴</div>
+        <div class="search-container">
+            <input type="text" placeholder="Start (e.g. Puchong)">
+            <span class="to-arrow">➞</span>
+            <input type="text" placeholder="End (e.g. Penang)">
+            <button class="btn-go">Let's Go!</button>
+        </div>
+    </header>
+
+    <main class="app-container">
+        <section class="itinerary-sidebar">
+            <h3>Your Trip Plan 🗺️</h3>
+            <div class="timeline">
+                <div class="timeline-item start">
+                    <span class="time">08:00 AM</span>
+                    <p>Depart from Puchong</p>
+                </div>
+                <div class="cart-drop-zone">
+                    <p class="placeholder">Drag stops here or click "Add to Trip"</p>
+                </div>
+                <div class="timeline-item end">
+                    <span class="time">--:--</span>
+                    <p>Arrive in Penang</p>
+                </div>
+            </div>
+            <button class="btn-spin">🎰 Spin to Win (1 Entry)</button>
+        </section>
+
+        <section class="discovery-feed">
+            <h2>Stops "On-The-Way" 🚗</h2>
+            <div class="filter-bar">
+                <button class="filter-tag active">All</button>
+                <button class="filter-tag">Halal Food 🍲</button>
+                <button class="filter-tag">Nature 🌳</button>
+                <button class="filter-tag">Kids 🎠</button>
+            </div>
+
+            <div class="card-grid">
+                <div class="card">
+                    <div class="card-img" style="background-image: url('https://images.unsplash.com/photo-1590001158193-7fef716db3f7?auto=format&fit=crop&w=400&q=80')">
+                        <span class="tag halal">Halal</span>
+                    </div>
+                    <div class="card-content">
+                        <h4>Ipoh Chicken Rice Paradise</h4>
+                        <p class="dist">📍 15km off PLUS Highway</p>
+                        <p class="warning">⚠️ Avoid: 12pm - 2pm (Peak Crowd)</p>
+                        <button class="btn-add">+ Add to Trip</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-img" style="background-image: url('https://images.unsplash.com/photo-1621995060177-660e825109b1?auto=format&fit=crop&w=400&q=80')">
+                        <span class="tag nature">Nature</span>
+                    </div>
+                    <div class="card-content">
+                        <h4>Sungkai Hot Springs</h4>
+                        <p class="dist">📍 8km off PLUS Highway</p>
+                        <p class="warning">✅ Best time: 9am (Quiet)</p>
+                        <button class="btn-add">+ Add to Trip</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+</body>
+</html>
