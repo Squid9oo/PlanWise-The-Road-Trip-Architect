@@ -986,33 +986,69 @@ input:focus-visible {
 }
 
 /* ============================================
-   INFINITE CAROUSEL
+   SEARCH CARD CAROUSEL BACKGROUND
    ============================================ */
 
-.carousel-section {
+/* Wrapper contains both carousel + search card */
+.search-card-wrapper {
     position: relative;
-    z-index: 1;
-    margin-top: -5rem;
-    padding-bottom: 4rem;
+    border-radius: var(--radius-lg);
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-    background: var(--bg);
-    padding-top: 6rem; /* pushes images down so top rows peek from behind card */
+    padding: 2rem;
 }
 
-.carousel-track-wrapper {
+/* Carousel fills the wrapper absolutely */
+.search-bg-carousel {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* Dark overlay keeps search card readable */
+.search-bg-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 10, 20, 0.45);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* Track wrappers split height equally */
+.search-bg-carousel .carousel-track-wrapper {
+    flex: 1;
     overflow: hidden;
     width: 100%;
 }
 
-.carousel-track {
+.search-bg-carousel .carousel-track {
     display: flex;
-    gap: 0.75rem;
+    gap: 4px;
+    height: 100%;
     width: max-content;
 }
 
+/* Individual cards — no border radius, fills row height */
+.search-bg-carousel .carousel-card {
+    width: 260px;
+    height: 100%;
+    flex-shrink: 0;
+    background-size: cover;
+    background-position: center;
+    border-radius: 0;
+}
+
+/* Search card floats above carousel */
+.search-card-wrapper .search-card {
+    position: relative;
+    z-index: 2;
+}
+
+/* Scroll animations */
 .carousel-track.scroll-left {
     animation: marquee-left 40s linear infinite;
 }
@@ -1031,37 +1067,13 @@ input:focus-visible {
     100% { transform: translateX(0); }
 }
 
-.carousel-section .carousel-card {
-    width: 240px;
-    height: 160px;
-    border-radius: var(--radius-md);
-    background-size: cover;
-    background-position: center;
-    flex-shrink: 0;
-}
-
-/* Mobile adjustments */
+/* Mobile — wrapper padding reduces */
 @media (max-width: 768px) {
-    .carousel-section {
-        margin-top: -3rem;
-        padding-top: 4rem;
-        gap: 0.5rem;
-    }
-    .carousel-section .carousel-card {
-        width: 180px;
-        height: 120px;
-    }
+    .search-card-wrapper { padding: 1rem; }
 }
 
 @media (max-width: 480px) {
-    .carousel-section {
-        margin-top: -2rem;
-        padding-top: 3rem;
-    }
-    .carousel-section .carousel-card {
-        width: 150px;
-        height: 100px;
-    }
+    .search-card-wrapper { padding: 0.75rem; }
 }
 
 /* Reduced motion */
