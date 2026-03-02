@@ -42,12 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (diffDays === 0) {
             durationBadge.textContent = '1-day trip 🌟';
             durationBadge.style.background = 'var(--secondary)';
-            durationBadge.style.color = 'var(--dark)';
-            durationBadge.style.display = 'block';
-        } else {
-            durationBadge.textContent = `${diffDays + 1} days / ${diffDays} nights`;
-            durationBadge.style.background = 'var(--secondary)';
-            durationBadge.style.color = 'var(--dark)';
+            durationBadge.style.color = '#1a1a2e';
             durationBadge.style.display = 'block';
         }
     }

@@ -233,6 +233,8 @@ button { font-family: var(--font-body); cursor: pointer; }
     box-sizing: border-box;
     -webkit-appearance: none;
     appearance: none;
+    min-height: 48px;
+    line-height: 1.5;
 }
 
 .form-group input:focus {
@@ -254,15 +256,15 @@ button { font-family: var(--font-body); cursor: pointer; }
 /* Trip duration badge */
 .trip-duration {
     background: var(--secondary);
-    color: #1a1a2e;
+    color: #1a1a2e !important;
     padding: 0.35rem 0.85rem;
     border-radius: var(--radius-xl);
     font-size: 0.8rem;
     font-weight: 700;
     white-space: nowrap;
-    align-self: flex-end;
-    margin-bottom: 0.2rem;
-    display: none; /* shown by JS */
+    display: none; /* shown by JS when dates selected */
+    width: fit-content;
+    margin-top: -0.75rem;
 }
 
 /* Transport chips */
