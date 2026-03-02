@@ -477,7 +477,19 @@ function searchNearbyPlaces(location, cityName, gridId, loadingId, emptyId, head
     const map    = new google.maps.Map(mapEl, { center: location, zoom: 12 });
     const service = new google.maps.places.PlacesService(map);
 
-    const types  = ['tourist_attraction', 'park'];
+    const types = [
+        'tourist_attraction',
+        'park',
+        'museum',
+        'zoo',
+        'amusement_park',
+        'mosque',
+        'hindu_temple',
+        'church',
+        'beach',
+        'shopping_mall',
+        'campground',
+    ];
     let allResults = [];
     let completed  = 0;
 
@@ -590,8 +602,26 @@ function buildPlaceCard(place, index) {
 // TAG HELPER — Maps Google place types to card styles
 // ==========================================
 function getTagInfo(types) {
-    if (types.includes('park') || types.includes('natural_feature')) {
+    if (types.includes('park') || types.includes('natural_feature') || types.includes('campground')) {
         return { tag: 'nature', tagLabel: 'Nature & Parks', platform: 'instagram', platformLabel: '📸 Google Places' };
+    }
+    if (types.includes('beach')) {
+        return { tag: 'beach', tagLabel: 'Beach', platform: 'instagram', platformLabel: '📸 Google Places' };
+    }
+    if (types.includes('museum') || types.includes('art_gallery')) {
+        return { tag: 'heritage', tagLabel: 'Museum & Culture', platform: 'youtube', platformLabel: '📍 Google Places' };
+    }
+    if (types.includes('zoo') || types.includes('aquarium')) {
+        return { tag: 'family', tagLabel: 'Zoo & Wildlife', platform: 'youtube', platformLabel: '📍 Google Places' };
+    }
+    if (types.includes('amusement_park')) {
+        return { tag: 'family', tagLabel: 'Theme Park', platform: 'tiktok', platformLabel: '▶ Google Places' };
+    }
+    if (types.includes('mosque') || types.includes('hindu_temple') || types.includes('church')) {
+        return { tag: 'heritage', tagLabel: 'Religious Site', platform: 'youtube', platformLabel: '📍 Google Places' };
+    }
+    if (types.includes('shopping_mall')) {
+        return { tag: 'shopping', tagLabel: 'Shopping', platform: 'instagram', platformLabel: '📸 Google Places' };
     }
     if (types.includes('tourist_attraction') || types.includes('point_of_interest')) {
         return { tag: 'heritage', tagLabel: 'Tourist Attraction', platform: 'youtube', platformLabel: '📍 Google Places' };
