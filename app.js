@@ -23,19 +23,6 @@ window.initMap = function () {
             if (!place.geometry) return;
             document.getElementById('city-from-lat').value = place.geometry.location.lat();
             document.getElementById('city-from-lng').value = place.geometry.location.lng();
-
-            // Trigger departure card search
-            const cityName = place.name || document.getElementById('city-from').value;
-            searchNearbyPlaces(
-                place.geometry.location,
-                cityName,
-                'from-grid',
-                'from-loading',
-                null,
-                'from-section-header',
-                'from-section-title',
-                '🚩 Gems near your starting point'
-            );
         });
     }
 
@@ -49,20 +36,6 @@ window.initMap = function () {
             if (!place.geometry) return;
             document.getElementById('city-to-lat').value = place.geometry.location.lat();
             document.getElementById('city-to-lng').value = place.geometry.location.lng();
-
-            // Trigger destination card search
-            const cityName = place.name || document.getElementById('city-to').value;
-            searchNearbyPlaces(
-                place.geometry.location,
-                cityName,
-                'feed-grid',
-                'feed-loading',
-                'feed-empty',
-                'feed-section-header',
-                'feed-section-title',
-                '🏁 Gems near your destination'
-            );
-            updateFeedDivider(cityName);
         });
     }
 
@@ -483,13 +456,10 @@ function searchNearbyPlaces(location, cityName, gridId, loadingId, emptyId, head
         'museum',
         'zoo',
         'amusement_park',
-        'mosque',
-        'hindu_temple',
-        'church',
         'beach',
         'shopping_mall',
-        'campground',
     ];
+
     let allResults = [];
     let completed  = 0;
 
@@ -602,7 +572,7 @@ function buildPlaceCard(place, index) {
 // TAG HELPER — Maps Google place types to card styles
 // ==========================================
 function getTagInfo(types) {
-    if (types.includes('park') || types.includes('natural_feature') || types.includes('campground')) {
+    if (types.includes('park') || types.includes('natural_feature')) {
         return { tag: 'nature', tagLabel: 'Nature & Parks', platform: 'instagram', platformLabel: '📸 Google Places' };
     }
     if (types.includes('beach')) {
@@ -616,9 +586,6 @@ function getTagInfo(types) {
     }
     if (types.includes('amusement_park')) {
         return { tag: 'family', tagLabel: 'Theme Park', platform: 'tiktok', platformLabel: '▶ Google Places' };
-    }
-    if (types.includes('mosque') || types.includes('hindu_temple') || types.includes('church')) {
-        return { tag: 'heritage', tagLabel: 'Religious Site', platform: 'youtube', platformLabel: '📍 Google Places' };
     }
     if (types.includes('shopping_mall')) {
         return { tag: 'shopping', tagLabel: 'Shopping', platform: 'instagram', platformLabel: '📸 Google Places' };

@@ -118,40 +118,180 @@
         </div>
     </section>
 
-    <!-- DIVIDER -->
+    <!-- CAROUSEL DIVIDER -->
     <div class="section-divider">
-        <p id="feed-divider-text">🌴 Pick a destination to discover gems along your route</p>
+        <p>🌴 Discover Malaysia's Most Unforgettable Places</p>
     </div>
 
-    <!-- DESTINATION GEMS FEED -->
-    <section class="feed-section">
-        <div class="feed-section-header" id="feed-section-header" style="display:none;">
-            <h2 class="feed-section-title" id="feed-section-title"></h2>
-        </div>
-        <div class="feed-grid" id="feed-grid">
-            <!-- Cards injected by app.js -->
-        </div>
-        <div class="feed-loading" id="feed-loading" style="display:none;">
-            <div class="loading-spinner"></div>
-            <p>Finding gems near your destination...</p>
-        </div>
-        <div class="feed-empty" id="feed-empty" style="display:none;">
-            <p>😕 No gems found nearby. Try a different destination.</p>
-        </div>
-    </section>
+    <!-- INFINITE CAROUSEL -->
+    <section class="carousel-section">
 
-    <!-- DEPARTURE GEMS FEED -->
-    <section class="feed-section" style="padding-top:0;">
-        <div class="feed-section-header" id="from-section-header" style="display:none;">
-            <h2 class="feed-section-title" id="from-section-title"></h2>
+        <!-- ROW 1 — scrolls left -->
+        <div class="carousel-track-wrapper">
+            <div class="carousel-track scroll-left">
+
+                <!-- Original set -->
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Batu Caves</p><p class="carousel-city">Selangor</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1508009603885-50cf7c8dd0d5?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">KLCC Twin Towers</p><p class="carousel-city">Kuala Lumpur</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1555217851-6141535bd771?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Penang Hill</p><p class="carousel-city">Penang</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Perhentian Islands</p><p class="carousel-city">Terengganu</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1588416499018-d8c621e7d2c2?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Cameron Highlands</p><p class="carousel-city">Pahang</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Langkawi Sky Bridge</p><p class="carousel-city">Langkawi</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Mount Kinabalu</p><p class="carousel-city">Sabah</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1502083896352-259ab9e342d7?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Redang Island</p><p class="carousel-city">Terengganu</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Taman Negara</p><p class="carousel-city">Pahang</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1516690561799-46d8f74f9abf?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">George Town</p><p class="carousel-city">Penang</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Tioman Island</p><p class="carousel-city">Pahang</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Ipoh Old Town</p><p class="carousel-city">Perak</p></div>
+                </div>
+
+                <!-- Duplicate set for seamless loop -->
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Batu Caves</p><p class="carousel-city">Selangor</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1508009603885-50cf7c8dd0d5?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">KLCC Twin Towers</p><p class="carousel-city">Kuala Lumpur</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1555217851-6141535bd771?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Penang Hill</p><p class="carousel-city">Penang</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Perhentian Islands</p><p class="carousel-city">Terengganu</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1588416499018-d8c621e7d2c2?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Cameron Highlands</p><p class="carousel-city">Pahang</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Langkawi Sky Bridge</p><p class="carousel-city">Langkawi</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Mount Kinabalu</p><p class="carousel-city">Sabah</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1502083896352-259ab9e342d7?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Redang Island</p><p class="carousel-city">Terengganu</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Taman Negara</p><p class="carousel-city">Pahang</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1516690561799-46d8f74f9abf?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">George Town</p><p class="carousel-city">Penang</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Tioman Island</p><p class="carousel-city">Pahang</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Ipoh Old Town</p><p class="carousel-city">Perak</p></div>
+                </div>
+
+            </div>
         </div>
-        <div class="feed-grid" id="from-grid">
-            <!-- Cards injected by app.js -->
+
+        <!-- ROW 2 — scrolls right -->
+        <div class="carousel-track-wrapper">
+            <div class="carousel-track scroll-right">
+
+                <!-- Original set -->
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1582972236019-ea4af5ffe587?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Jonker Walk</p><p class="carousel-city">Melaka</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1559628129-67cf63b72248?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Sipadan Island</p><p class="carousel-city">Sabah</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Kinabatangan River</p><p class="carousel-city">Sabah</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Kundasang</p><p class="carousel-city">Sabah</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Sunway Lagoon</p><p class="carousel-city">Selangor</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Kota Bharu Market</p><p class="carousel-city">Kelantan</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Danum Valley</p><p class="carousel-city">Sabah</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1490122417551-6ee9691429d0?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Gunung Mulu</p><p class="carousel-city">Sarawak</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">A Famosa</p><p class="carousel-city">Melaka</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1519451241324-20b4ea2c4220?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">KL City Gallery</p><p class="carousel-city">Kuala Lumpur</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1509316785289-025f5b846b35?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Cherating Beach</p><p class="carousel-city">Pahang</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1569154941061-e231b4725ef1?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Zoo Negara</p><p class="carousel-city">Kuala Lumpur</p></div>
+                </div>
+
+                <!-- Duplicate set for seamless loop -->
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1582972236019-ea4af5ffe587?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Jonker Walk</p><p class="carousel-city">Melaka</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1559628129-67cf63b72248?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Sipadan Island</p><p class="carousel-city">Sabah</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Kinabatangan River</p><p class="carousel-city">Sabah</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Kundasang</p><p class="carousel-city">Sabah</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Sunway Lagoon</p><p class="carousel-city">Selangor</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Kota Bharu Market</p><p class="carousel-city">Kelantan</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1501854140801-50d01698950b?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Danum Valley</p><p class="carousel-city">Sabah</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1490122417551-6ee9691429d0?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Gunung Mulu</p><p class="carousel-city">Sarawak</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">A Famosa</p><p class="carousel-city">Melaka</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1519451241324-20b4ea2c4220?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">KL City Gallery</p><p class="carousel-city">Kuala Lumpur</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1509316785289-025f5b846b35?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Cherating Beach</p><p class="carousel-city">Pahang</p></div>
+                </div>
+                <div class="carousel-card" style="background-image:url('https://images.unsplash.com/photo-1569154941061-e231b4725ef1?auto=format&fit=crop&w=600&q=80')">
+                    <div class="carousel-card-body"><p class="carousel-place">Zoo Negara</p><p class="carousel-city">Kuala Lumpur</p></div>
+                </div>
+
+            </div>
         </div>
-        <div class="feed-loading" id="from-loading" style="display:none;">
-            <div class="loading-spinner"></div>
-            <p>Finding gems near your starting point...</p>
-        </div>
+
     </section>
 
     <!-- FOOTER -->

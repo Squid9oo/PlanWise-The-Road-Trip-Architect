@@ -984,6 +984,125 @@ input:focus-visible {
 }
 
 /* ============================================
+   INFINITE CAROUSEL
+   ============================================ */
+
+.carousel-section {
+    padding: 0.5rem 0 4rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.carousel-track-wrapper {
+    overflow: hidden;
+    width: 100%;
+}
+
+.carousel-track {
+    display: flex;
+    gap: 1rem;
+    width: max-content;
+}
+
+/* Scroll left — row 1 */
+.carousel-track.scroll-left {
+    animation: marquee-left 40s linear infinite;
+}
+
+/* Scroll right — row 2 */
+.carousel-track.scroll-right {
+    animation: marquee-right 40s linear infinite;
+}
+
+/* Pause on hover */
+.carousel-track-wrapper:hover .carousel-track {
+    animation-play-state: paused;
+}
+
+@keyframes marquee-left {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+@keyframes marquee-right {
+    0%   { transform: translateX(-50%); }
+    100% { transform: translateX(0); }
+}
+
+/* Individual carousel card */
+.carousel-card {
+    width: 260px;
+    height: 170px;
+    border-radius: var(--radius-md);
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition), box-shadow var(--transition);
+}
+
+.carousel-card:hover {
+    transform: scale(1.03);
+    box-shadow: var(--shadow-md);
+}
+
+/* Gradient overlay */
+.carousel-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        to bottom,
+        transparent 40%,
+        rgba(10, 10, 20, 0.75) 100%
+    );
+    border-radius: var(--radius-md);
+}
+
+.carousel-card-body {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 0.85rem 1rem;
+    z-index: 1;
+}
+
+.carousel-place {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.carousel-city {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.75);
+    margin-top: 0.15rem;
+    letter-spacing: 0.04em;
+}
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce) {
+    .carousel-track.scroll-left,
+    .carousel-track.scroll-right {
+        animation: none;
+    }
+}
+
+/* Mobile — slightly smaller cards */
+@media (max-width: 768px) {
+    .carousel-card { width: 200px; height: 140px; }
+    .carousel-section { gap: 0.75rem; padding-bottom: 3rem; }
+}
+
+/* ============================================
    FEED LOADING & SECTION HEADERS
    ============================================ */
 
