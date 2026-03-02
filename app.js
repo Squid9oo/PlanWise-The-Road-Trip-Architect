@@ -60,6 +60,10 @@ window.initMap = function () {
         });
     }
 
+    if (typeof window.initResultsSearch === 'function') {
+        window.initResultsSearch();
+    }
+
 };
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -159,9 +163,18 @@ document.addEventListener('DOMContentLoaded', () => {
         btnPlan.disabled         = true;
 
         // --- Build query string to pass data to results page ---
+        const fromLat = document.getElementById('city-from-lat').value;
+        const fromLng = document.getElementById('city-from-lng').value;
+        const toLat   = document.getElementById('city-to-lat').value;
+        const toLng   = document.getElementById('city-to-lng').value;
+
         const params = new URLSearchParams({
             from:       fromCity,
             to:         toCity,
+            fromLat:    fromLat,
+            fromLng:    fromLng,
+            toLat:      toLat,
+            toLng:      toLng,
             dateFrom:   fromDate,
             dateTo:     toDate,
             transport:  transport,
@@ -512,7 +525,13 @@ function searchNearbyPlaces(location, cityName, gridId, loadingId, emptyId, head
 function buildPlaceCard(place, index) {
 
     const card = document.createElement('div');
+
+    // Category tag — must be defined BEFORE card.dataset.category is set
+    const types   = place.types || [];
+    const tagInfo = getTagInfo(types);
+
     card.className = `feed-card${index === 1 || index === 4 ? ' tall' : ''}`;
+    card.dataset.category = tagInfo.tag; // used by results page filter chips
     card.style.cursor = 'pointer';
     card.dataset.placeId = place.place_id;
 
@@ -520,10 +539,6 @@ function buildPlaceCard(place, index) {
     const photoUrl = place.photos && place.photos.length > 0
         ? place.photos[0].getUrl({ maxWidth: 500, maxHeight: 400 })
         : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=500&q=80';
-
-    // Category tag
-    const types    = place.types || [];
-    const tagInfo  = getTagInfo(types);
 
     // Rating
     const rating   = place.rating ? `⭐ ${place.rating} (${place.user_ratings_total || 0})` : '⭐ Not rated yet';

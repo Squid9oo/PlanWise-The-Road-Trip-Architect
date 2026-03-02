@@ -215,6 +215,39 @@
             .btn-edit-search { display: none; } /* too cramped on small phones */
             .map-placeholder { height: 180px; }
         }
+
+        /* --- FILTER CHIPS ROW --- */
+        .results-filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+            margin-bottom: 1.5rem;
+        }
+
+        /* --- ERROR BANNER --- */
+        .results-error {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--muted);
+        }
+
+        .results-error p {
+            font-size: 0.95rem;
+            color: var(--body-text);
+            margin-bottom: 0.5rem;
+        }
+
+        .results-error .btn-back {
+            display: inline-block;
+            margin-top: 1.5rem;
+            background: var(--dark);
+            color: #fff;
+            padding: 0.75rem 2rem;
+            border-radius: var(--radius-xl);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+        }
     </style>
 </head>
 <body>
@@ -261,12 +294,39 @@
 
     <!-- RESULTS SECTION -->
     <section class="results-section">
-        <div class="results-header">
-            <p class="results-count" id="results-count">Loading gems...</p>
-        </div>
+
+    <!-- FILTER CHIPS -->
+    <div class="results-filter-row" id="results-filter-row" style="display:none;">
+        <button class="chip selected" data-filter="all">🗺️ All</button>
+        <button class="chip" data-filter="food">🍜 Food & Drink</button>
+        <button class="chip" data-filter="nature">🌳 Nature</button>
+        <button class="chip" data-filter="beach">🏖️ Beach</button>
+        <button class="chip" data-filter="heritage">🏛️ Heritage</button>
+        <button class="chip" data-filter="family">🎠 Family</button>
+        <button class="chip" data-filter="nightlife">🌆 Nightlife</button>
+        <button class="chip" data-filter="wellness">🧘 Wellness</button>
+        <button class="chip" data-filter="shopping">🛍️ Shopping</button>
+    </div>
+
+    <!-- LOADING SPINNER -->
+    <div class="feed-loading" id="results-loading">
+        <div class="loading-spinner"></div>
+        <p>Finding gems near your destination...</p>
+    </div>
+
+    <!-- ERROR BANNER — shown if no lat/lng -->
+    <div class="results-error" id="results-error" style="display:none;">
+        <p>⚠️ We couldn't find your destination on the map.</p>
+        <p>Please go back and select your city from the autocomplete dropdown.</p>
+        <a href="index.html" class="btn-back">← Back to Search</a>
+    </div>
+
+    <div class="results-header">
+        <p class="results-count" id="results-count" style="display:none;"></p>
+    </div>
 
         <!-- Card grid — same structure as index.html, filtered by JS -->
-        <div class="feed-grid" id="results-grid">
+        <div class="feed-grid" id="results-grid" style="display:none;">
 
             <!-- CARD 1 -->
             <div class="feed-card" data-category="food">
