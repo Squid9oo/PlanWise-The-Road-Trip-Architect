@@ -993,10 +993,12 @@ input:focus-visible {
 .search-card-wrapper {
     position: relative;
     overflow: hidden;
-    padding: 2rem;
+    padding: 2rem 0;
     margin-left: calc(-50vw + 50%);
     margin-right: calc(-50vw + 50%);
     width: 100vw;
+    display: flex;
+    justify-content: center;
 }
 
 /* Carousel fills the wrapper absolutely */
