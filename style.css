@@ -184,6 +184,8 @@ button { font-family: var(--font-body); cursor: pointer; }
     flex-direction: column;
     gap: 1.5rem;
     border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
 }
 
 /* Form Rows */
@@ -984,41 +986,48 @@ input:focus-visible {
 }
 
 /* ============================================
-   INFINITE CAROUSEL
+   SEARCH CARD CAROUSEL BACKGROUND
    ============================================ */
 
-.carousel-section {
-    padding: 0.5rem 0 4rem;
+/* Search card becomes the containing frame */
+.search-card {
+    position: relative;
     overflow: hidden;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+    /* keep existing styles, just adding these two */
 }
 
-.carousel-track-wrapper {
+/* Carousel lives absolutely behind everything */
+.search-card-carousel {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    overflow: hidden;
+}
+
+/* Each row fills half the card height */
+.search-card-carousel .carousel-track-wrapper {
+    flex: 1;
     overflow: hidden;
     width: 100%;
 }
 
-.carousel-track {
+.search-card-carousel .carousel-track {
     display: flex;
-    gap: 1rem;
+    gap: 4px;
+    height: 100%;
     width: max-content;
 }
 
-/* Scroll left — row 1 */
+/* Scroll animations */
 .carousel-track.scroll-left {
-    animation: marquee-left 40s linear infinite;
+    animation: marquee-left 35s linear infinite;
 }
 
-/* Scroll right — row 2 */
 .carousel-track.scroll-right {
-    animation: marquee-right 40s linear infinite;
-}
-
-/* Pause on hover */
-.carousel-track-wrapper:hover .carousel-track {
-    animation-play-state: paused;
+    animation: marquee-right 35s linear infinite;
 }
 
 @keyframes marquee-left {
@@ -1031,75 +1040,86 @@ input:focus-visible {
     100% { transform: translateX(0); }
 }
 
-/* Individual carousel card */
-.carousel-card {
-    width: 260px;
-    height: 170px;
-    border-radius: var(--radius-md);
+/* Individual carousel card — no text, no hover effects */
+.search-card-carousel .carousel-card {
+    width: 220px;
+    height: 100%;
     background-size: cover;
     background-position: center;
-    position: relative;
-    overflow: hidden;
     flex-shrink: 0;
-    box-shadow: var(--shadow-sm);
-    transition: transform var(--transition), box-shadow var(--transition);
+    border-radius: 0;
 }
 
-.carousel-card:hover {
-    transform: scale(1.03);
-    box-shadow: var(--shadow-md);
-}
-
-/* Gradient overlay */
-.carousel-card::after {
+/* Dark overlay so form stays readable */
+.search-card-carousel::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: linear-gradient(
-        to bottom,
-        transparent 40%,
-        rgba(10, 10, 20, 0.75) 100%
-    );
-    border-radius: var(--radius-md);
-}
-
-.carousel-card-body {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 0.85rem 1rem;
+    background: rgba(10, 10, 20, 0.55);
     z-index: 1;
+    pointer-events: none;
 }
 
-.carousel-place {
-    font-family: var(--font-display);
-    font-size: 0.95rem;
-    font-weight: 700;
-    color: #fff;
-    line-height: 1.2;
+/* Form content floats above carousel + overlay */
+.search-card-overlay {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
-.carousel-city {
-    font-size: 0.72rem;
-    font-weight: 500;
-    color: rgba(255,255,255,0.75);
-    margin-top: 0.15rem;
-    letter-spacing: 0.04em;
+/* Adjust form labels + text to stay readable on dark bg */
+.search-card-overlay .form-group label,
+.search-card-overlay .row-label {
+    color: rgba(255, 255, 255, 0.85);
 }
 
-/* Reduce motion */
+.search-card-overlay .label-hint {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.search-card-overlay .form-group input[type="text"],
+.search-card-overlay .form-group input[type="date"] {
+    background: rgba(255, 255, 255, 0.92);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.search-card-overlay .transport-chip span {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.search-card-overlay .transport-chip input:checked + span {
+    background: #fff;
+    border-color: #fff;
+    color: var(--dark);
+}
+
+.search-card-overlay .chip {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.search-card-overlay .chip.selected {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--dark);
+}
+
+.search-card-overlay .trip-duration {
+    background: var(--secondary);
+    color: var(--dark);
+}
+
+/* Reduced motion — freeze carousel */
 @media (prefers-reduced-motion: reduce) {
     .carousel-track.scroll-left,
     .carousel-track.scroll-right {
         animation: none;
     }
-}
-
-/* Mobile — slightly smaller cards */
-@media (max-width: 768px) {
-    .carousel-card { width: 200px; height: 140px; }
-    .carousel-section { gap: 0.75rem; padding-bottom: 3rem; }
 }
 
 /* ============================================
