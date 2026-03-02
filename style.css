@@ -185,7 +185,7 @@ button { font-family: var(--font-body); cursor: pointer; }
     gap: 1.5rem;
     border: 1px solid var(--border);
     position: relative;
-    overflow: hidden;
+    z-index: 2;
 }
 
 /* Form Rows */
@@ -986,48 +986,39 @@ input:focus-visible {
 }
 
 /* ============================================
-   SEARCH CARD CAROUSEL BACKGROUND
+   INFINITE CAROUSEL
    ============================================ */
 
-/* Search card becomes the containing frame */
-.search-card {
+.carousel-section {
     position: relative;
+    z-index: 1;
+    margin-top: -5rem;
+    padding-bottom: 4rem;
     overflow: hidden;
-    /* keep existing styles, just adding these two */
-}
-
-/* Carousel lives absolutely behind everything */
-.search-card-carousel {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
     display: flex;
     flex-direction: column;
-    gap: 0;
-    overflow: hidden;
+    gap: 0.75rem;
+    background: var(--bg);
+    padding-top: 6rem; /* pushes images down so top rows peek from behind card */
 }
 
-/* Each row fills half the card height */
-.search-card-carousel .carousel-track-wrapper {
-    flex: 1;
+.carousel-track-wrapper {
     overflow: hidden;
     width: 100%;
 }
 
-.search-card-carousel .carousel-track {
+.carousel-track {
     display: flex;
-    gap: 4px;
-    height: 100%;
+    gap: 0.75rem;
     width: max-content;
 }
 
-/* Scroll animations */
 .carousel-track.scroll-left {
-    animation: marquee-left 35s linear infinite;
+    animation: marquee-left 40s linear infinite;
 }
 
 .carousel-track.scroll-right {
-    animation: marquee-right 35s linear infinite;
+    animation: marquee-right 40s linear infinite;
 }
 
 @keyframes marquee-left {
@@ -1040,81 +1031,40 @@ input:focus-visible {
     100% { transform: translateX(0); }
 }
 
-/* Individual carousel card — no text, no hover effects */
-.search-card-carousel .carousel-card {
-    width: 220px;
-    height: 100%;
+.carousel-section .carousel-card {
+    width: 240px;
+    height: 160px;
+    border-radius: var(--radius-md);
     background-size: cover;
     background-position: center;
     flex-shrink: 0;
-    border-radius: 0;
 }
 
-/* Dark overlay so form stays readable */
-.search-card-carousel::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: rgba(10, 10, 20, 0.55);
-    z-index: 1;
-    pointer-events: none;
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .carousel-section {
+        margin-top: -3rem;
+        padding-top: 4rem;
+        gap: 0.5rem;
+    }
+    .carousel-section .carousel-card {
+        width: 180px;
+        height: 120px;
+    }
 }
 
-/* Form content floats above carousel + overlay */
-.search-card-overlay {
-    position: relative;
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+@media (max-width: 480px) {
+    .carousel-section {
+        margin-top: -2rem;
+        padding-top: 3rem;
+    }
+    .carousel-section .carousel-card {
+        width: 150px;
+        height: 100px;
+    }
 }
 
-/* Adjust form labels + text to stay readable on dark bg */
-.search-card-overlay .form-group label,
-.search-card-overlay .row-label {
-    color: rgba(255, 255, 255, 0.85);
-}
-
-.search-card-overlay .label-hint {
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.search-card-overlay .form-group input[type="text"],
-.search-card-overlay .form-group input[type="date"] {
-    background: rgba(255, 255, 255, 0.92);
-    border-color: rgba(255, 255, 255, 0.3);
-}
-
-.search-card-overlay .transport-chip span {
-    background: rgba(255, 255, 255, 0.15);
-    border-color: rgba(255, 255, 255, 0.25);
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.search-card-overlay .transport-chip input:checked + span {
-    background: #fff;
-    border-color: #fff;
-    color: var(--dark);
-}
-
-.search-card-overlay .chip {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.25);
-    color: rgba(255, 255, 255, 0.9);
-}
-
-.search-card-overlay .chip.selected {
-    background: var(--primary);
-    border-color: var(--primary);
-    color: var(--dark);
-}
-
-.search-card-overlay .trip-duration {
-    background: var(--secondary);
-    color: var(--dark);
-}
-
-/* Reduced motion — freeze carousel */
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
     .carousel-track.scroll-left,
     .carousel-track.scroll-right {
