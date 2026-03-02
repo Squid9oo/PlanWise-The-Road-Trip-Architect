@@ -307,6 +307,51 @@
 </div>
 
     <div id="hidden-map" style="display:none;"></div>
+    <!-- PLACE DETAIL PANEL -->
+    <div class="place-panel-overlay" id="place-panel-overlay">
+        <div class="place-panel" id="place-panel" role="dialog" aria-modal="true" aria-labelledby="panel-name">
+
+            <button class="place-panel-close" id="place-panel-close" aria-label="Close panel">✕</button>
+
+            <!-- PHOTO STRIP -->
+            <div class="place-panel-photos" id="panel-photos"></div>
+
+            <!-- CONTENT -->
+            <div class="place-panel-body">
+
+                <!-- TAG + NAME -->
+                <div class="panel-tag-row" id="panel-tag-row"></div>
+                <h2 class="place-panel-name" id="panel-name">Loading...</h2>
+                <p class="place-panel-address" id="panel-address"></p>
+
+                <!-- RATING -->
+                <div class="place-panel-rating" id="panel-rating"></div>
+
+                <!-- OPENING HOURS -->
+                <div class="place-panel-section" id="panel-hours-section" style="display:none;">
+                    <p class="place-panel-section-title">🕐 Opening Hours</p>
+                    <ul class="panel-hours-list" id="panel-hours-list"></ul>
+                </div>
+
+                <!-- CONTACT -->
+                <div class="place-panel-section" id="panel-contact-section" style="display:none;">
+                    <p class="place-panel-section-title">📞 Contact</p>
+                    <div class="panel-contact-links" id="panel-contact-links"></div>
+                </div>
+
+                <!-- ACTION BUTTONS -->
+                <div class="place-panel-actions" id="panel-actions"></div>
+
+            </div>
+
+            <!-- LOADING STATE -->
+            <div class="place-panel-loading" id="panel-loading">
+                <div class="loading-spinner"></div>
+                <p>Loading details...</p>
+            </div>
+
+        </div>
+    </div>
     <script src="app.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCtHBA74KW3ZS8WE8OKUr6tWy2MHFHxGw8&libraries=places&callback=initMap" async defer></script>
 

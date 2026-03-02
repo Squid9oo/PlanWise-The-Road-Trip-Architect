@@ -531,6 +531,8 @@ function buildPlaceCard(place, index) {
 
     const card = document.createElement('div');
     card.className = `feed-card${index === 1 || index === 4 ? ' tall' : ''}`;
+    card.style.cursor = 'pointer';
+    card.dataset.placeId = place.place_id;
 
     // Photo
     const photoUrl = place.photos && place.photos.length > 0
@@ -566,6 +568,12 @@ function buildPlaceCard(place, index) {
         </div>
     `;
 
+    // Wire card click → open detail panel
+    card.addEventListener('click', function (e) {
+        if (e.target.closest('.btn-save')) return; // don't open panel if Save clicked
+        openPlaceDetail(place.place_id, place);
+    });
+
     // Wire save button
     card.querySelector('.btn-save').addEventListener('click', function () {
         this.textContent      = '✓ Saved';
@@ -598,3 +606,155 @@ function updateFeedDivider(cityName) {
     const el = document.getElementById('feed-divider-text');
     if (el) el.textContent = `🔥 Top Gems Discovered Near ${cityName}`;
 }
+
+// ==========================================
+// PLACE DETAIL PANEL — Open + fetch details
+// ==========================================
+function openPlaceDetail(placeId, basicPlace) {
+
+    const overlay  = document.getElementById('place-panel-overlay');
+    const loading  = document.getElementById('panel-loading');
+    const body     = document.querySelector('.place-panel-body');
+
+    // Show panel in loading state
+    loading.style.display = 'flex';
+    body.style.display    = 'none';
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Fetch full details
+    const mapEl  = document.getElementById('hidden-map');
+    const map    = new google.maps.Map(mapEl, { center: { lat: 3.14, lng: 101.68 }, zoom: 12 });
+    const service = new google.maps.places.PlacesService(map);
+
+    service.getDetails({
+        placeId: placeId,
+        fields: [
+            'name', 'formatted_address', 'rating', 'user_ratings_total',
+            'opening_hours', 'formatted_phone_number', 'website',
+            'url', 'photos', 'types'
+        ],
+    }, (place, status) => {
+
+        loading.style.display = 'none';
+        body.style.display    = 'flex';
+
+        if (status !== google.maps.places.PlacesServiceStatus.OK || !place) {
+            document.getElementById('panel-name').textContent = basicPlace.name || 'Unknown Place';
+            document.getElementById('panel-address').textContent = 'Could not load full details.';
+            return;
+        }
+
+        // --- Photos ---
+        const photoStrip = document.getElementById('panel-photos');
+        photoStrip.innerHTML = '';
+        const photos = place.photos ? place.photos.slice(0, 3) : [];
+        if (photos.length > 0) {
+            photos.forEach(photo => {
+                const div = document.createElement('div');
+                div.className = 'panel-photo';
+                div.style.backgroundImage = `url('${photo.getUrl({ maxWidth: 600 })}')`;
+                photoStrip.appendChild(div);
+            });
+        } else {
+            photoStrip.style.background = 'var(--border)';
+        }
+
+        // --- Tag ---
+        const tagRow  = document.getElementById('panel-tag-row');
+        const tagInfo = getTagInfo(place.types || []);
+        tagRow.innerHTML = `<div class="card-tag ${tagInfo.tag}">${tagInfo.tagLabel}</div>`;
+
+        // --- Name + Address ---
+        document.getElementById('panel-name').textContent    = place.name || '';
+        document.getElementById('panel-address').textContent = place.formatted_address || '';
+
+        // --- Rating ---
+        const ratingEl = document.getElementById('panel-rating');
+        if (place.rating) {
+            const stars = Math.round(place.rating);
+            const starHtml = Array.from({ length: 5 }, (_, i) =>
+                `<span class="rating-star">${i < stars ? '★' : '☆'}</span>`
+            ).join('');
+            ratingEl.innerHTML = `
+                <div class="rating-stars">${starHtml}</div>
+                <span>${place.rating}</span>
+                <span class="rating-count">(${place.user_ratings_total || 0} reviews)</span>
+            `;
+        } else {
+            ratingEl.innerHTML = '<span style="color:var(--muted);font-size:0.85rem;">No ratings yet</span>';
+        }
+
+        // --- Opening Hours ---
+        const hoursSection = document.getElementById('panel-hours-section');
+        const hoursList    = document.getElementById('panel-hours-list');
+        if (place.opening_hours && place.opening_hours.weekday_text) {
+            hoursSection.style.display = 'flex';
+            hoursList.innerHTML = '';
+            const today = new Date().getDay(); // 0 = Sunday
+            place.opening_hours.weekday_text.forEach((line, i) => {
+                const li = document.createElement('li');
+                li.textContent = line;
+                // weekday_text starts Monday (index 0), JS getDay() 0=Sun,1=Mon
+                if ((i + 1) % 7 === today % 7) li.classList.add('today');
+                hoursList.appendChild(li);
+            });
+        } else {
+            hoursSection.style.display = 'none';
+        }
+
+        // --- Contact ---
+        const contactSection = document.getElementById('panel-contact-section');
+        const contactLinks   = document.getElementById('panel-contact-links');
+        contactLinks.innerHTML = '';
+        let hasContact = false;
+
+        if (place.formatted_phone_number) {
+            hasContact = true;
+            contactLinks.innerHTML += `<a class="panel-contact-link" href="tel:${place.formatted_phone_number}">📞 ${place.formatted_phone_number}</a>`;
+        }
+        if (place.website) {
+            hasContact = true;
+            contactLinks.innerHTML += `<a class="panel-contact-link" href="${place.website}" target="_blank" rel="noopener">🌐 Visit Website</a>`;
+        }
+        contactSection.style.display = hasContact ? 'flex' : 'none';
+
+        // --- Action Buttons ---
+        const actions = document.getElementById('panel-actions');
+        actions.innerHTML = '';
+        if (place.url) {
+            actions.innerHTML += `<a class="btn-panel-maps" href="${place.url}" target="_blank" rel="noopener">🗺️ Open in Google Maps</a>`;
+        }
+        const saveBtn = document.createElement('button');
+        saveBtn.className   = 'btn-panel-save';
+        saveBtn.textContent = '+ Save';
+        saveBtn.addEventListener('click', function () {
+            this.textContent        = '✓ Saved';
+            this.style.background   = 'var(--green)';
+            this.style.borderColor  = 'var(--green)';
+            this.style.color        = '#fff';
+            this.disabled           = true;
+        });
+        actions.appendChild(saveBtn);
+    });
+}
+
+// ==========================================
+// PLACE DETAIL PANEL — Close
+// ==========================================
+function closePlaceDetail() {
+    const overlay = document.getElementById('place-panel-overlay');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// Wire close button + overlay click + Escape key
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('place-panel-close').addEventListener('click', closePlaceDetail);
+    document.getElementById('place-panel-overlay').addEventListener('click', (e) => {
+        if (e.target === document.getElementById('place-panel-overlay')) closePlaceDetail();
+    });
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closePlaceDetail();
+    });
+});
