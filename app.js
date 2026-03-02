@@ -23,6 +23,19 @@ window.initMap = function () {
             if (!place.geometry) return;
             document.getElementById('city-from-lat').value = place.geometry.location.lat();
             document.getElementById('city-from-lng').value = place.geometry.location.lng();
+
+            // Trigger departure card search
+            const cityName = place.name || document.getElementById('city-from').value;
+            searchNearbyPlaces(
+                place.geometry.location,
+                cityName,
+                'from-grid',
+                'from-loading',
+                null,
+                'from-section-header',
+                'from-section-title',
+                '🚩 Gems near your starting point'
+            );
         });
     }
 
@@ -36,6 +49,20 @@ window.initMap = function () {
             if (!place.geometry) return;
             document.getElementById('city-to-lat').value = place.geometry.location.lat();
             document.getElementById('city-to-lng').value = place.geometry.location.lng();
+
+            // Trigger destination card search
+            const cityName = place.name || document.getElementById('city-to').value;
+            searchNearbyPlaces(
+                place.geometry.location,
+                cityName,
+                'feed-grid',
+                'feed-loading',
+                'feed-empty',
+                'feed-section-header',
+                'feed-section-title',
+                '🏁 Gems near your destination'
+            );
+            updateFeedDivider(cityName);
         });
     }
 
@@ -428,3 +455,146 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
 });
+
+// ==========================================
+// PLACES SEARCH — Fetch nearby attractions
+// ==========================================
+function searchNearbyPlaces(location, cityName, gridId, loadingId, emptyId, headerId, titleId, sectionLabel) {
+
+    const grid    = document.getElementById(gridId);
+    const loading = document.getElementById(loadingId);
+    const empty   = emptyId ? document.getElementById(emptyId) : null;
+    const header  = document.getElementById(headerId);
+    const title   = document.getElementById(titleId);
+
+    // Show loading, hide previous results
+    grid.innerHTML        = '';
+    loading.style.display = 'flex';
+    if (empty) empty.style.display = 'none';
+    header.style.display  = 'none';
+
+    const mapEl  = document.getElementById('hidden-map');
+    const map    = new google.maps.Map(mapEl, { center: location, zoom: 12 });
+    const service = new google.maps.places.PlacesService(map);
+
+    const types  = ['tourist_attraction', 'park'];
+    let allResults = [];
+    let completed  = 0;
+
+    types.forEach(type => {
+        service.nearbySearch({
+            location: location,
+            radius:   25000, // 25km radius
+            type:     type,
+        }, (results, status) => {
+            completed++;
+            if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+                allResults = allResults.concat(results);
+            }
+            if (completed === types.length) {
+                // Deduplicate by place_id, sort by rating, take top 6
+                const seen = new Set();
+                const unique = allResults
+                    .filter(p => {
+                        if (seen.has(p.place_id)) return false;
+                        seen.add(p.place_id);
+                        return true;
+                    })
+                    .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+                    .slice(0, 6);
+
+                loading.style.display = 'none';
+
+                if (unique.length === 0) {
+                    if (empty) empty.style.display = 'block';
+                    return;
+                }
+
+                // Show section header
+                title.textContent    = `${sectionLabel} — ${cityName}`;
+                header.style.display = 'block';
+
+                // Render cards
+                unique.forEach((place, i) => {
+                    const card = buildPlaceCard(place, i);
+                    grid.appendChild(card);
+                });
+            }
+        });
+    });
+}
+
+// ==========================================
+// CARD BUILDER — Turns a Places result into a card
+// ==========================================
+function buildPlaceCard(place, index) {
+
+    const card = document.createElement('div');
+    card.className = `feed-card${index === 1 || index === 4 ? ' tall' : ''}`;
+
+    // Photo
+    const photoUrl = place.photos && place.photos.length > 0
+        ? place.photos[0].getUrl({ maxWidth: 500, maxHeight: 400 })
+        : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=500&q=80';
+
+    // Category tag
+    const types    = place.types || [];
+    const tagInfo  = getTagInfo(types);
+
+    // Rating
+    const rating   = place.rating ? `⭐ ${place.rating} (${place.user_ratings_total || 0})` : '⭐ Not rated yet';
+
+    // Open now
+    const openNow  = place.opening_hours
+        ? (place.opening_hours.isOpen() ? '✅ Open now' : '⚠️ Closed now')
+        : '';
+
+    card.innerHTML = `
+        <div class="card-media" style="background-image: url('${photoUrl}')">
+            <div class="card-platform ${tagInfo.platform}">${tagInfo.platformLabel}</div>
+            <div class="card-views">${rating}</div>
+        </div>
+        <div class="card-body">
+            <div class="card-tag ${tagInfo.tag}">${tagInfo.tagLabel}</div>
+            <h3>${place.name}</h3>
+            <p class="card-meta">📍 ${place.vicinity || ''}</p>
+            ${openNow ? `<p class="card-warning">${openNow}</p>` : ''}
+            <div class="card-footer">
+                <span class="card-author">📍 Google Places</span>
+                <button class="btn-save">+ Save</button>
+            </div>
+        </div>
+    `;
+
+    // Wire save button
+    card.querySelector('.btn-save').addEventListener('click', function () {
+        this.textContent      = '✓ Saved';
+        this.style.background = 'var(--green)';
+        this.style.borderColor = 'var(--green)';
+        this.style.color      = '#fff';
+        this.disabled         = true;
+    });
+
+    return card;
+}
+
+// ==========================================
+// TAG HELPER — Maps Google place types to card styles
+// ==========================================
+function getTagInfo(types) {
+    if (types.includes('park') || types.includes('natural_feature')) {
+        return { tag: 'nature', tagLabel: 'Nature & Parks', platform: 'instagram', platformLabel: '📸 Google Places' };
+    }
+    if (types.includes('tourist_attraction') || types.includes('point_of_interest')) {
+        return { tag: 'heritage', tagLabel: 'Tourist Attraction', platform: 'youtube', platformLabel: '📍 Google Places' };
+    }
+    return { tag: 'heritage', tagLabel: 'Attraction', platform: 'youtube', platformLabel: '📍 Google Places' };
+}
+
+// ==========================================
+// DIVIDER TEXT — Updates when destination chosen
+// ==========================================
+function updateFeedDivider(cityName) {
+    const el = document.getElementById('feed-divider-text');
+    if (el) el.textContent = `🔥 Top Gems Discovered Near ${cityName}`;
+}
