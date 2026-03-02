@@ -692,7 +692,7 @@ input:focus-visible {
     *, *::before, *::after { transition: none !important; animation: none !important; }
 }
 
-/* Dark mode support */
+/* Dark mode support — commented out until results.html is complete
 @media (prefers-color-scheme: dark) {
     :root {
         --bg:       #12121e;
@@ -709,3 +709,4 @@ input:focus-visible {
     .chip.selected { color: var(--dark); }
     .site-footer { background: #0a0a14; }
 }
+*/

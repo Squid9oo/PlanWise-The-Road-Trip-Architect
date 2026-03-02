@@ -44,6 +44,11 @@ document.addEventListener('DOMContentLoaded', () => {
             durationBadge.style.background = 'var(--secondary)';
             durationBadge.style.color = '#1a1a2e';
             durationBadge.style.display = 'block';
+        } else {
+            durationBadge.textContent = `${diffDays} night${diffDays > 1 ? 's' : ''} 🌙`;
+            durationBadge.style.background = 'var(--secondary)';
+            durationBadge.style.color = '#1a1a2e';
+            durationBadge.style.display = 'block';
         }
     }
 
