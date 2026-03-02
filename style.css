@@ -510,12 +510,14 @@ input:focus-visible {
     color: #fff;
 }
 
-.card-tag.foodie    { background: #e67e22; }
+.card-tag.food      { background: #e67e22; }
 .card-tag.nature    { background: #27ae60; }
 .card-tag.beach     { background: #0099cc; }
-.card-tag.family    { background: #8e44ad; }
 .card-tag.heritage  { background: #c0392b; }
-.card-tag.budget    { background: #16a085; }
+.card-tag.family    { background: #8e44ad; }
+.card-tag.nightlife { background: #6c3483; }
+.card-tag.wellness  { background: #1a9e8f; }
+.card-tag.shopping  { background: #d35400; }
 
 .card-body h3 {
     font-family: var(--font-display);

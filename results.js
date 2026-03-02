@@ -61,14 +61,16 @@ document.addEventListener('DOMContentLoaded', () => {
     metaContainer.innerHTML += `<span class="trip-badge">${transportLabel}</span>`;
 
     // Activity badges
-    const activityMap = {
-        foodie:   '🍜 Foodie',
-        nature:   '🌳 Nature',
-        beach:    '🏖️ Beach',
-        family:   '🎠 Family',
-        heritage: '🏛️ Heritage',
-        budget:   '💸 Budget',
-    };
+const activityMap = {
+    food:      '🍜 Food & Drink',
+    nature:    '🌳 Nature & Outdoors',
+    beach:     '🏖️ Beach & Islands',
+    heritage:  '🏛️ Heritage & Culture',
+    family:    '🎠 Family & Kids',
+    nightlife: '🌆 Urban & Nightlife',
+    wellness:  '🧘 Wellness & Spa',
+    shopping:  '🛍️ Shopping & Markets',
+};
 
     activities.forEach(act => {
         if (activityMap[act]) {
