@@ -43,9 +43,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // 2. TRIP DURATION — Auto-calculate from dates
     // ==========================================
-    const dateFrom  = document.getElementById('date-from');
-    const dateTo    = document.getElementById('date-to');
+    const dateFrom      = document.getElementById('date-from');
+    const dateTo        = document.getElementById('date-to');
     const durationBadge = document.getElementById('trip-duration');
+
+    if (dateFrom && dateTo && durationBadge) {
 
     function updateDuration() {
         const from  = new Date(dateFrom.value);
@@ -79,12 +81,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     dateFrom.addEventListener('change', updateDuration);
     dateTo.addEventListener('change', updateDuration);
+    } // end trip duration guard
 
 
     // ==========================================
     // 3. FORM SUBMISSION — Validate + redirect
     // ==========================================
     const btnPlan    = document.getElementById('btn-plan');
+    if (btnPlan) {
     const btnText    = btnPlan.querySelector('.btn-text');
     const btnLoading = btnPlan.querySelector('.btn-loading');
 
@@ -134,6 +138,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1200);
     });
 
+    } // end btnPlan guard
 
     // ==========================================
     // 4. HELPER — Show inline error message
@@ -167,6 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // 5. SAVE BUTTONS — Visual feedback
     // ==========================================
     const saveButtons = document.querySelectorAll('.btn-save');
+    if (saveButtons.length > 0) {
 
     saveButtons.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -177,6 +183,7 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.disabled             = true;
         });
     });
+    } // end save buttons guard
 
     // ==========================================
     // 6. ADD A GEM MODAL
