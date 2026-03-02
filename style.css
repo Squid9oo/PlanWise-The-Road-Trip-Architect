@@ -250,7 +250,7 @@ button { font-family: var(--font-body); cursor: pointer; }
 /* Trip duration badge */
 .trip-duration {
     background: var(--secondary);
-    color: var(--dark);
+    color: #1a1a2e;
     padding: 0.35rem 0.85rem;
     border-radius: var(--radius-xl);
     font-size: 0.8rem;
@@ -422,12 +422,13 @@ input:focus-visible {
 
 /* Masonry-style grid */
 .feed-grid {
-    columns: 3;
-    column-gap: 1.25rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
 }
 
 .feed-card {
-    break-inside: avoid;
+    break-inside: unset;
     background: var(--surface);
     border-radius: var(--radius-md);
     overflow: hidden;
@@ -450,7 +451,7 @@ input:focus-visible {
     position: relative;
 }
 
-.feed-card.tall .card-media { height: 270px; }
+.feed-card.tall .card-media { height: 240px; }
 
 /* Platform badge */
 .card-platform {
@@ -615,21 +616,31 @@ input:focus-visible {
 /* Tablet: 768px and below */
 @media (max-width: 768px) {
 
-    .header-inner { padding: 0.85rem 1.25rem; }
-    .header-nav { gap: 1rem; }
-    .header-nav a:not(.btn-login) { display: none; } /* hide nav links, keep sign in */
+    .header-inner { padding: 0.85rem 1rem; }
+    .header-nav { gap: 0.75rem; }
+    .header-nav a:not(.btn-login) { display: none; }
+
+    .btn-login { padding: 0.45rem 1rem; font-size: 0.8rem; }
 
     .hero {
-        padding: 3rem 1.25rem 2rem;
+        padding: 3rem 1rem 2rem;
         min-height: auto;
         align-items: flex-start;
     }
 
     .hero-inner h1 { font-size: clamp(1.8rem, 7vw, 2.4rem); }
 
-    .search-card { padding: 1.5rem 1.25rem 1.25rem; gap: 1.25rem; }
+    .search-card { padding: 1.25rem 1rem 1.25rem; gap: 1.25rem; }
 
+    /* All rows stack vertically except .date-row which stays side by side */
     .form-row { flex-direction: column; align-items: stretch; }
+    .date-row { flex-direction: row; align-items: flex-end; flex-wrap: nowrap; }
+    .date-row .form-group { min-width: 0; flex: 1; }
+    .date-row .form-divider { display: flex; }
+
+    /* Prevent date inputs from overflowing */
+    .form-group input[type="date"],
+    .form-group input[type="text"] { min-width: 0; width: 100%; }
 
     .form-divider { display: none; }
     .route-arrow { display: none; }
@@ -644,11 +655,11 @@ input:focus-visible {
     .btn-plan { width: 100%; padding: 1rem; }
 
     .feed-grid {
-        columns: 2;
-        column-gap: 1rem;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
     }
 
-    .feed-section { padding: 1rem 1.25rem 3rem; }
+    .feed-section { padding: 1rem 1rem 3rem; }
 }
 
 /* Mobile: 480px and below */
@@ -660,11 +671,9 @@ input:focus-visible {
     .search-card { padding: 1.25rem 1rem; border-radius: var(--radius-md); }
 
     .feed-grid {
-        columns: 1;
-        column-gap: 0;
+        grid-template-columns: 1fr;
+        gap: 1rem;
     }
-
-    .feed-card { margin-bottom: 1rem; }
 
     .transport-options { gap: 0.4rem; }
     .transport-chip span { padding: 0.45rem 0.75rem; font-size: 0.8rem; }
