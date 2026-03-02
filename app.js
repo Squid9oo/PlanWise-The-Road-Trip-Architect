@@ -6,24 +6,60 @@
 // Called automatically when Maps API loads
 // ==========================================
 window.initMap = function () {
+
+    // ==========================================
+    // SEARCH FORM — Autocomplete for city inputs
+    // ==========================================
+    const cityFromInput = document.getElementById('city-from');
+    const cityToInput   = document.getElementById('city-to');
+
+    if (cityFromInput) {
+        const acFrom = new google.maps.places.Autocomplete(cityFromInput, {
+            componentRestrictions: { country: 'my' },
+            fields: ['name', 'geometry', 'formatted_address'],
+        });
+        acFrom.addListener('place_changed', () => {
+            const place = acFrom.getPlace();
+            if (!place.geometry) return;
+            document.getElementById('city-from-lat').value = place.geometry.location.lat();
+            document.getElementById('city-from-lng').value = place.geometry.location.lng();
+        });
+    }
+
+    if (cityToInput) {
+        const acTo = new google.maps.places.Autocomplete(cityToInput, {
+            componentRestrictions: { country: 'my' },
+            fields: ['name', 'geometry', 'formatted_address'],
+        });
+        acTo.addListener('place_changed', () => {
+            const place = acTo.getPlace();
+            if (!place.geometry) return;
+            document.getElementById('city-to-lat').value = place.geometry.location.lat();
+            document.getElementById('city-to-lng').value = place.geometry.location.lng();
+        });
+    }
+
+    // ==========================================
+    // GEM MODAL — Autocomplete for location field
+    // ==========================================
     const locationInput = document.getElementById('gem-location');
-    if (!locationInput) return; // only runs on pages with the modal
+    if (locationInput) {
+        const acGem = new google.maps.places.Autocomplete(locationInput, {
+            componentRestrictions: { country: 'my' },
+            fields: ['name', 'geometry', 'formatted_address'],
+        });
+        acGem.addListener('place_changed', () => {
+            const place = acGem.getPlace();
+            if (!place.geometry) {
+                document.getElementById('gem-lat').value = '';
+                document.getElementById('gem-lng').value = '';
+                return;
+            }
+            document.getElementById('gem-lat').value = place.geometry.location.lat();
+            document.getElementById('gem-lng').value = place.geometry.location.lng();
+        });
+    }
 
-    const autocomplete = new google.maps.places.Autocomplete(locationInput, {
-        componentRestrictions: { country: 'my' }, // Malaysia only
-        fields: ['name', 'geometry', 'formatted_address'],
-    });
-
-    autocomplete.addListener('place_changed', () => {
-        const place = autocomplete.getPlace();
-        if (!place.geometry) {
-            document.getElementById('gem-lat').value = '';
-            document.getElementById('gem-lng').value = '';
-            return;
-        }
-        document.getElementById('gem-lat').value = place.geometry.location.lat();
-        document.getElementById('gem-lng').value = place.geometry.location.lng();
-    });
 };
 
 document.addEventListener('DOMContentLoaded', () => {
