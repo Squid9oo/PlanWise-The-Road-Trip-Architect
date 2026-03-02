@@ -144,7 +144,7 @@ window.initResultsSearch = function () {
                         seen.add(p.place_id);
                         return true;
                     })
-                    .filter(p => p.rating && p.rating >= 3.5) // minimum quality filter
+                    .filter(p => p.rating && p.rating >= 4.0 && p.user_ratings_total >= 100) // quality filter
                     .sort((a, b) => (b.rating || 0) - (a.rating || 0))
                     .slice(0, 18);
 
