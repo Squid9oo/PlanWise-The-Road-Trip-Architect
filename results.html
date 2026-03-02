@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Road Trip · PlanWise Malaysia</title>
+    <meta name="description" content="Discover the best stops, food, and experiences along your Malaysian road trip with PlanWise.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* ============================================
+           RESULTS PAGE — Additional styles only
+           (All base styles come from style.css)
+           ============================================ */
+
+        /* --- TRIP SUMMARY BAR --- */
+        .trip-bar {
+            background: var(--dark);
+            color: #fff;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 65px; /* sits just below the sticky header */
+            z-index: 100;
+        }
+
+        .trip-bar-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .trip-route {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .trip-city {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .trip-arrow {
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        .trip-meta {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+
+        .trip-badge {
+            background: rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.85);
+            padding: 0.3rem 0.85rem;
+            border-radius: var(--radius-xl);
+            font-size: 0.78rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .trip-badge.highlight {
+            background: var(--primary);
+            color: var(--dark);
+        }
+
+        .btn-edit-search {
+            background: transparent;
+            border: 1.5px solid rgba(255,255,255,0.25);
+            color: rgba(255,255,255,0.75);
+            padding: 0.4rem 1rem;
+            border-radius: var(--radius-xl);
+            font-size: 0.8rem;
+            font-weight: 600;
+            font-family: var(--font-body);
+            transition: all var(--transition);
+            white-space: nowrap;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-edit-search:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.5);
+            color: #fff;
+        }
+
+        /* --- MAP PLACEHOLDER --- */
+        .map-section {
+            padding: 2rem 2rem 0;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .map-placeholder {
+            width: 100%;
+            height: 320px;
+            background: linear-gradient(135deg, #e8f4f8 0%, #d4edf5 100%);
+            border-radius: var(--radius-md);
+            border: 2px dashed var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            color: var(--muted);
+        }
+
+        .map-placeholder-icon {
+            font-size: 3rem;
+            line-height: 1;
+        }
+
+        .map-placeholder-title {
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--body-text);
+        }
+
+        .map-placeholder-sub {
+            font-size: 0.85rem;
+            color: var(--muted);
+            text-align: center;
+            max-width: 300px;
+            line-height: 1.5;
+        }
+
+        /* --- RESULTS SECTION --- */
+        .results-section {
+            padding: 2rem 2rem 5rem;
+            max-width: 1280px;
+            margin: 0 auto;
+        }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .results-count {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        .results-count strong {
+            color: var(--body-text);
+            font-size: 1rem;
+        }
+
+        /* Empty state — shown when no cards match */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--muted);
+        }
+
+        .empty-state-icon { font-size: 3rem; margin-bottom: 1rem; }
+
+        .empty-state h3 {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            color: var(--body-text);
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p { font-size: 0.9rem; }
+
+        .empty-state .btn-back {
+            display: inline-block;
+            margin-top: 1.5rem;
+            background: var(--dark);
+            color: #fff;
+            padding: 0.75rem 2rem;
+            border-radius: var(--radius-xl);
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: background var(--transition), transform var(--transition);
+        }
+
+        .empty-state .btn-back:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 768px) {
+            .trip-bar { padding: 0.85rem 1rem; top: 57px; }
+            .trip-city { font-size: 1rem; }
+            .map-section { padding: 1rem 1rem 0; }
+            .map-placeholder { height: 220px; }
+            .results-section { padding: 1.5rem 1rem 3rem; }
+        }
+
+        @media (max-width: 480px) {
+            .trip-bar-inner { gap: 0.6rem; }
+            .btn-edit-search { display: none; } /* too cramped on small phones */
+            .map-placeholder { height: 180px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- HEADER (identical to index.html) -->
+    <header class="site-header">
+        <div class="header-inner">
+            <a href="index.html" class="logo">
+                <span class="logo-icon">🌴</span>
+                <span class="logo-text">PlanWise</span>
+            </a>
+            <nav class="header-nav">
+                <a href="index.html">Explore</a>
+                <a href="#">Add a Gem</a>
+                <a href="#" class="btn-login">Sign In</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- TRIP SUMMARY BAR -->
+    <!-- Populated by results.js from URL params -->
+    <div class="trip-bar" id="trip-bar">
+        <div class="trip-bar-inner">
+            <div class="trip-route">
+                <span class="trip-city" id="result-from">...</span>
+                <span class="trip-arrow">→</span>
+                <span class="trip-city" id="result-to">...</span>
+            </div>
+            <div class="trip-meta" id="trip-meta">
+                <!-- Badges injected by JS -->
+            </div>
+            <a href="index.html" class="btn-edit-search">✏️ Edit Search</a>
+        </div>
+    </div>
+
+    <!-- MAP PLACEHOLDER -->
+    <div class="map-section">
+        <div class="map-placeholder" id="map-container">
+            <div class="map-placeholder-icon">🗺️</div>
+            <p class="map-placeholder-title">Interactive Map Coming Soon</p>
+            <p class="map-placeholder-sub">Google Maps route visualisation will show your gems along the road here.</p>
+        </div>
+    </div>
+
+    <!-- RESULTS SECTION -->
+    <section class="results-section">
+        <div class="results-header">
+            <p class="results-count" id="results-count">Loading gems...</p>
+        </div>
+
+        <!-- Card grid — same structure as index.html, filtered by JS -->
+        <div class="feed-grid" id="results-grid">
+
+            <!-- CARD 1 -->
+            <div class="feed-card" data-category="foodie">
+                <div class="card-media" style="background-image: url('https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=500&q=80')">
+                    <div class="card-platform tiktok">▶ TikTok</div>
+                    <div class="card-views">👁 2.3M views</div>
+                </div>
+                <div class="card-body">
+                    <div class="card-tag foodie">Foodie Trail</div>
+                    <h3>The Ipoh White Coffee You Can't Miss</h3>
+                    <p class="card-meta">📍 Ipoh, Perak · ⏱ Best before 10am</p>
+                    <p class="card-warning">⚠️ Avoid 12–2pm — full house every day</p>
+                    <div class="card-footer">
+                        <span class="card-author">@foodiemsia</span>
+                        <button class="btn-save">+ Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARD 2 -->
+            <div class="feed-card tall" data-category="nature">
+                <div class="card-media" style="background-image: url('https://images.unsplash.com/photo-1588416499018-d8c621e7d2c2?auto=format&fit=crop&w=500&q=80')">
+                    <div class="card-platform instagram">📸 Instagram</div>
+                    <div class="card-views">👁 890K views</div>
+                </div>
+                <div class="card-body">
+                    <div class="card-tag nature">Nature & Hiking</div>
+                    <h3>Secret Waterfall in Cameron Highlands</h3>
+                    <p class="card-meta">📍 Cameron Highlands · ⏱ Go at sunrise</p>
+                    <p class="card-warning">✅ Quiet on weekday mornings</p>
+                    <div class="card-footer">
+                        <span class="card-author">@wildhikemy</span>
+                        <button class="btn-save">+ Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARD 3 -->
+            <div class="feed-card" data-category="heritage">
+                <div class="card-media" style="background-image: url('https://images.unsplash.com/photo-1596422846543-75c6fc197f07?auto=format&fit=crop&w=500&q=80')">
+                    <div class="card-platform youtube">▶ YouTube</div>
+                    <div class="card-views">👁 1.1M views</div>
+                </div>
+                <div class="card-body">
+                    <div class="card-tag heritage">Heritage & Culture</div>
+                    <h3>George Town's Hidden Street Art Trail</h3>
+                    <p class="card-meta">📍 Georgetown, Penang · ⏱ Whole afternoon</p>
+                    <p class="card-warning">✅ Less crowded on weekday</p>
+                    <div class="card-footer">
+                        <span class="card-author">@penangwalk</span>
+                        <button class="btn-save">+ Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARD 4 -->
+            <div class="feed-card" data-category="beach">
+                <div class="card-media" style="background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=500&q=80')">
+                    <div class="card-platform tiktok">▶ TikTok</div>
+                    <div class="card-views">👁 4.7M views</div>
+                </div>
+                <div class="card-body">
+                    <div class="card-tag beach">Beach & Islands</div>
+                    <h3>Pulau Perhentian on RM150/day Budget</h3>
+                    <p class="card-meta">📍 Terengganu · ⏱ 2-3 days ideal</p>
+                    <p class="card-warning">⚠️ Closed Nov–Feb (monsoon season)</p>
+                    <div class="card-footer">
+                        <span class="card-author">@budgettravelmy</span>
+                        <button class="btn-save">+ Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARD 5 -->
+            <div class="feed-card tall" data-category="family">
+                <div class="card-media" style="background-image: url('https://images.unsplash.com/photo-1569154941061-e231b4725ef1?auto=format&fit=crop&w=500&q=80')">
+                    <div class="card-platform facebook">f Facebook</div>
+                    <div class="card-views">👁 560K views</div>
+                </div>
+                <div class="card-body">
+                    <div class="card-tag family">Family & Kids</div>
+                    <h3>A-Famosa Safari: What Nobody Tells You</h3>
+                    <p class="card-meta">📍 Melaka · ⏱ Half day trip</p>
+                    <p class="card-warning">✅ Best for kids under 12</p>
+                    <div class="card-footer">
+                        <span class="card-author">@familytripmy</span>
+                        <button class="btn-save">+ Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CARD 6 -->
+            <div class="feed-card" data-category="budget">
+                <div class="card-media" style="background-image: url('https://images.unsplash.com/photo-1482049016688-2d3e1b311543?auto=format&fit=crop&w=500&q=80')">
+                    <div class="card-platform instagram">📸 Instagram</div>
+                    <div class="card-views">👁 320K views</div>
+                </div>
+                <div class="card-body">
+                    <div class="card-tag budget">Budget-Friendly</div>
+                    <h3>Eating Like a Local in Kota Bharu</h3>
+                    <p class="card-meta">📍 Kelantan · ⏱ Morning market only</p>
+                    <p class="card-warning">✅ Full meal under RM8 — seriously</p>
+                    <div class="card-footer">
+                        <span class="card-author">@cheapeatmy</span>
+                        <button class="btn-save">+ Save</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <!-- end #results-grid -->
+
+        <!-- EMPTY STATE — shown by JS if no cards match -->
+        <div class="empty-state" id="empty-state" style="display:none;">
+            <div class="empty-state-icon">🔍</div>
+            <h3>No gems found for those filters</h3>
+            <p>Try selecting fewer activities, or search a different route.</p>
+            <a href="index.html" class="btn-back">← Back to Search</a>
+        </div>
+
+    </section>
+
+    <!-- FOOTER (identical to index.html) -->
+    <footer class="site-footer">
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <span class="logo-icon">🌴</span> PlanWise Malaysia
+            </div>
+            <p class="footer-tagline">Every journey deserves a story worth telling.</p>
+            <div class="footer-links">
+                <a href="#">Add a Gem</a>
+                <a href="#">About</a>
+                <a href="#">Contact</a>
+            </div>
+            <p class="footer-copy">© 2026 PlanWise. Built with ❤️ in Malaysia.</p>
+        </div>
+    </footer>
+
+    <script src="results.js"></script>
+</body>
+</html>
