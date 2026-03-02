@@ -1041,6 +1041,8 @@ input:focus-visible {
 .search-card-wrapper .search-card {
     position: relative;
     z-index: 2;
+    width: 100%;
+    max-width: 820px;
 }
 
 /* Scroll animations */
