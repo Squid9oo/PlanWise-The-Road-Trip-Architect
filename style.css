@@ -992,9 +992,11 @@ input:focus-visible {
 /* Wrapper contains both carousel + search card */
 .search-card-wrapper {
     position: relative;
-    border-radius: var(--radius-lg);
     overflow: hidden;
     padding: 2rem;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    width: 100vw;
 }
 
 /* Carousel fills the wrapper absolutely */
@@ -1007,15 +1009,6 @@ input:focus-visible {
     gap: 4px;
     pointer-events: none;
     overflow: hidden;
-}
-
-/* Dark overlay keeps search card readable */
-.search-bg-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(10, 10, 20, 0.45);
-    z-index: 1;
-    pointer-events: none;
 }
 
 /* Track wrappers split height equally */
