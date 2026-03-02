@@ -21,7 +21,7 @@
             </div>
             <nav class="header-nav">
                 <a href="#">Explore</a>
-                <a href="#">Add a Gem</a>
+                <a href="#" data-open-gem-modal>Add a Gem</a>
                 <a href="#" class="btn-login">Sign In</a>
             </nav>
         </div>
@@ -241,7 +241,7 @@
             </div>
             <p class="footer-tagline">Every journey deserves a story worth telling.</p>
             <div class="footer-links">
-                <a href="#">Add a Gem</a>
+                <a href="#" data-open-gem-modal>Add a Gem</a>
                 <a href="#">About</a>
                 <a href="#">Contact</a>
             </div>
@@ -249,6 +249,85 @@
         </div>
     </footer>
 
+    <!-- ADD A GEM MODAL -->
+<div class="modal-overlay" id="gem-modal-overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+
+        <div class="modal-header">
+            <h2 id="modal-title">💎 Add a Gem</h2>
+            <p class="modal-subtitle">Share a hidden gem with fellow Malaysian travellers</p>
+            <button class="modal-close" id="modal-close" aria-label="Close modal">✕</button>
+        </div>
+
+        <div class="modal-body">
+
+            <!-- THE FORM -->
+            <form id="gem-form" novalidate>
+
+                <div class="gem-form-group">
+                    <label for="gem-handle">👤 Your Name or Handle</label>
+                    <input type="text" id="gem-handle" placeholder="e.g. @foodiemsia or Bryan">
+                </div>
+
+                <div class="gem-form-group">
+                    <label for="gem-name">📍 Destination Name</label>
+                    <input type="text" id="gem-name" placeholder="e.g. Nam Heong Ipoh White Coffee">
+                </div>
+
+                <div class="gem-form-group">
+                    <label for="gem-location">🗺️ Search Location</label>
+                    <input type="text" id="gem-location" placeholder="Start typing a place in Malaysia...">
+                    <input type="hidden" id="gem-lat">
+                    <input type="hidden" id="gem-lng">
+                    <p class="field-hint">Select from the dropdown to pin the exact spot</p>
+                </div>
+
+                <div class="gem-form-group">
+                    <label>✨ Category <span class="label-hint">(Pick one)</span></label>
+                    <div class="gem-chips" id="gem-chips">
+                        <button type="button" class="chip" data-value="foodie">🍜 Foodie Trail</button>
+                        <button type="button" class="chip" data-value="nature">🌳 Nature & Hiking</button>
+                        <button type="button" class="chip" data-value="beach">🏖️ Beach & Islands</button>
+                        <button type="button" class="chip" data-value="family">🎠 Family & Kids</button>
+                        <button type="button" class="chip" data-value="heritage">🏛️ Heritage & Culture</button>
+                        <button type="button" class="chip" data-value="budget">💸 Budget-Friendly</button>
+                    </div>
+                </div>
+
+                <div class="gem-form-group">
+                    <label for="gem-social">🔗 Social Media Post Link</label>
+                    <input type="url" id="gem-social" placeholder="e.g. https://www.tiktok.com/@user/video/...">
+                    <p class="field-hint">TikTok · Instagram · Facebook · YouTube · XHS</p>
+                </div>
+
+                <div class="gem-form-group">
+                    <label for="gem-hours">🕐 Operating Hours</label>
+                    <input type="text" id="gem-hours" placeholder="e.g. Mon–Sat, 8am–5pm">
+                </div>
+
+                <p class="gem-error" id="gem-error" style="display:none;"></p>
+
+                <button type="button" class="btn-plan" id="gem-submit">
+                    <span class="btn-text">Submit My Gem ✦</span>
+                    <span class="btn-loading" style="display:none;">Submitting...</span>
+                </button>
+
+            </form>
+
+            <!-- SUCCESS STATE (hidden until submission) -->
+            <div class="gem-success" id="gem-success" style="display:none;">
+                <div class="gem-success-icon">🌟</div>
+                <h3>Gem submitted!</h3>
+                <p>Thanks for sharing. We'll review and add it to the map soon.</p>
+                <button type="button" class="btn-plan" id="gem-success-close">Close</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
     <script src="app.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCtHBA74KW3ZS8WE8OKUr6tWy2MHFHxGw8&libraries=places&callback=initMap" async defer></script>
+
 </body>
 </html>
