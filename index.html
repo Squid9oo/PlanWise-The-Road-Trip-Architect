@@ -260,49 +260,108 @@
         </div>
 
         <div class="modal-body">
-
-            <!-- THE FORM -->
             <form id="gem-form" novalidate>
 
+                <!-- HANDLE -->
                 <div class="gem-form-group">
-                    <label for="gem-handle">👤 Your Name or Handle</label>
+                    <label for="gem-handle">👤 Your Name or Handle <span class="field-required">*</span></label>
                     <input type="text" id="gem-handle" placeholder="e.g. @foodiemsia or Bryan">
                 </div>
 
+                <!-- DESTINATION NAME -->
                 <div class="gem-form-group">
-                    <label for="gem-name">📍 Destination Name</label>
+                    <label for="gem-name">📍 Destination Name <span class="field-required">*</span></label>
                     <input type="text" id="gem-name" placeholder="e.g. Nam Heong Ipoh White Coffee">
                 </div>
 
+                <!-- LOCATION — Autocomplete + fallback -->
                 <div class="gem-form-group">
-                    <label for="gem-location">🗺️ Search Location</label>
+                    <label for="gem-location">🗺️ Search Location <span class="field-required">*</span></label>
                     <input type="text" id="gem-location" placeholder="Start typing a place in Malaysia...">
                     <input type="hidden" id="gem-lat">
                     <input type="hidden" id="gem-lng">
                     <p class="field-hint">Select from the dropdown to pin the exact spot</p>
+                    <a href="#" class="field-toggle" id="toggle-location-url">Can't find it? Share a Waze or Google Maps link instead →</a>
                 </div>
 
+                <!-- LOCATION URL FALLBACK (hidden by default) -->
+                <div class="gem-form-group gem-conditional" id="location-url-group" style="display:none;">
+                    <label for="gem-location-url">🔗 Waze or Google Maps Link</label>
+                    <input type="url" id="gem-location-url" placeholder="e.g. https://waze.com/ul/...">
+                    <p class="field-hint">Paste your Waze or Google Maps share link here</p>
+                </div>
+
+                <!-- CATEGORY -->
                 <div class="gem-form-group">
-                    <label>✨ Category <span class="label-hint">(Pick one)</span></label>
+                    <label>✨ Category <span class="field-required">*</span> <span class="label-hint">(Pick one)</span></label>
                     <div class="gem-chips" id="gem-chips">
-                        <button type="button" class="chip" data-value="foodie">🍜 Foodie Trail</button>
-                        <button type="button" class="chip" data-value="nature">🌳 Nature & Hiking</button>
+                        <button type="button" class="chip" data-value="food">🍜 Food & Drink</button>
+                        <button type="button" class="chip" data-value="nature">🌳 Nature & Outdoors</button>
                         <button type="button" class="chip" data-value="beach">🏖️ Beach & Islands</button>
-                        <button type="button" class="chip" data-value="family">🎠 Family & Kids</button>
                         <button type="button" class="chip" data-value="heritage">🏛️ Heritage & Culture</button>
-                        <button type="button" class="chip" data-value="budget">💸 Budget-Friendly</button>
+                        <button type="button" class="chip" data-value="family">🎠 Family & Kids</button>
+                        <button type="button" class="chip" data-value="nightlife">🌆 Urban & Nightlife</button>
+                        <button type="button" class="chip" data-value="wellness">🧘 Wellness & Spa</button>
+                        <button type="button" class="chip" data-value="shopping">🛍️ Shopping & Markets</button>
                     </div>
                 </div>
 
-                <div class="gem-form-group">
-                    <label for="gem-social">🔗 Social Media Post Link</label>
-                    <input type="url" id="gem-social" placeholder="e.g. https://www.tiktok.com/@user/video/...">
-                    <p class="field-hint">TikTok · Instagram · Facebook · YouTube · XHS</p>
+                <!-- DINING TYPE — only shows when Food & Drink selected -->
+                <div class="gem-form-group gem-conditional" id="dining-type-group" style="display:none;">
+                    <label>🍽️ Dining Type <span class="field-required">*</span> <span class="label-hint">(Pick one)</span></label>
+                    <div class="gem-chips" id="dining-chips">
+                        <button type="button" class="chip" data-value="halal">✅ Halal</button>
+                        <button type="button" class="chip" data-value="non-halal">🚫 Non-Halal</button>
+                        <button type="button" class="chip" data-value="pork-free">🥩 Pork-Free</button>
+                        <button type="button" class="chip" data-value="not-sure">🤷 Not Sure</button>
+                    </div>
                 </div>
 
+                <!-- SOCIAL LINK -->
                 <div class="gem-form-group">
-                    <label for="gem-hours">🕐 Operating Hours</label>
+                    <label for="gem-social">🔗 Social Media Post Link <span class="field-required">*</span></label>
+                    <input type="url" id="gem-social" placeholder="e.g. https://www.tiktok.com/@user/video/...">
+                    <p class="field-hint">TikTok · Instagram · Facebook · YouTube · XHS</p>
+                    <a href="#" class="field-toggle" id="toggle-photo-url">No social post? Share a photo URL instead →</a>
+                </div>
+
+                <!-- PHOTO URL (hidden by default) -->
+                <div class="gem-form-group gem-conditional" id="photo-url-group" style="display:none;">
+                    <label for="gem-photo">🖼️ Photo URL <span class="field-required">*</span></label>
+                    <input type="url" id="gem-photo" placeholder="e.g. https://drive.google.com/...">
+                    <p class="field-hint">Paste a direct link to one photo that best shows this place</p>
+                </div>
+
+                <!-- OPERATING HOURS -->
+                <div class="gem-form-group">
+                    <label for="gem-hours">🕐 Operating Hours <span class="label-hint">(optional)</span></label>
                     <input type="text" id="gem-hours" placeholder="e.g. Mon–Sat, 8am–5pm">
+                </div>
+
+                <!-- LUCKY DRAW SECTION -->
+                <div class="lucky-draw-section">
+                    <div class="lucky-draw-header">
+                        <span class="lucky-draw-icon">🎰</span>
+                        <div>
+                            <p class="lucky-draw-title">Join the Lucky Draw <span class="label-hint">(optional)</span></p>
+                            <p class="lucky-draw-sub">Every approved gem = 1 entry. More gems = more chances to win!</p>
+                        </div>
+                    </div>
+
+                    <div class="gem-form-group">
+                        <label for="gem-fullname">👤 Full Name</label>
+                        <input type="text" id="gem-fullname" placeholder="e.g. Bryan Lee">
+                    </div>
+
+                    <div class="gem-form-group">
+                        <label for="gem-email">📧 Email Address</label>
+                        <input type="text" id="gem-email" placeholder="e.g. bryan@email.com">
+                    </div>
+
+                    <label class="consent-label">
+                        <input type="checkbox" id="gem-consent">
+                        <span>I agree that my details may be used to contact me if I win the PlanWise Lucky Draw</span>
+                    </label>
                 </div>
 
                 <p class="gem-error" id="gem-error" style="display:none;"></p>
@@ -314,7 +373,7 @@
 
             </form>
 
-            <!-- SUCCESS STATE (hidden until submission) -->
+            <!-- SUCCESS STATE -->
             <div class="gem-success" id="gem-success" style="display:none;">
                 <div class="gem-success-icon">🌟</div>
                 <h3>Gem submitted!</h3>

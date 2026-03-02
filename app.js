@@ -181,7 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // 6. ADD A GEM MODAL
     // ==========================================
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwwOdnv2WxUJmY3E-E1_ZElJBhrE07M6wDVwldyiOrIZ_lwzzEtWrU4hwnzTjijCE_6Ng/exec'; // ← paste your URL here
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwwOdnv2WxUJmY3E-E1_ZElJBhrE07M6wDVwldyiOrIZ_lwzzEtWrU4hwnzTjijCE_6Ng/exec';
 
     const modalOverlay    = document.getElementById('gem-modal-overlay');
     const modalClose      = document.getElementById('modal-close');
@@ -191,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const gemSuccess      = document.getElementById('gem-success');
     const gemSuccessClose = document.getElementById('gem-success-close');
 
-    // --- Open modal from any "Add a Gem" trigger ---
+    // --- Open modal ---
     document.querySelectorAll('[data-open-gem-modal]').forEach(trigger => {
         trigger.addEventListener('click', (e) => {
             e.preventDefault();
@@ -211,41 +211,91 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.style.overflow = '';
     }
 
-    // Close via ✕ button
     modalClose.addEventListener('click', closeGemModal);
-
-    // Close by clicking the dark overlay behind the modal
     modalOverlay.addEventListener('click', (e) => {
         if (e.target === modalOverlay) closeGemModal();
     });
-
-    // Close with ESC key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') closeGemModal();
     });
 
-    // Success screen close — resets form too
+    // --- Reset on success close ---
     gemSuccessClose.addEventListener('click', () => {
         closeGemModal();
         setTimeout(() => {
             gemForm.style.display    = '';
             gemSuccess.style.display = 'none';
             gemForm.reset();
-            document.querySelectorAll('#gem-chips .chip').forEach(c => c.classList.remove('selected'));
+            document.querySelectorAll('#gem-chips .chip, #dining-chips .chip')
+                    .forEach(c => c.classList.remove('selected'));
             document.getElementById('gem-lat').value = '';
             document.getElementById('gem-lng').value = '';
+            document.getElementById('dining-type-group').style.display  = 'none';
+            document.getElementById('location-url-group').style.display = 'none';
+            document.getElementById('photo-url-group').style.display    = 'none';
+            document.getElementById('toggle-location-url').textContent  = 'Can\'t find it? Share a Waze or Google Maps link instead →';
+            document.getElementById('toggle-photo-url').textContent     = 'No social post? Share a photo URL instead →';
         }, 300);
     });
 
-    // --- Gem category chips — SINGLE select (not multi) ---
+    // --- Category chips — single select, shows dining type if Food & Drink ---
     document.querySelectorAll('#gem-chips .chip').forEach(chip => {
         chip.addEventListener('click', () => {
             document.querySelectorAll('#gem-chips .chip').forEach(c => c.classList.remove('selected'));
             chip.classList.add('selected');
+
+            const diningGroup = document.getElementById('dining-type-group');
+            if (chip.dataset.value === 'food') {
+                diningGroup.style.display       = 'flex';
+                diningGroup.style.flexDirection = 'column';
+                diningGroup.style.gap           = '0.4rem';
+            } else {
+                diningGroup.style.display = 'none';
+                document.querySelectorAll('#dining-chips .chip')
+                        .forEach(c => c.classList.remove('selected'));
+            }
         });
     });
 
-    // --- Submit gem form ---
+    // --- Dining type chips — single select ---
+    document.querySelectorAll('#dining-chips .chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            document.querySelectorAll('#dining-chips .chip').forEach(c => c.classList.remove('selected'));
+            chip.classList.add('selected');
+        });
+    });
+
+    // --- "Can't find it?" toggle ---
+    document.getElementById('toggle-location-url').addEventListener('click', (e) => {
+        e.preventDefault();
+        const group    = document.getElementById('location-url-group');
+        const isHidden = group.style.display === 'none';
+        group.style.display = isHidden ? 'flex' : 'none';
+        if (isHidden) {
+            group.style.flexDirection = 'column';
+            group.style.gap           = '0.4rem';
+        }
+        e.target.textContent = isHidden
+            ? 'Hide Waze / Google Maps link ↑'
+            : 'Can\'t find it? Share a Waze or Google Maps link instead →';
+    });
+
+    // --- "No social post?" toggle ---
+    document.getElementById('toggle-photo-url').addEventListener('click', (e) => {
+        e.preventDefault();
+        const group    = document.getElementById('photo-url-group');
+        const isHidden = group.style.display === 'none';
+        group.style.display = isHidden ? 'flex' : 'none';
+        if (isHidden) {
+            group.style.flexDirection = 'column';
+            group.style.gap           = '0.4rem';
+        }
+        e.target.textContent = isHidden
+            ? 'Hide photo URL ↑'
+            : 'No social post? Share a photo URL instead →';
+    });
+
+    // --- Submit ---
     gemSubmit.addEventListener('click', async () => {
 
         const handle       = document.getElementById('gem-handle').value.trim();
@@ -253,18 +303,36 @@ document.addEventListener('DOMContentLoaded', () => {
         const locationName = document.getElementById('gem-location').value.trim();
         const lat          = document.getElementById('gem-lat').value;
         const lng          = document.getElementById('gem-lng').value;
+        const locationUrl  = document.getElementById('gem-location-url')?.value.trim() || '';
         const category     = document.querySelector('#gem-chips .chip.selected')?.dataset.value || '';
+        const diningType   = document.querySelector('#dining-chips .chip.selected')?.dataset.value || '';
         const socialLink   = document.getElementById('gem-social').value.trim();
+        const photoUrl     = document.getElementById('gem-photo')?.value.trim() || '';
         const hours        = document.getElementById('gem-hours').value.trim();
+        const fullName     = document.getElementById('gem-fullname').value.trim();
+        const email        = document.getElementById('gem-email').value.trim();
+        const consent      = document.getElementById('gem-consent').checked;
 
-        // Validation
-        if (!handle)                  return showGemError('Please enter your name or handle 👤');
-        if (!name)                    return showGemError('Please enter the destination name 📍');
-        if (!locationName || !lat)    return showGemError('Please select a location from the dropdown 🗺️');
-        if (!category)                return showGemError('Please pick a category ✨');
-        if (!socialLink)              return showGemError('Please paste a social media post link 🔗');
+        const photoGroupVisible    = document.getElementById('photo-url-group').style.display !== 'none';
+        const locationGroupVisible = document.getElementById('location-url-group').style.display !== 'none';
 
-        // Loading state
+        // --- Validation ---
+        if (!handle)
+            return showGemError('Please enter your name or handle 👤');
+        if (!name)
+            return showGemError('Please enter the destination name 📍');
+        if (!locationName && !locationUrl)
+            return showGemError('Please search for a location or paste a Waze / Maps link 🗺️');
+        if (locationName && !lat)
+            return showGemError('Please select a location from the dropdown — don\'t just type it 🗺️');
+        if (!category)
+            return showGemError('Please pick a category ✨');
+        if (category === 'food' && !diningType)
+            return showGemError('Please select a dining type for food spots 🍽️');
+        if (!socialLink && !photoUrl)
+            return showGemError('Please share a social media link or a photo URL 🔗');
+
+        // --- Loading state ---
         const btnText    = gemSubmit.querySelector('.btn-text');
         const btnLoading = gemSubmit.querySelector('.btn-loading');
         btnText.style.display    = 'none';
@@ -275,21 +343,26 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await fetch(APPS_SCRIPT_URL, {
                 method:  'POST',
-                mode:    'no-cors', // required for Apps Script
+                mode:    'no-cors',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     handle,
-                    destinationName: name,
+                    destinationName:  name,
                     locationName,
                     lat,
                     lng,
+                    locationUrl,
                     category,
+                    diningType,
                     socialLink,
-                    operatingHours: hours,
+                    photoUrl,
+                    operatingHours:   hours,
+                    fullName,
+                    email,
+                    luckyDrawConsent: consent,
                 }),
             });
 
-            // no-cors means we can't read the response — assume success
             gemForm.style.display    = 'none';
             gemSuccess.style.display = 'flex';
 
@@ -304,6 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function showGemError(msg) {
         gemError.textContent   = msg;
         gemError.style.display = 'block';
+        gemError.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function hideGemError() {
