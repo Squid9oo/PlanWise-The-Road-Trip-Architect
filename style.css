@@ -253,7 +253,11 @@ button { font-family: var(--font-body); cursor: pointer; }
     align-self: flex-end;
 }
 
-.route-arrow { font-size: 1.5rem; }
+/* Lift the arrow up so it aligns with the inputs instead of the hint text */
+.route-arrow { 
+    font-size: 1.5rem; 
+    margin-bottom: 1.4rem; 
+}
 
 /* Trip duration badge */
 .trip-duration {
