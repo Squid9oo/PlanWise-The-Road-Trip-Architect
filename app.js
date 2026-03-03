@@ -215,50 +215,71 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        function executeSearch() {
+            // --- Loading state ---
+            btnText.style.display    = 'none';
+            btnLoading.style.display = 'inline';
+            btnPlan.disabled         = true;
+
+            // --- Build query string to pass data to results page ---
+            const fromLat = document.getElementById('city-from-lat').value;
+            const fromLng = document.getElementById('city-from-lng').value;
+            
+            // Radius Search Fallback: If no destination, use start point
+            const toLat   = document.getElementById('city-to-lat').value || fromLat;
+            const toLng   = document.getElementById('city-to-lng').value || fromLng;
+            const finalToCity = toCity || fromCity;
+
+            const params = new URLSearchParams({
+                from:       fromCity,
+                to:         finalToCity,
+                fromLat:    fromLat,
+                fromLng:    fromLng,
+                toLat:      toLat,
+                toLng:      toLng,
+                dateFrom:   fromDate,
+                dateTo:     toDate,
+                transport:  transport,
+                activities: activities.join(','),
+            });
+
+            setTimeout(() => {
+                window.location.href = `results.html?${params.toString()}`;
+            }, 1200);
+        }
+
         // --- Check for gems from a previous trip ---
         const existingGems = getSavedGems();
         if (existingGems.length > 0) {
-            const startFresh = window.confirm(
-                `You have ${existingGems.length} gem${existingGems.length !== 1 ? 's' : ''} saved from a previous trip.\n\nOK — Clear them and start fresh\nCancel — Keep them in my planner`
-            );
-            if (startFresh) {
+            const modal = document.getElementById('basket-modal-overlay');
+            const desc  = document.getElementById('basket-modal-desc');
+            const btnFresh = document.getElementById('btn-basket-fresh');
+            const btnKeep  = document.getElementById('btn-basket-keep');
+            
+            desc.textContent = `You have ${existingGems.length} gem${existingGems.length !== 1 ? 's' : ''} saved from a previous trip. Do you want to start fresh or keep them?`;
+            modal.classList.add('active');
+            
+            // Wire buttons (cloning to prevent duplicate event listeners)
+            const newBtnFresh = btnFresh.cloneNode(true);
+            const newBtnKeep  = btnKeep.cloneNode(true);
+            btnFresh.parentNode.replaceChild(newBtnFresh, btnFresh);
+            btnKeep.parentNode.replaceChild(newBtnKeep, btnKeep);
+
+            newBtnFresh.addEventListener('click', () => {
                 localStorage.removeItem(STORAGE_KEY);
                 ['planwise_stop_order','planwise_stop_notes','planwise_stop_duration',
                  'planwise_day_times','planwise_day_count'].forEach(k => localStorage.removeItem(k));
-            }
+                modal.classList.remove('active');
+                executeSearch();
+            });
+
+            newBtnKeep.addEventListener('click', () => {
+                modal.classList.remove('active');
+                executeSearch();
+            });
+        } else {
+            executeSearch();
         }
-
-        // --- Loading state ---
-        btnText.style.display    = 'none';
-        btnLoading.style.display = 'inline';
-        btnPlan.disabled         = true;
-
-        // --- Build query string to pass data to results page ---
-        const fromLat = document.getElementById('city-from-lat').value;
-        const fromLng = document.getElementById('city-from-lng').value;
-        
-        // Radius Search Fallback: If no destination, use start point
-        const toLat   = document.getElementById('city-to-lat').value || fromLat;
-        const toLng   = document.getElementById('city-to-lng').value || fromLng;
-        const finalToCity = toCity || fromCity;
-
-        const params = new URLSearchParams({
-            from:       fromCity,
-            to:         finalToCity,
-            fromLat:    fromLat,
-            fromLng:    fromLng,
-            toLat:      toLat,
-            toLng:      toLng,
-            dateFrom:   fromDate,
-            dateTo:     toDate,
-            transport:  transport,
-            activities: activities.join(','),
-        });
-
-        // Small delay so user sees "Finding your gems..." then redirect
-        setTimeout(() => {
-            window.location.href = `results.html?${params.toString()}`;
-        }, 1200);
     });
 
     } // end btnPlan guard

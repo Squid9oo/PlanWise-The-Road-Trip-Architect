@@ -447,6 +447,19 @@
 
         </div>
     </div>
+
+    <div class="modal-overlay" id="basket-modal-overlay" aria-hidden="true">
+        <div class="modal confirm-modal" role="dialog" aria-modal="true" aria-labelledby="basket-modal-title">
+            <div class="confirm-modal-icon">🎒</div>
+            <h2 id="basket-modal-title">Trip in progress</h2>
+            <p id="basket-modal-desc">You have gems saved from a previous trip. Do you want to start fresh or keep them?</p>
+            <div class="confirm-modal-actions">
+                <button type="button" class="btn-plan" id="btn-basket-fresh">Start Fresh</button>
+                <button type="button" class="btn-plan btn-basket-keep" id="btn-basket-keep">Keep Them</button>
+            </div>
+        </div>
+    </div>
+
     <script src="app.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCtHBA74KW3ZS8WE8OKUr6tWy2MHFHxGw8&libraries=places&callback=initMap" async defer></script>
 
