@@ -169,8 +169,8 @@ document.addEventListener('DOMContentLoaded', () => {
             showError('Please select your travel dates 📅');
             return;
         }
-        if (!fromCity || !toCity) {
-            showError('Please enter your departure and destination cities 📍');
+        if (!fromCity) {
+            showError('Please enter your departure city 📍');
             return;
         }
         if (new Date(toDate) < new Date(fromDate)) {
@@ -186,12 +186,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Build query string to pass data to results page ---
         const fromLat = document.getElementById('city-from-lat').value;
         const fromLng = document.getElementById('city-from-lng').value;
-        const toLat   = document.getElementById('city-to-lat').value;
-        const toLng   = document.getElementById('city-to-lng').value;
+        
+        // Radius Search Fallback: If no destination, use start point
+        const toLat   = document.getElementById('city-to-lat').value || fromLat;
+        const toLng   = document.getElementById('city-to-lng').value || fromLng;
+        const finalToCity = toCity || fromCity;
 
         const params = new URLSearchParams({
             from:       fromCity,
-            to:         toCity,
+            to:         finalToCity,
             fromLat:    fromLat,
             fromLng:    fromLng,
             toLat:      toLat,
