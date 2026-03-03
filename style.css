@@ -112,6 +112,24 @@ button { font-family: var(--font-body); cursor: pointer; }
     transform: translateY(-1px);
 }
 
+.btn-mytrip {
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--body-text) !important;
+    padding: 0.45rem 1rem;
+    border-radius: var(--radius-xl);
+    font-weight: 600;
+    font-size: 0.85rem;
+    transition: all var(--transition);
+    white-space: nowrap;
+}
+
+.btn-mytrip:hover {
+    border-color: var(--primary);
+    color: var(--primary-dark) !important;
+    background: rgba(0, 210, 255, 0.06);
+}
+
 /* --- HERO --- */
 .hero {
     padding: 5rem 2rem 0;
