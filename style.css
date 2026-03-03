@@ -1812,3 +1812,39 @@ input:focus-visible {
     .gem-panel-overlay { transition: none !important; }
     .gem-card { transition: none !important; }
 }
+
+/* --- SMALL CATEGORY TAGS (gem cards — up to 3) --- */
+.card-tag--small {
+    font-size: 0.6rem;
+    padding: 2px 7px;
+    letter-spacing: 0.06em;
+}
+
+.gem-card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+    margin-bottom: 0.15rem;
+}
+
+/* --- GEM CARD DESCRIPTION --- */
+.gem-card-desc {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* --- GEM PANEL DESCRIPTION --- */
+.gem-panel-desc {
+    font-size: 0.9rem;
+    color: var(--body-text);
+    line-height: 1.55;
+    padding: 0.6rem 0.85rem;
+    background: var(--bg);
+    border-radius: var(--radius-sm);
+    border-left: 3px solid var(--primary);
+}

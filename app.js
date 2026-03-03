@@ -294,14 +294,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 300);
     });
 
-    // --- Category chips — single select, shows dining type if Food & Drink ---
+    // --- Category chips — multi-select up to 3, shows dining type if Food selected ---
     document.querySelectorAll('#gem-chips .chip').forEach(chip => {
         chip.addEventListener('click', () => {
-            document.querySelectorAll('#gem-chips .chip').forEach(c => c.classList.remove('selected'));
-            chip.classList.add('selected');
+            const selected   = [...document.querySelectorAll('#gem-chips .chip.selected')];
+            const isSelected = chip.classList.contains('selected');
 
+            if (isSelected) {
+                chip.classList.remove('selected');
+            } else {
+                if (selected.length >= 3) {
+                    showGemError('You can pick up to 3 categories ✨');
+                    return;
+                }
+                chip.classList.add('selected');
+            }
+
+            // Show dining type if Food is among selected
+            const anyFood = [...document.querySelectorAll('#gem-chips .chip.selected')]
+                .some(c => c.dataset.value === 'food');
             const diningGroup = document.getElementById('dining-type-group');
-            if (chip.dataset.value === 'food') {
+            if (anyFood) {
                 diningGroup.style.display       = 'flex';
                 diningGroup.style.flexDirection = 'column';
                 diningGroup.style.gap           = '0.4rem';
@@ -360,11 +373,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const lat          = document.getElementById('gem-lat').value;
         const lng          = document.getElementById('gem-lng').value;
         const locationUrl  = document.getElementById('gem-location-url')?.value.trim() || '';
-        const category     = document.querySelector('#gem-chips .chip.selected')?.dataset.value || '';
-        const diningType   = document.querySelector('#dining-chips .chip.selected')?.dataset.value || '';
+        const categoryChips = [...document.querySelectorAll('#gem-chips .chip.selected')];
+        const category      = categoryChips.map(c => c.dataset.value).join(',');
+        const diningType    = document.querySelector('#dining-chips .chip.selected')?.dataset.value || '';
         const socialLink   = document.getElementById('gem-social').value.trim();
         const photoUrl     = document.getElementById('gem-photo')?.value.trim() || '';
         const hours        = document.getElementById('gem-hours').value.trim();
+        const description  = document.getElementById('gem-description')?.value.trim() || '';
         const fullName     = document.getElementById('gem-fullname').value.trim();
         const email        = document.getElementById('gem-email').value.trim();
         const consent      = document.getElementById('gem-consent').checked;
@@ -382,8 +397,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (locationName && !lat)
             return showGemError('Please select a location from the dropdown — don\'t just type it 🗺️');
         if (!category)
-            return showGemError('Please pick a category ✨');
-        if (category === 'food' && !diningType)
+            return showGemError('Please pick at least one category ✨');
+        if (category.includes('food') && !diningType)
             return showGemError('Please select a dining type for food spots 🍽️');
         if (!socialLink && !photoUrl)
             return showGemError('Please share a social media link or a photo URL 🔗');
@@ -401,22 +416,23 @@ document.addEventListener('DOMContentLoaded', () => {
                 method:  'POST',
                 mode:    'no-cors',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    handle,
-                    destinationName:  name,
-                    locationName,
-                    lat,
-                    lng,
-                    locationUrl,
-                    category,
-                    diningType,
-                    socialLink,
-                    photoUrl,
-                    operatingHours:   hours,
-                    fullName,
-                    email,
-                    luckyDrawConsent: consent,
-                }),
+            body: JSON.stringify({
+                handle,
+                destinationName:  name,
+                locationName,
+                lat,
+                lng,
+                locationUrl,
+                category,
+                diningType,
+                socialLink,
+                photoUrl,
+                operatingHours:   hours,
+                fullName,
+                email,
+                luckyDrawConsent: consent,
+                description,
+            }),
             });
 
             gemForm.style.display    = 'none';
@@ -850,10 +866,15 @@ async function buildGemCard(gem) {
     const platform  = detectPlatform(gem.socialLink);
     const thumbnail = await getGemThumbnail(gem.socialLink);
 
+    // Handle comma-separated categories e.g. "food,beach,family"
+    const categories = gem.category
+        ? gem.category.split(',').map(c => c.trim()).filter(Boolean)
+        : ['heritage'];
+
     const tagLabels = {
-        food: '🍜 Food & Drink', nature: '🌳 Nature',    beach:    '🏖️ Beach',
-        heritage: '🏛️ Heritage', family: '🎠 Family',    nightlife:'🌆 Nightlife',
-        wellness: '🧘 Wellness', shopping:'🛍️ Shopping',
+        food:'🍜 Food',     nature:'🌳 Nature',    beach:'🏖️ Beach',
+        heritage:'🏛️ Heritage', family:'🎠 Family', nightlife:'🌆 Nightlife',
+        wellness:'🧘 Wellness', shopping:'🛍️ Shopping',
     };
     const tagColors = {
         food:'#e67e22', nature:'#27ae60', beach:'#0099cc',
@@ -861,22 +882,23 @@ async function buildGemCard(gem) {
         wellness:'#1a9e8f', shopping:'#d35400',
     };
     const platformMeta = {
-        youtube: { label: '▶ YouTube',  bg: '#FF0000' },
-        tiktok:  { label: '♪ TikTok',   bg: '#010101' },
+        youtube: { label: '▶ YouTube', bg: '#FF0000' },
+        tiktok:  { label: '♪ TikTok',  bg: '#010101' },
     };
 
-    const tagLabel   = tagLabels[gem.category]        || gem.category;
-    const tagColor   = tagColors[gem.category]        || '#555';
-    const platMeta   = platformMeta[platform]         || { label: '🔗 Social', bg: '#555' };
-
-    // Media background — real thumbnail or branded gradient fallback
-    const mediaBg = thumbnail
+    const platMeta = platformMeta[platform] || { label: '🔗 Social', bg: '#555' };
+    const mediaBg  = thumbnail
         ? `background-image:url('${thumbnail}')`
         : `background:linear-gradient(135deg,#1a1a2e 0%,#2a2a4a 100%)`;
 
+    // Up to 3 category tags — smaller size
+    const tagsHtml = categories.slice(0, 3).map(cat =>
+        `<span class="card-tag card-tag--small" style="background:${tagColors[cat]||'#555'};color:#fff;">${tagLabels[cat]||cat}</span>`
+    ).join('');
+
     const card = document.createElement('div');
     card.className        = 'gem-card';
-    card.dataset.category = gem.category;
+    card.dataset.category = gem.category; // full comma-separated string for filter chips
     card.style.cursor     = 'pointer';
 
     card.innerHTML = `
@@ -886,8 +908,9 @@ async function buildGemCard(gem) {
             <div class="gem-card-badge">💎 Community Gem</div>
         </div>
         <div class="gem-card-body">
-            <div class="card-tag" style="background:${tagColor};color:#fff;">${tagLabel}</div>
+            <div class="gem-card-tags">${tagsHtml}</div>
             <h3>${gem.name}</h3>
+            ${gem.description ? `<p class="gem-card-desc">${gem.description}</p>` : ''}
             <p class="gem-card-location">📍 ${gem.locationName || ''}</p>
             <div class="gem-card-footer">
                 <span class="gem-card-author">by ${gem.handle}</span>
@@ -896,32 +919,29 @@ async function buildGemCard(gem) {
         </div>
     `;
 
-    // Click card → open gem detail panel
     card.addEventListener('click', (e) => {
         if (e.target.closest('.gem-save-btn')) return;
         openGemPanel(gem, thumbnail);
     });
 
-    // Save button feedback
     card.querySelector('.gem-save-btn').addEventListener('click', function () {
-        this.textContent      = '✓ Saved';
-        this.style.background = 'var(--green)';
-        this.style.borderColor= 'var(--green)';
-        this.style.color      = '#fff';
-        this.disabled         = true;
+        this.textContent       = '✓ Saved';
+        this.style.background  = 'var(--green)';
+        this.style.borderColor = 'var(--green)';
+        this.style.color       = '#fff';
+        this.disabled          = true;
     });
 
     return card;
 }
 
 // --- Open gem detail panel ---
-function openGemPanel(gem, thumbnail) {
+async function openGemPanel(gem, thumbnail) {
     const overlay      = document.getElementById('gem-panel-overlay');
     const embedSection = document.getElementById('gem-panel-embed');
     if (!overlay || !embedSection) return;
 
     const platform = detectPlatform(gem.socialLink);
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
     // --- Build embed ---
     embedSection.innerHTML = '';
@@ -939,10 +959,22 @@ function openGemPanel(gem, thumbnail) {
                 ></iframe>`;
         }
     } else if (platform === 'tiktok') {
-        const videoId = getTikTokVideoId(gem.socialLink);
-
-        if (isMobile || !videoId) {
-            // Mobile: open TikTok app / Short URL: can't embed
+        try {
+            // oEmbed handles both full URLs and short URLs (vt.tiktok.com)
+            const res     = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(gem.socialLink)}`);
+            const data    = await res.json();
+            const videoId = data.embed_product_id;
+            if (!videoId) throw new Error('No video ID');
+            embedSection.innerHTML = `
+                <iframe
+                    src="https://www.tiktok.com/embed/v2/${videoId}"
+                    frameborder="0"
+                    allow="autoplay"
+                    allowfullscreen
+                    class="gem-panel-iframe gem-panel-iframe--tiktok"
+                ></iframe>`;
+        } catch (_) {
+            // Fallback — Watch on TikTok button
             const thumb = thumbnail
                 ? `<div class="gem-panel-thumb" style="background-image:url('${thumbnail}')"></div>`
                 : `<div class="gem-panel-thumb gem-panel-thumb--empty">♪</div>`;
@@ -953,20 +985,10 @@ function openGemPanel(gem, thumbnail) {
                         ♪ Watch on TikTok
                     </a>
                 </div>`;
-        } else {
-            // Desktop + full URL: embed TikTok iframe
-            embedSection.innerHTML = `
-                <iframe
-                    src="https://www.tiktok.com/embed/v2/${videoId}"
-                    frameborder="0"
-                    allow="autoplay"
-                    allowfullscreen
-                    class="gem-panel-iframe gem-panel-iframe--tiktok"
-                ></iframe>`;
         }
     }
 
-    // --- Populate details ---
+    // --- Tags ---
     const tagLabels = {
         food:'🍜 Food & Drink', nature:'🌳 Nature',    beach:'🏖️ Beach',
         heritage:'🏛️ Heritage', family:'🎠 Family',    nightlife:'🌆 Nightlife',
@@ -978,28 +1000,63 @@ function openGemPanel(gem, thumbnail) {
         wellness:'#1a9e8f', shopping:'#d35400',
     };
 
-    const tagEl = document.getElementById('gem-panel-tag');
-    tagEl.textContent       = tagLabels[gem.category] || gem.category;
-    tagEl.style.background  = tagColors[gem.category] || '#555';
+    const categories = gem.category
+        ? gem.category.split(',').map(c => c.trim()).filter(Boolean)
+        : [];
+    const tagRow = document.getElementById('gem-panel-tag-row');
+    if (tagRow) {
+        tagRow.innerHTML = categories.map(cat =>
+            `<span class="card-tag" style="background:${tagColors[cat]||'#555'};color:#fff;">${tagLabels[cat]||cat}</span>`
+        ).join('');
+    }
 
+    // --- Text fields ---
     document.getElementById('gem-panel-name').textContent     = gem.name;
     document.getElementById('gem-panel-location').textContent = `📍 ${gem.locationName || ''}`;
     document.getElementById('gem-panel-handle').textContent   = `💎 Shared by ${gem.handle}`;
 
-    const hoursEl = document.getElementById('gem-panel-hours');
-    hoursEl.textContent  = gem.hours ? `🕐 ${gem.hours}` : '';
-    hoursEl.style.display= gem.hours ? 'block' : 'none';
+    const descEl = document.getElementById('gem-panel-desc');
+    if (descEl) {
+        descEl.textContent   = gem.description || '';
+        descEl.style.display = gem.description ? 'block' : 'none';
+    }
 
-    // Maps link
+    const hoursEl = document.getElementById('gem-panel-hours');
+    hoursEl.textContent   = gem.hours ? `🕐 ${gem.hours}` : '';
+    hoursEl.style.display = gem.hours ? 'block' : 'none';
+
+    // --- Maps link — use location name so Google Maps shows readable result ---
     const mapsLink = document.getElementById('gem-panel-maps');
     if (gem.lat && gem.lng) {
-        mapsLink.href         = `https://www.google.com/maps?q=${gem.lat},${gem.lng}`;
+        const query = gem.locationName
+            ? encodeURIComponent(gem.locationName)
+            : `${gem.lat},${gem.lng}`;
+        mapsLink.href         = `https://www.google.com/maps/search/?api=1&query=${query}`;
         mapsLink.style.display= 'inline-block';
     } else if (gem.locationUrl) {
         mapsLink.href         = gem.locationUrl;
         mapsLink.style.display= 'inline-block';
     } else {
         mapsLink.style.display= 'none';
+    }
+
+    // --- Save button — reset + wire on every open ---
+    const saveBtn = document.getElementById('gem-panel-save');
+    if (saveBtn) {
+        const newBtn = saveBtn.cloneNode(true); // cloning removes old listeners
+        saveBtn.parentNode.replaceChild(newBtn, saveBtn);
+        newBtn.textContent       = '+ Save';
+        newBtn.style.background  = '';
+        newBtn.style.borderColor = '';
+        newBtn.style.color       = '';
+        newBtn.disabled          = false;
+        newBtn.addEventListener('click', function () {
+            this.textContent       = '✓ Saved';
+            this.style.background  = 'var(--green)';
+            this.style.borderColor = 'var(--green)';
+            this.style.color       = '#fff';
+            this.disabled          = true;
+        });
     }
 
     overlay.classList.add('active');

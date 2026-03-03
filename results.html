@@ -486,6 +486,7 @@
                 <h2 class="gem-panel-name" id="gem-panel-name"></h2>
                 <p class="gem-panel-location" id="gem-panel-location"></p>
                 <p class="gem-panel-handle" id="gem-panel-handle"></p>
+                <p class="gem-panel-desc" id="gem-panel-desc" style="display:none;"></p>
                 <p class="gem-panel-hours" id="gem-panel-hours" style="display:none;"></p>
 
                 <div class="gem-panel-actions">
@@ -586,6 +587,13 @@
                             <button type="button" class="chip" data-value="pork-free">🥩 Pork-Free</button>
                             <button type="button" class="chip" data-value="not-sure">🤷 Not Sure</button>
                         </div>
+                    </div>
+                    
+                    <!-- DESCRIPTION -->
+                    <div class="gem-form-group">
+                        <label for="gem-description">✏️ Short Description <span class="label-hint">(optional, max 100 characters)</span></label>
+                        <input type="text" id="gem-description" placeholder="e.g. Best nasi kerabu in Puchong, open till 3pm only!" maxlength="100">
+                        <p class="field-hint">One punchy sentence that tells travellers why this place is worth visiting</p>
                     </div>
 
                     <div class="gem-form-group">
