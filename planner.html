@@ -3,14 +3,650 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Trip Planner · PlanWise Malaysia</title>
+    <title>Road Trip Architect · PlanWise Malaysia</title>
+    <meta name="description" content="Plan your perfect Malaysian road trip. Organise your stops, calculate real drive times, and hit the road.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <style>
+        /* ============================================
+           PLANNER PAGE — Page-specific styles
+           (All base design tokens come from style.css)
+           ============================================ */
+
+        /* --- PAGE HERO --- */
+        .planner-hero {
+            background: var(--dark);
+            padding: 2.5rem 2rem 2rem;
+        }
+
+        .planner-hero-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .planner-hero-text .hero-eyebrow {
+            color: var(--primary);
+            margin-bottom: 0.4rem;
+        }
+
+        .planner-hero-text h1 {
+            font-family: var(--font-display);
+            font-size: clamp(1.8rem, 4vw, 2.6rem);
+            font-weight: 900;
+            color: #fff;
+            line-height: 1.15;
+            letter-spacing: -0.5px;
+        }
+
+        .planner-hero-text h1 em {
+            font-style: italic;
+            color: var(--secondary);
+        }
+
+        .planner-hero-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .btn-export {
+            background: var(--primary);
+            color: var(--dark);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-xl);
+            font-size: 0.88rem;
+            font-weight: 700;
+            font-family: var(--font-body);
+            cursor: pointer;
+            transition: background var(--transition), transform var(--transition);
+            white-space: nowrap;
+        }
+
+        .btn-export:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+
+        .btn-explore-alt {
+            background: transparent;
+            color: rgba(255,255,255,0.75);
+            border: 1.5px solid rgba(255,255,255,0.2);
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-xl);
+            font-size: 0.88rem;
+            font-weight: 600;
+            font-family: var(--font-body);
+            cursor: pointer;
+            transition: all var(--transition);
+            white-space: nowrap;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-explore-alt:hover {
+            background: rgba(255,255,255,0.08);
+            border-color: rgba(255,255,255,0.4);
+            color: #fff;
+        }
+
+        /* --- TRIP SUMMARY BAR --- */
+        .planner-summary-bar {
+            background: #13132a;
+            border-bottom: 1px solid rgba(255,255,255,0.07);
+            padding: 0.85rem 2rem;
+            position: sticky;
+            top: 65px;
+            z-index: 150;
+        }
+
+        .summary-bar-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            flex-wrap: wrap;
+        }
+
+        .summary-stat {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.65);
+        }
+
+        .summary-stat strong {
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .summary-divider {
+            width: 1px;
+            height: 16px;
+            background: rgba(255,255,255,0.12);
+            flex-shrink: 0;
+        }
+
+        .summary-highlight {
+            color: var(--primary) !important;
+        }
+
+        /* --- MAIN PLANNER CONTENT AREA --- */
+        .planner-main {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 2.5rem 2rem 6rem;
+        }
+
+        /* --- EMPTY STATE --- */
+        .planner-empty-state {
+            max-width: 480px;
+            margin: 4rem auto;
+            text-align: center;
+            padding: 3.5rem 2rem;
+            background: var(--surface);
+            border: 1.5px dashed var(--border);
+            border-radius: var(--radius-lg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .empty-icon { font-size: 3.5rem; line-height: 1; }
+
+        .planner-empty-state h2 {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            color: var(--dark);
+            font-weight: 700;
+        }
+
+        .planner-empty-state p {
+            font-size: 0.9rem;
+            color: var(--muted);
+            line-height: 1.6;
+            max-width: 300px;
+        }
+
+        /* --- DAY SECTION --- */
+        .day-section {
+            margin-bottom: 2.5rem;
+        }
+
+        .day-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            background: var(--dark);
+            color: #fff;
+            padding: 0.85rem 1.25rem;
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
+            flex-wrap: wrap;
+        }
+
+        .day-header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .day-badge {
+            background: var(--primary);
+            color: var(--dark);
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            padding: 0.3rem 0.85rem;
+            border-radius: var(--radius-xl);
+        }
+
+        .day-stop-count {
+            font-size: 0.82rem;
+            color: rgba(255,255,255,0.55);
+            font-weight: 500;
+        }
+
+        .day-header-right {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .day-start-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: rgba(255,255,255,0.5);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .day-start-time {
+            background: rgba(255,255,255,0.08);
+            border: 1.5px solid rgba(255,255,255,0.15);
+            border-radius: var(--radius-sm);
+            color: #fff;
+            padding: 0.4rem 0.75rem;
+            font-family: var(--font-body);
+            font-size: 0.88rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: border-color var(--transition);
+        }
+
+        .day-start-time:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* colour-scheme dark ensures the time picker UI is dark too */
+        .day-start-time { color-scheme: dark; }
+
+        .btn-remove-day {
+            background: transparent;
+            border: 1.5px solid rgba(255,71,126,0.4);
+            color: rgba(255,71,126,0.8);
+            padding: 0.35rem 0.85rem;
+            border-radius: var(--radius-xl);
+            font-size: 0.75rem;
+            font-weight: 600;
+            font-family: var(--font-body);
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .btn-remove-day:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+            color: #fff;
+        }
+
+        /* --- DAY BODY (droppable zone) --- */
+        .day-body {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-top: none;
+            border-radius: 0 0 var(--radius-md) var(--radius-md);
+            padding: 1.5rem 1.5rem 1rem;
+            min-height: 80px;
+            transition: background var(--transition), border-color var(--transition);
+            position: relative;
+        }
+
+        .day-body.drag-over {
+            background: rgba(0, 210, 255, 0.04);
+            border-color: var(--primary);
+        }
+
+        .day-empty {
+            text-align: center;
+            padding: 1.5rem;
+            color: var(--muted);
+            font-size: 0.85rem;
+            font-style: italic;
+            border: 1.5px dashed var(--border);
+            border-radius: var(--radius-sm);
+        }
+
+        /* --- STOP CARD --- */
+        .stop-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 0;
+            background: var(--bg);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            margin-bottom: 0;
+            transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+            cursor: grab;
+            position: relative;
+        }
+
+        .stop-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .stop-card:active { cursor: grabbing; }
+
+        .stop-card.dragging {
+            opacity: 0.45;
+            box-shadow: var(--shadow-lg);
+            transform: scale(1.02);
+        }
+
+        .stop-card.drop-indicator {
+            border-color: var(--primary);
+            border-style: dashed;
+            box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.2);
+        }
+
+        /* Drag handle */
+        .drag-handle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            flex-shrink: 0;
+            color: var(--border);
+            font-size: 1.1rem;
+            letter-spacing: -2px;
+            cursor: grab;
+            align-self: stretch;
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            transition: color var(--transition), background var(--transition);
+            user-select: none;
+        }
+
+        .stop-card:hover .drag-handle {
+            color: var(--muted);
+            background: var(--bg);
+        }
+
+        /* Stop number badge */
+        .stop-num {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            background: var(--dark);
+            color: #fff;
+            border-radius: 50%;
+            font-size: 0.78rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            margin: 1rem 0 0 0.75rem;
+            align-self: flex-start;
+        }
+
+        /* Photo */
+        .stop-photo {
+            width: 110px;
+            min-height: 130px;
+            background-size: cover;
+            background-position: center;
+            background-color: var(--border);
+            flex-shrink: 0;
+            margin: 0.75rem 0 0.75rem 0.75rem;
+            border-radius: var(--radius-sm);
+            align-self: stretch;
+            min-height: 100%;
+        }
+
+        /* Info block */
+        .stop-info {
+            flex: 1;
+            padding: 0.9rem 1rem 0.9rem 0.85rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            min-width: 0;
+        }
+
+        .stop-top-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+        }
+
+        .stop-name {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--dark);
+            line-height: 1.3;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .stop-location {
+            font-size: 0.78rem;
+            color: var(--muted);
+        }
+
+        /* Arrival + drive badges row */
+        .stop-timing-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            margin-top: 0.15rem;
+        }
+
+        .arrival-badge {
+            background: var(--primary);
+            color: var(--dark);
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.28rem 0.75rem;
+            border-radius: var(--radius-xl);
+            white-space: nowrap;
+        }
+
+        .drive-from-badge {
+            background: rgba(0,210,255,0.08);
+            color: var(--primary-dark);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.28rem 0.75rem;
+            border-radius: var(--radius-xl);
+            white-space: nowrap;
+            border: 1px solid rgba(0,210,255,0.2);
+        }
+
+        /* Stop bottom row: time-spent + maps link */
+        .stop-bottom-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 0.1rem;
+        }
+
+        .spend-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .spend-label {
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            white-space: nowrap;
+        }
+
+        .time-spent-select {
+            padding: 0.35rem 0.6rem;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: var(--font-body);
+            font-size: 0.82rem;
+            font-weight: 600;
+            background: var(--surface);
+            color: var(--dark);
+            cursor: pointer;
+            transition: border-color var(--transition);
+        }
+
+        .time-spent-select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .btn-maps-link {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--primary-dark);
+            text-decoration: underline;
+            text-underline-offset: 2px;
+            transition: color var(--transition);
+            white-space: nowrap;
+        }
+
+        .btn-maps-link:hover { color: var(--accent); }
+
+        /* Notes textarea */
+        .stop-notes-field {
+            width: 100%;
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.55rem 0.75rem;
+            font-family: var(--font-body);
+            font-size: 0.8rem;
+            color: var(--body-text);
+            background: var(--surface);
+            resize: none;
+            line-height: 1.5;
+            transition: border-color var(--transition);
+            margin-top: 0.25rem;
+        }
+
+        .stop-notes-field:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.12);
+        }
+
+        .stop-notes-field::placeholder { color: var(--muted); }
+
+        /* Remove stop button */
+        .btn-remove-stop {
+            background: transparent;
+            border: none;
+            color: var(--muted);
+            font-size: 0.8rem;
+            padding: 0.25rem;
+            cursor: pointer;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background var(--transition), color var(--transition);
+            flex-shrink: 0;
+        }
+
+        .btn-remove-stop:hover {
+            background: rgba(255, 71, 126, 0.1);
+            color: var(--accent);
+        }
+
+        /* --- CONNECTOR BETWEEN STOPS --- */
+        .stop-connector {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.6rem 0 0.6rem 2.75rem; /* indented to align with card content */
+            position: relative;
+        }
+
+        .connector-line {
+            width: 2px;
+            height: 100%;
+            background: var(--border);
+            position: absolute;
+            left: 47px;
+            top: 0;
+            bottom: 0;
+        }
+
+        .connector-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            border: 2px solid var(--surface);
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1;
+        }
+
+        .connector-info {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: var(--muted);
+        }
+
+        /* --- ADD DAY BUTTON --- */
+        .btn-add-day {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            width: 100%;
+            padding: 0.9rem;
+            background: transparent;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-md);
+            font-family: var(--font-body);
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--muted);
+            cursor: pointer;
+            margin-top: 0.5rem;
+            transition: all var(--transition);
+        }
+
+        .btn-add-day:hover {
+            border-color: var(--primary);
+            color: var(--primary-dark);
+            background: rgba(0, 210, 255, 0.04);
+        }
+
+        /* --- MOBILE RESPONSIVE --- */
+        @media (max-width: 768px) {
+            .planner-hero { padding: 2rem 1rem 1.5rem; }
+            .planner-hero-inner { flex-direction: column; align-items: flex-start; gap: 1rem; }
+            .planner-hero-actions { width: 100%; }
+            .btn-export, .btn-explore-alt { flex: 1; text-align: center; padding: 0.75rem 1rem; font-size: 0.82rem; }
+            .planner-summary-bar { padding: 0.7rem 1rem; top: 57px; }
+            .summary-divider { display: none; }
+            .planner-main { padding: 1.5rem 1rem 4rem; }
+            .stop-card { flex-wrap: wrap; }
+            .stop-photo { width: 80px; min-height: 80px; margin: 0.75rem 0 0.75rem 0.5rem; }
+            .stop-num { margin: 0.75rem 0 0 0.5rem; }
+            .drag-handle { width: 22px; }
+            .day-header { padding: 0.75rem 1rem; }
+            .day-body { padding: 1rem 0.85rem 0.75rem; }
+        }
+
+        @media (max-width: 480px) {
+            .stop-photo { display: none; } /* hide photo on very small screens */
+            .stop-num { width: 26px; height: 26px; font-size: 0.72rem; }
+            .planner-hero-text h1 { font-size: 1.6rem; }
+        }
+
+        /* Reduce motion */
+        @media (prefers-reduced-motion: reduce) {
+            .stop-card, .btn-add-day, .btn-export { transition: none !important; }
+        }
+    </style>
 </head>
 <body>
 
+    <!-- HEADER -->
     <header class="site-header">
         <div class="header-inner">
             <a href="index.html" class="logo">
@@ -19,54 +655,87 @@
             </a>
             <nav class="header-nav">
                 <a href="index.html">Explore</a>
-                <a href="results.html">Map</a>
+                <a href="results.html">Discover</a>
+                <a href="planner.html" style="color: var(--primary-dark); font-weight: 600;">My Trip</a>
             </nav>
         </div>
     </header>
 
-    <section class="planner-section">
-        <div class="planner-header">
-            <h1>Trip Architect</h1>
-            <p class="planner-sub">Design your journey, calculate times, and hit the road.</p>
-        </div>
-
-        <div class="trip-dashboard" id="trip-dashboard" style="display: none;">
-            <div class="dashboard-grid">
-                <div class="dash-group">
-                    <label>Start Time (Stop 1)</label>
-                    <input type="time" id="trip-start-time" value="09:00">
-                </div>
-                <div class="dash-group">
-                    <label>Travelers</label>
-                    <input type="number" id="trip-pax" value="2" min="1">
-                </div>
-                <div class="dash-group">
-                    <label>Transport</label>
-                    <select id="trip-transport">
-                        <option value="car">🚗 Car</option>
-                        <option value="motorcycle">🏍️ Motorcycle</option>
-                    </select>
-                </div>
+    <!-- PLANNER HERO -->
+    <section class="planner-hero">
+        <div class="planner-hero-inner">
+            <div class="planner-hero-text">
+                <p class="hero-eyebrow">📋 Road Trip Architect</p>
+                <h1>Your journey,<br><em>perfectly planned.</em></h1>
+            </div>
+            <div class="planner-hero-actions">
+                <button class="btn-export" id="btn-export-maps">🗺️ Open in Google Maps</button>
+                <a href="index.html" class="btn-explore-alt">+ Discover More Gems</a>
             </div>
         </div>
-
-        <div class="planner-empty" id="planner-empty" style="display: none;">
-            <h3>Your backpack is empty 🎒</h3>
-            <p style="color: var(--muted); margin-bottom: 1.5rem;">Explore the map and click "+ Save" to build your trip here.</p>
-            <a href="index.html" class="btn-plan" style="text-decoration: none; display: inline-block;">Explore Gems</a>
-        </div>
-
-        <div class="itinerary-list" id="itinerary-list">
-            </div>
     </section>
 
+    <!-- TRIP SUMMARY BAR -->
+    <div class="planner-summary-bar" id="planner-summary-bar">
+        <div class="summary-bar-inner">
+            <div class="summary-stat">
+                <strong id="summary-stops">0 stops</strong>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-stat">
+                <strong id="summary-days">1 day</strong>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-stat">
+                <span class="summary-highlight" id="summary-km">-- km</span>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-stat">
+                <span class="summary-highlight" id="summary-time">-- drive</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <main>
+
+        <!-- EMPTY STATE -->
+        <div class="planner-empty-state" id="planner-empty" style="display:none;">
+            <div class="empty-icon">🎒</div>
+            <h2>Your backpack is empty</h2>
+            <p>Explore destinations and tap <strong>+ Save</strong> on any gem to start building your road trip here.</p>
+            <a href="index.html" class="btn-plan" style="text-decoration:none; display:inline-block; margin-top:0.5rem;">
+                Explore Gems ✦
+            </a>
+        </div>
+
+        <!-- PLANNER MAIN (shown when gems exist) -->
+        <div class="planner-main" id="planner-main" style="display:none;">
+            <!-- Day sections injected here by planner.js -->
+            <div id="planner-content"></div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
     <footer class="site-footer">
         <div class="footer-inner">
-            <div class="footer-brand"><span class="logo-icon">🌴</span> PlanWise Malaysia</div>
+            <div class="footer-brand">
+                <span class="logo-icon">🌴</span> PlanWise Malaysia
+            </div>
+            <p class="footer-tagline">Every journey deserves a story worth telling.</p>
+            <div class="footer-links">
+                <a href="index.html">Explore</a>
+                <a href="#">About</a>
+                <a href="#">Contact</a>
+            </div>
             <p class="footer-copy">© 2026 PlanWise. Built with ❤️ in Malaysia.</p>
         </div>
     </footer>
 
     <script src="planner.js"></script>
+    <!-- Distance Matrix API — callback triggers loadPlanner() -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCtHBA74KW3ZS8WE8OKUr6tWy2MHFHxGw8&callback=initMap" async defer></script>
+
 </body>
 </html>
