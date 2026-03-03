@@ -197,7 +197,7 @@ window.initResultsSearch = function () {
 let activeFilter = 'all';
 
 // homepageActivities drives the initial card-level filter separate from chip UI
-const homepageActivities = activities.length > 0 ? activities : null;
+let homepageActivities = activities.length > 0 ? activities : null;
 
 function applyFilter(filterValue) {
     const chips      = document.querySelectorAll('.results-filter-row .chip');
@@ -208,6 +208,9 @@ function applyFilter(filterValue) {
     // Dismiss the multi-activity label whenever any single chip is tapped
     const multiLabel = document.getElementById('multi-activity-label');
     if (multiLabel) multiLabel.style.display = 'none';
+
+    // Disable homepage multi-activity memory so it doesn't accidentally re-trigger
+    homepageActivities = null;
 
     activeFilter = filterValue;
 
@@ -337,8 +340,13 @@ async function loadResultsGems() {
             grid.appendChild(card);
         });
 
-        // Re-apply the active chip filter so counts and visibility stay consistent
-        applyFilter(activeFilter);
+        // Re-apply the active filter so counts and visibility stay consistent
+        // If multi-activities were passed and no single chip was clicked, keep the multi-filter
+        if (homepageActivities && homepageActivities.length > 1 && activeFilter === 'all') {
+            applyMultiFilter(homepageActivities);
+        } else {
+            applyFilter(activeFilter);
+        }
 
     } catch (err) {
         // Gems failed silently — Places results still show fine
