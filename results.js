@@ -10,6 +10,8 @@ const to         = params.get('to')         || 'Your Destination';
 const dateFrom   = params.get('dateFrom')   || '';
 const dateTo     = params.get('dateTo')     || '';
 const transport  = params.get('transport')  || 'car';
+const fromLat    = parseFloat(params.get('fromLat'));
+const fromLng    = parseFloat(params.get('fromLng'));
 const toLat      = parseFloat(params.get('toLat'));
 const toLng      = parseFloat(params.get('toLng'));
 const activities = params.get('activities')
@@ -76,100 +78,113 @@ document.addEventListener('DOMContentLoaded', () => {
 // ==========================================
 // 3. MAIN SEARCH — called by initMap() in app.js
 // ==========================================
+
+// Place types — shared by all search points
+const PLACE_TYPES = [
+    'tourist_attraction', 'park', 'museum', 'zoo',
+    'amusement_park', 'shopping_mall', 'restaurant', 'spa', 'night_club',
+];
+
+// Search at one or more lat/lng points, combine + quality-filter, then call onComplete
+function runPlacesSearch(locations, service, onComplete) {
+    const total = locations.length * PLACE_TYPES.length;
+    let completed = 0;
+    let allResults = [];
+
+    locations.forEach(location => {
+        PLACE_TYPES.forEach(type => {
+            service.nearbySearch({ location, radius: 25000, type }, (results, status) => {
+                completed++;
+                if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+                    allResults = allResults.concat(results);
+                }
+                if (completed === total) {
+                    const seen = new Set();
+                    const unique = allResults
+                        .filter(p => { if (seen.has(p.place_id)) return false; seen.add(p.place_id); return true; })
+                        .filter(p => p.rating >= 4.0 && p.user_ratings_total >= 100)
+                        .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+                        .slice(0, 18);
+                    onComplete(unique);
+                }
+            });
+        });
+    });
+}
+
+// Render cards + show grid after places search completes
+function renderResults(unique) {
+    const loadingEl  = document.getElementById('results-loading');
+    const filterRow  = document.getElementById('results-filter-row');
+    const countEl    = document.getElementById('results-count');
+    const grid       = document.getElementById('results-grid');
+    const emptyState = document.getElementById('empty-state');
+
+    loadingEl.style.display = 'none';
+    if (unique.length === 0) { emptyState.style.display = 'block'; return; }
+
+    unique.forEach((place, i) => grid.appendChild(buildPlaceCard(place, i)));
+    grid.style.display      = '';
+    filterRow.style.display = 'flex';
+    countEl.style.display   = 'block';
+    countEl.innerHTML       = `Showing <strong>${unique.length} gems</strong> near ${to}`;
+    wireFilterChips();
+}
+
 window.initResultsSearch = function () {
+    const loadingEl  = document.getElementById('results-loading');
+    const errorEl    = document.getElementById('results-error');
+    const grid       = document.getElementById('results-grid');
+    const emptyState = document.getElementById('empty-state');
 
-    const loadingEl   = document.getElementById('results-loading');
-    const errorEl     = document.getElementById('results-error');
-    const filterRow   = document.getElementById('results-filter-row');
-    const countEl     = document.getElementById('results-count');
-    const grid        = document.getElementById('results-grid');
-    const emptyState  = document.getElementById('empty-state');
-
-    // --- Guard: no lat/lng means user typed without using autocomplete ---
     if (isNaN(toLat) || isNaN(toLng)) {
         loadingEl.style.display = 'none';
         errorEl.style.display   = 'block';
         return;
     }
 
-    // --- Clear hardcoded cards, show loading ---
-    grid.innerHTML      = '';
-    grid.style.display  = 'none';
-    loadingEl.style.display = 'flex';
+    grid.innerHTML           = '';
+    grid.style.display       = 'none';
+    loadingEl.style.display  = 'flex';
     emptyState.style.display = 'none';
 
-    const location = { lat: toLat, lng: toLng };
-
-    const mapEl  = document.getElementById('hidden-map');
-    const map    = new google.maps.Map(mapEl, { center: location, zoom: 12 });
+    const mapEl   = document.getElementById('hidden-map');
+    const map     = new google.maps.Map(mapEl, { center: { lat: toLat, lng: toLng }, zoom: 12 });
     const service = new google.maps.places.PlacesService(map);
+    const dest    = { lat: toLat, lng: toLng };
 
-    // Place types to search — mirrors the activity categories
-    const types = [
-        'tourist_attraction',
-        'park',
-        'museum',
-        'zoo',
-        'amusement_park',
-        'shopping_mall',
-        'restaurant',
-        'spa',
-        'night_club',
-    ];
+    // Route search if start point is different from destination
+    const hasFrom    = !isNaN(fromLat) && !isNaN(fromLng);
+    const isSameSpot = hasFrom && Math.abs(fromLat - toLat) < 0.01 && Math.abs(fromLng - toLng) < 0.01;
 
-    let allResults = [];
-    let completed  = 0;
-
-    types.forEach(type => {
-        service.nearbySearch({
-            location: location,
-            radius:   25000, // 25km radius
-            type:     type,
-        }, (results, status) => {
-            completed++;
-
-            if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-                allResults = allResults.concat(results);
+    if (hasFrom && !isSameSpot) {
+        const directionsService = new google.maps.DirectionsService();
+        directionsService.route({
+            origin:      { lat: fromLat, lng: fromLng },
+            destination: dest,
+            travelMode:  google.maps.TravelMode.DRIVING,
+        }, (result, status) => {
+            if (status !== 'OK' || !result.routes[0]) {
+                runPlacesSearch([dest], service, renderResults); // graceful fallback
+                return;
             }
+            const path = result.routes[0].overview_path;
+            const len  = path.length;
+            if (len < 4) { runPlacesSearch([dest], service, renderResults); return; }
 
-            // Once all type searches are done
-            if (completed === types.length) {
-                loadingEl.style.display = 'none';
+            // Extract 2 evenly-spaced midpoints along the route
+            const mid1 = { lat: path[Math.floor(len * 0.33)].lat(), lng: path[Math.floor(len * 0.33)].lng() };
+            const mid2 = { lat: path[Math.floor(len * 0.66)].lat(), lng: path[Math.floor(len * 0.66)].lng() };
 
-                // Deduplicate by place_id, sort by rating, take top 18
-                const seen   = new Set();
-                const unique = allResults
-                    .filter(p => {
-                        if (seen.has(p.place_id)) return false;
-                        seen.add(p.place_id);
-                        return true;
-                    })
-                    .filter(p => p.rating && p.rating >= 4.0 && p.user_ratings_total >= 100) // quality filter
-                    .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-                    .slice(0, 18);
+            const loadingP = document.querySelector('#results-loading p');
+            if (loadingP) loadingP.textContent = '🛣️ Searching along your route...';
 
-                if (unique.length === 0) {
-                    emptyState.style.display = 'block';
-                    return;
-                }
-
-                // Build cards
-                unique.forEach((place, i) => {
-                    const card = buildPlaceCard(place, i);
-                    grid.appendChild(card);
-                });
-
-                // Show grid + filter row + count
-                grid.style.display  = '';
-                filterRow.style.display = 'flex';
-                countEl.style.display   = 'block';
-                countEl.innerHTML = `Showing <strong>${unique.length} gems</strong> near ${to}`;
-
-                // Wire filter chips now that cards exist
-                wireFilterChips();
-            }
+            runPlacesSearch([mid1, mid2, dest], service, renderResults);
         });
-    });
+    } else {
+        // No start point or radius search — destination only
+        runPlacesSearch([dest], service, renderResults);
+    }
 
 };
 
@@ -189,6 +204,10 @@ function applyFilter(filterValue) {
     const grid       = document.getElementById('results-grid');
     const countEl    = document.getElementById('results-count');
     const emptyState = document.getElementById('empty-state');
+
+    // Dismiss the multi-activity label whenever any single chip is tapped
+    const multiLabel = document.getElementById('multi-activity-label');
+    if (multiLabel) multiLabel.style.display = 'none';
 
     activeFilter = filterValue;
 
@@ -217,17 +236,62 @@ function applyFilter(filterValue) {
     }
 }
 
+// Called when 2+ activities are passed from home page via URL
+function applyMultiFilter(activityList) {
+    const labels = {
+        food:'Food & Drink', nature:'Nature', beach:'Beach', heritage:'Heritage',
+        family:'Family', nightlife:'Nightlife', wellness:'Wellness', shopping:'Shopping',
+    };
+    const grid       = document.getElementById('results-grid');
+    const countEl    = document.getElementById('results-count');
+    const emptyState = document.getElementById('empty-state');
+    const label      = document.getElementById('multi-activity-label');
+    const text       = document.getElementById('multi-activity-text');
+
+    // Keep "All" chip selected visually — no single chip matches multi
+    document.querySelectorAll('.results-filter-row .chip').forEach(c => c.classList.remove('selected'));
+    const allChip = document.querySelector('.results-filter-row .chip[data-filter="all"]');
+    if (allChip) allChip.classList.add('selected');
+
+    // Show the label strip
+    if (text)  text.textContent    = '🎯 Filtered by: ' + activityList.map(a => labels[a] || a).join(', ');
+    if (label) label.style.display = 'flex';
+
+    // Show cards matching ANY selected activity
+    const allCards = grid.querySelectorAll('.feed-card, .gem-card');
+    let visible = 0;
+    allCards.forEach(card => {
+        const cats  = (card.dataset.category || '').split(',').map(c => c.trim());
+        const match = activityList.some(act => cats.includes(act));
+        card.style.display = match ? '' : 'none';
+        if (match) visible++;
+    });
+
+    if (countEl)    countEl.innerHTML          = `Showing <strong>${visible} result${visible !== 1 ? 's' : ''}</strong> near ${to}`;
+    if (emptyState) emptyState.style.display   = visible === 0 ? 'block' : 'none';
+}
+
 function wireFilterChips() {
     const chips = document.querySelectorAll('.results-filter-row .chip');
     chips.forEach(chip => {
         chip.addEventListener('click', () => applyFilter(chip.dataset.filter));
     });
 
-    // Auto-select chip only when EXACTLY 1 activity was chosen (chip UI supports 1-at-a-time)
-    // For 2+ activities, keep "All" chip selected but cards are already pre-filtered below
     if (activities.length === 1) {
-        // Use setTimeout(0) so the filter row is definitely visible before we apply
         setTimeout(() => applyFilter(activities[0]), 0);
+    }
+    // Multi-activity: show label + filter cards
+    if (activities.length > 1) {
+        setTimeout(() => applyMultiFilter(activities), 0);
+    }
+    // Wire the "✕ Show All" button on the label
+    const clearBtn = document.getElementById('multi-activity-clear');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            const label = document.getElementById('multi-activity-label');
+            if (label) label.style.display = 'none';
+            applyFilter('all');
+        });
     }
 }
 

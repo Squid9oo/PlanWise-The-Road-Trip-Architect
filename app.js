@@ -215,6 +215,19 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // --- Check for gems from a previous trip ---
+        const existingGems = getSavedGems();
+        if (existingGems.length > 0) {
+            const startFresh = window.confirm(
+                `You have ${existingGems.length} gem${existingGems.length !== 1 ? 's' : ''} saved from a previous trip.\n\nOK — Clear them and start fresh\nCancel — Keep them in my planner`
+            );
+            if (startFresh) {
+                localStorage.removeItem(STORAGE_KEY);
+                ['planwise_stop_order','planwise_stop_notes','planwise_stop_duration',
+                 'planwise_day_times','planwise_day_count'].forEach(k => localStorage.removeItem(k));
+            }
+        }
+
         // --- Loading state ---
         btnText.style.display    = 'none';
         btnLoading.style.display = 'inline';
