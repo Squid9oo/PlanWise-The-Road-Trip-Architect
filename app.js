@@ -18,8 +18,38 @@ function toggleSaveGem(gemObj, btnEl) {
         saved.push(gemObj); // Add it (Save)
         btnEl.textContent = '✓ Saved';
         btnEl.classList.add('btn-saved');
+        showSaveToast(saved.length); // 🎒 Show toast only on save, not unsave
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+}
+
+// ==========================================
+// SAVE TOAST — Floating badge after saving
+// ==========================================
+let toastTimer = null;
+
+function showSaveToast(count) {
+    // Remove any existing toast first
+    const existing = document.getElementById('save-toast');
+    if (existing) existing.remove();
+    if (toastTimer) clearTimeout(toastTimer);
+
+    const toast = document.createElement('a');
+    toast.id        = 'save-toast';
+    toast.className = 'save-toast';
+    toast.href      = 'planner.html';
+    toast.innerHTML = `
+        🎒 <span>${count} gem${count !== 1 ? 's' : ''} saved — View Planner</span>
+        <span class="save-toast-arrow">→</span>
+    `;
+
+    document.body.appendChild(toast);
+
+    // Auto-dismiss after 4 seconds
+    toastTimer = setTimeout(() => {
+        toast.classList.add('toast-hide');
+        setTimeout(() => toast.remove(), 420);
+    }, 4000);
 }
 
 // ==========================================
