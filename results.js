@@ -89,23 +89,32 @@ const PLACE_TYPES = [
 function runPlacesSearch(locations, service, onComplete) {
     const total = locations.length * PLACE_TYPES.length;
     let completed = 0;
-    let allResults = [];
+    // Keep results separated by location instead of one giant pool
+    let locationResults = locations.map(() => []);
 
-    locations.forEach(location => {
+    locations.forEach((location, locIndex) => {
         PLACE_TYPES.forEach(type => {
             service.nearbySearch({ location, radius: 25000, type }, (results, status) => {
                 completed++;
                 if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-                    allResults = allResults.concat(results);
+                    locationResults[locIndex] = locationResults[locIndex].concat(results);
                 }
                 if (completed === total) {
+                    let finalUnique = [];
                     const seen = new Set();
-                    const unique = allResults
-                        .filter(p => { if (seen.has(p.place_id)) return false; seen.add(p.place_id); return true; })
-                        .filter(p => p.rating >= 4.0 && p.user_ratings_total >= 100)
-                        .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-                        .slice(0, 18);
-                    onComplete(unique);
+                    const perLocLimit = Math.ceil(18 / locations.length);
+
+                    // Pull top rated places from EACH location equally
+                    locationResults.forEach(locArray => {
+                        const uniqueLoc = locArray
+                            .filter(p => { if (seen.has(p.place_id)) return false; seen.add(p.place_id); return true; })
+                            .filter(p => p.rating >= 4.0 && p.user_ratings_total >= 100)
+                            .sort((a, b) => (b.rating || 0) - (a.rating || 0))
+                            .slice(0, perLocLimit);
+                        finalUnique = finalUnique.concat(uniqueLoc);
+                    });
+
+                    onComplete(finalUnique);
                 }
             });
         });
@@ -129,6 +138,9 @@ function renderResults(unique) {
     countEl.style.display   = 'block';
     countEl.innerHTML       = `Showing <strong>${unique.length} gems</strong> near ${to}`;
     wireFilterChips();
+    
+    // Fetch community gems now that we know the search points
+    loadResultsGems(); 
 }
 
 window.initResultsSearch = function () {
@@ -152,6 +164,7 @@ window.initResultsSearch = function () {
     const map     = new google.maps.Map(mapEl, { center: { lat: toLat, lng: toLng }, zoom: 12 });
     const service = new google.maps.places.PlacesService(map);
     const dest    = { lat: toLat, lng: toLng };
+    window.activeSearchPoints = [dest]; // Default to destination
 
     // Route search if start point is different from destination
     const hasFrom    = !isNaN(fromLat) && !isNaN(fromLng);
@@ -175,6 +188,9 @@ window.initResultsSearch = function () {
             // Extract 2 evenly-spaced midpoints along the route
             const mid1 = { lat: path[Math.floor(len * 0.33)].lat(), lng: path[Math.floor(len * 0.33)].lng() };
             const mid2 = { lat: path[Math.floor(len * 0.66)].lat(), lng: path[Math.floor(len * 0.66)].lng() };
+
+            // Save for geo-filtering community gems
+            window.activeSearchPoints = [mid1, mid2, dest]; 
 
             const loadingP = document.querySelector('#results-loading p');
             if (loadingP) loadingP.textContent = '🛣️ Searching along your route...';
@@ -282,6 +298,15 @@ function wireFilterChips() {
 // ==========================================
 // 5. COMMUNITY GEMS — Fetch + render on results page
 // ==========================================
+function getDistanceKm(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Earth radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) + 
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
 async function loadResultsGems() {
 
     const grid      = document.getElementById('results-grid');
@@ -293,14 +318,17 @@ async function loadResultsGems() {
         const gems = await fetchApprovedGems(); // defined in app.js
         if (!gems.length) return;
 
-        // Filter gems to match selected activities from URL params
-        // If no activities selected, show all gems
-        const filteredGems = activities.length > 0
-            ? gems.filter(gem => {
-                const gemCats = (gem.category || '').split(',').map(c => c.trim());
-                return activities.some(act => gemCats.includes(act));
-              })
-            : gems;
+        // Filter gems by activities AND geography (within 50km of any route point)
+        const filteredGems = gems.filter(gem => {
+            // 1. Activity filter
+            const gemCats = (gem.category || '').split(',').map(c => c.trim());
+            const actMatch = activities.length === 0 || activities.some(act => gemCats.includes(act));
+            if (!actMatch) return false;
+
+            // 2. Geography filter
+            if (!window.activeSearchPoints || window.activeSearchPoints.length === 0) return true;
+            return window.activeSearchPoints.some(pt => getDistanceKm(gem.lat, gem.lng, pt.lat, pt.lng) <= 50);
+        });
 
         if (!filteredGems.length) return;
 
