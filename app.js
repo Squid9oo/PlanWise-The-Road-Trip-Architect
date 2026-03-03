@@ -788,16 +788,33 @@ function openPlaceDetail(placeId, basicPlace) {
         if (place.url) {
             actions.innerHTML += `<a class="btn-panel-maps" href="${place.url}" target="_blank" rel="noopener">🗺️ Open in Google Maps</a>`;
         }
+        
         const saveBtn = document.createElement('button');
-        saveBtn.className   = 'btn-panel-save';
-        saveBtn.textContent = '+ Save';
+        saveBtn.className = 'btn-panel-save';
+        
+        // Package the Google Place data
+        const placeObj = {
+            id: place.place_id,
+            name: place.name || basicPlace.name,
+            location: place.formatted_address || basicPlace.vicinity,
+            lat: place.geometry?.location?.lat() || basicPlace.geometry?.location?.lat(),
+            lng: place.geometry?.location?.lng() || basicPlace.geometry?.location?.lng(),
+            photo: place.photos && place.photos.length > 0 ? place.photos[0].getUrl({ maxWidth: 500 }) : '',
+            category: getTagInfo(place.types || []).tag,
+            source: 'google'
+        };
+
+        if (isGemSaved(placeObj.id)) {
+            saveBtn.textContent = '✓ Saved';
+            saveBtn.classList.add('btn-saved');
+        } else {
+            saveBtn.textContent = '+ Save';
+        }
+
         saveBtn.addEventListener('click', function () {
-            this.textContent        = '✓ Saved';
-            this.style.background   = 'var(--green)';
-            this.style.borderColor  = 'var(--green)';
-            this.style.color        = '#fff';
-            this.disabled           = true;
+            toggleSaveGem(placeObj, this);
         });
+        
         actions.appendChild(saveBtn);
     });
 }
@@ -1094,23 +1111,29 @@ async function openGemPanel(gem, thumbnail) {
     if (saveBtn) {
         const newBtn = saveBtn.cloneNode(true); // cloning removes old listeners
         saveBtn.parentNode.replaceChild(newBtn, saveBtn);
-        newBtn.textContent       = '+ Save';
-        newBtn.style.background  = '';
-        newBtn.style.borderColor = '';
-        newBtn.style.color       = '';
-        newBtn.disabled          = false;
+        
+        // Package the Community Gem data exactly like the card does
+        const gemObj = {
+            id: 'gem_' + gem.name.replace(/\s+/g, '') + '_' + gem.lat,
+            name: gem.name,
+            location: gem.locationName,
+            lat: gem.lat,
+            lng: gem.lng,
+            photo: thumbnail || '',
+            category: categories[0] || 'heritage',
+            source: 'community'
+        };
+
+        if (isGemSaved(gemObj.id)) {
+            newBtn.textContent = '✓ Saved';
+            newBtn.classList.add('btn-saved');
+        } else {
+            newBtn.textContent = '+ Save';
+            newBtn.classList.remove('btn-saved');
+        }
+
         newBtn.addEventListener('click', function () {
-            if (this.textContent === '✓ Saved') {
-                this.textContent       = '+ Save';
-                this.style.background  = '';
-                this.style.borderColor = '';
-                this.style.color       = '';
-            } else {
-                this.textContent       = '✓ Saved';
-                this.style.background  = 'var(--green)';
-                this.style.borderColor = 'var(--green)';
-                this.style.color       = '#fff';
-            }
+            toggleSaveGem(gemObj, this);
         });
     }
 
