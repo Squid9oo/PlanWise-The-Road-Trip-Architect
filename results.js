@@ -175,39 +175,48 @@ window.initResultsSearch = function () {
 
 // ==========================================
 // 4. FILTER CHIPS
+// activeFilter persists so gem cards (added 800ms later) get filtered correctly
 // ==========================================
-function wireFilterChips() {
+let activeFilter = 'all';
 
-    const chips = document.querySelectorAll('.results-filter-row .chip');
-    const grid  = document.getElementById('results-grid');
+function applyFilter(filterValue) {
+    const chips      = document.querySelectorAll('.results-filter-row .chip');
+    const grid       = document.getElementById('results-grid');
+    const countEl    = document.getElementById('results-count');
+    const emptyState = document.getElementById('empty-state');
 
-    chips.forEach(chip => {
-        chip.addEventListener('click', () => {
+    activeFilter = filterValue;
 
-            // Update selected state
-            chips.forEach(c => c.classList.remove('selected'));
-            chip.classList.add('selected');
+    // Update chip selected state
+    chips.forEach(c => c.classList.remove('selected'));
+    const activeChip = document.querySelector(`.results-filter-row .chip[data-filter="${filterValue}"]`);
+    if (activeChip) activeChip.classList.add('selected');
 
-            const filter = chip.dataset.filter;
-            const allCards = grid.querySelectorAll('.feed-card, .gem-card');
-            let visibleCount = 0;
-
-            allCards.forEach(card => {
-                const categories = (card.dataset.category || '').split(',').map(c => c.trim());
-                const match = filter === 'all' || categories.includes(filter);
-                card.style.display = match ? '' : 'none';
-                if (match) visibleCount++;
-            });
-
-            // Update count
-            const countEl = document.getElementById('results-count');
-            countEl.innerHTML = `Showing <strong>${visibleCount} gem${visibleCount !== 1 ? 's' : ''}</strong> near ${to}`;
-
-            // Show/hide empty state
-            const emptyState = document.getElementById('empty-state');
-            emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
-        });
+    // Show / hide cards
+    const allCards = grid.querySelectorAll('.feed-card, .gem-card');
+    let visibleCount = 0;
+    allCards.forEach(card => {
+        const categories = (card.dataset.category || '').split(',').map(c => c.trim());
+        const match = filterValue === 'all' || categories.includes(filterValue);
+        card.style.display = match ? '' : 'none';
+        if (match) visibleCount++;
     });
+
+    if (countEl) countEl.innerHTML = `Showing <strong>${visibleCount} result${visibleCount !== 1 ? 's' : ''}</strong> near ${to}`;
+    if (emptyState) emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+}
+
+function wireFilterChips() {
+    const chips = document.querySelectorAll('.results-filter-row .chip');
+    chips.forEach(chip => {
+        chip.addEventListener('click', () => applyFilter(chip.dataset.filter));
+    });
+
+    // Auto-apply the activity the user chose on the home page
+    // Only if exactly 1 activity was selected (otherwise "All" is the sensible default)
+    if (activities.length === 1 && activities[0]) {
+        applyFilter(activities[0]);
+    }
 }
 
 // ==========================================
@@ -243,17 +252,9 @@ async function loadResultsGems() {
             grid.appendChild(card);
         });
 
-        // Recount visible cards after gems added
-        const allCards  = grid.querySelectorAll('.feed-card, .gem-card');
-        if (countEl) {
-            countEl.innerHTML = `Showing <strong>${allCards.length} results</strong> near ${to}`;
-        }
-
-        // Auto-apply filter chip if exactly 1 activity was selected on home page
-        if (activities.length === 1) {
-            const chip = document.querySelector(`.results-filter-row .chip[data-filter="${activities[0]}"]`);
-            if (chip) chip.click();
-        }
+        // Re-apply whatever filter chip is currently active
+        // so gem cards obey the same filter as the Places cards
+        applyFilter(activeFilter);
 
     } catch (err) {
         // Gems failed silently — Places results still show fine

@@ -267,6 +267,17 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
                         <option value="180" ${durationMins === 180 ? 'selected' : ''}>3 hours</option>
                     </select>
                 </div>
+                ${getDayCount() > 1 ? `
+                <div class="spend-group">
+                    <label class="spend-label">Move to</label>
+                    <select class="move-day-select" data-gem-id="${gem.id}" data-from-day="${dayNum}">
+                        <option value="${dayNum}">Day ${dayNum} ▾</option>
+                        ${Array.from({ length: getDayCount() }, (_, i) => i + 1)
+                            .filter(d => d !== dayNum)
+                            .map(d => `<option value="${d}">Day ${d}</option>`)
+                            .join('')}
+                    </select>
+                </div>` : ''}
                 <a class="btn-maps-link" href="${mapsUrl}" target="_blank" rel="noopener">🗺️ Open in Maps</a>
             </div>
             <textarea
@@ -293,6 +304,15 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
         saveDurations(durations);
         calculateCascadingTimes();
     });
+
+    // Wire move-to-day select
+    const moveDayEl = card.querySelector('.move-day-select');
+    if (moveDayEl) {
+        moveDayEl.addEventListener('change', (e) => {
+            const toDay = parseInt(e.target.value, 10);
+            if (toDay !== dayNum) moveStopToDay(gem.id, dayNum, toDay);
+        });
+    }
 
     // Wire notes textarea — debounced save (no re-render)
     let noteTimer;
@@ -647,6 +667,26 @@ function moveStop(gemId, direction) {
         fetchAllDriveTimes();
         return;
     }
+}
+
+// ==========================================
+// MOVE STOP TO DIFFERENT DAY
+// Called by the "Move to Day X" select on mobile
+// ==========================================
+function moveStopToDay(gemId, fromDay, toDay) {
+    if (fromDay === toDay) return;
+    const order = getOrder();
+
+    // Remove from source day
+    order[fromDay] = (order[fromDay] || []).filter(id => id !== gemId);
+
+    // Append to end of target day
+    if (!order[toDay]) order[toDay] = [];
+    order[toDay].push(gemId);
+
+    saveOrder(order);
+    renderPlanner();
+    fetchAllDriveTimes();
 }
 
 // ==========================================

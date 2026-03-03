@@ -355,9 +355,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 300);
     });
 
+    // Helper: fires on both click (desktop) and touchend (iOS inside modal)
+    // touchend + preventDefault() bypasses the 300ms iOS delay for fixed/overflow containers
+    function bindTap(el, handler) {
+        let touchFired = false;
+        el.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            touchFired = true;
+            handler.call(el, e);
+            setTimeout(() => { touchFired = false; }, 500);
+        });
+        el.addEventListener('click', (e) => {
+            if (touchFired) return; // prevent double-fire on touch devices
+            handler.call(el, e);
+        });
+    }
+
     // --- Category chips — multi-select up to 3, shows dining type if Food selected ---
     document.querySelectorAll('#gem-chips .chip').forEach(chip => {
-        chip.addEventListener('click', () => {
+        bindTap(chip, function() {
             const selected   = [...document.querySelectorAll('#gem-chips .chip.selected')];
             const isSelected = chip.classList.contains('selected');
 
@@ -389,7 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Dining type chips — single select ---
     document.querySelectorAll('#dining-chips .chip').forEach(chip => {
-        chip.addEventListener('click', () => {
+        bindTap(chip, function() {
             document.querySelectorAll('#dining-chips .chip').forEach(c => c.classList.remove('selected'));
             chip.classList.add('selected');
         });

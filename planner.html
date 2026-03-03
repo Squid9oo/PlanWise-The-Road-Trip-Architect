@@ -520,7 +520,8 @@
             white-space: nowrap;
         }
 
-        .time-spent-select {
+        .time-spent-select,
+        .move-day-select {
             padding: 0.35rem 0.6rem;
             border: 1.5px solid var(--border);
             border-radius: var(--radius-sm);
@@ -533,9 +534,15 @@
             transition: border-color var(--transition);
         }
 
-        .time-spent-select:focus {
+        .time-spent-select:focus,
+        .move-day-select:focus {
             outline: none;
             border-color: var(--primary);
+        }
+
+        .move-day-select {
+            border-color: var(--primary);
+            color: var(--primary-dark);
         }
 
         .btn-maps-link {
