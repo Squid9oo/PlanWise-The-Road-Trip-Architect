@@ -26,8 +26,28 @@
 
     <section class="planner-section">
         <div class="planner-header">
-            <h1>Your Itinerary</h1>
-            <p class="planner-sub">Your saved gems, ready for the road.</p>
+            <h1>Trip Architect</h1>
+            <p class="planner-sub">Design your journey, calculate times, and hit the road.</p>
+        </div>
+
+        <div class="trip-dashboard" id="trip-dashboard" style="display: none;">
+            <div class="dashboard-grid">
+                <div class="dash-group">
+                    <label>Start Time (Stop 1)</label>
+                    <input type="time" id="trip-start-time" value="09:00">
+                </div>
+                <div class="dash-group">
+                    <label>Travelers</label>
+                    <input type="number" id="trip-pax" value="2" min="1">
+                </div>
+                <div class="dash-group">
+                    <label>Transport</label>
+                    <select id="trip-transport">
+                        <option value="car">🚗 Car</option>
+                        <option value="motorcycle">🏍️ Motorcycle</option>
+                    </select>
+                </div>
+            </div>
         </div>
 
         <div class="planner-empty" id="planner-empty" style="display: none;">
