@@ -1427,7 +1427,7 @@ input:focus-visible {
 
 /* --- GEMS SECTION (home page) --- */
 .gems-section {
-    padding: 3rem 2rem 4rem;
+    padding: 1rem 2rem 4rem;
     background: var(--bg);
 }
 
@@ -1694,8 +1694,8 @@ input:focus-visible {
         flex-direction: column;
     }
     .gem-panel-video {
-        flex: 0 0 56vw;
-        height: 56vw;
+        flex: 0 0 65vh;
+        height: 65vh;
     }
     .gem-panel-details {
         padding: 1.25rem;
@@ -1897,4 +1897,11 @@ input:focus-visible {
     background: var(--bg);
     border-radius: var(--radius-sm);
     border-left: 3px solid var(--primary);
+}
+
+/* Toggle class for save buttons */
+.btn-saved {
+    background: var(--green) !important;
+    border-color: var(--green) !important;
+    color: #fff !important;
 }
