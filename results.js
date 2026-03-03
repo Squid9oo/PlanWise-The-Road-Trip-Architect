@@ -189,11 +189,12 @@ function wireFilterChips() {
             chip.classList.add('selected');
 
             const filter = chip.dataset.filter;
-            const allCards = grid.querySelectorAll('.feed-card');
+            const allCards = grid.querySelectorAll('.feed-card, .gem-card');
             let visibleCount = 0;
 
             allCards.forEach(card => {
-                const match = filter === 'all' || card.dataset.category === filter;
+                const categories = (card.dataset.category || '').split(',').map(c => c.trim());
+                const match = filter === 'all' || categories.includes(filter);
                 card.style.display = match ? '' : 'none';
                 if (match) visibleCount++;
             });
