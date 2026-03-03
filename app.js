@@ -2,6 +2,27 @@
 // Session A: Form interactions + redirect to results
 
 // ==========================================
+// TRIP PLANNER — LocalStorage Helper
+// ==========================================
+const STORAGE_KEY = 'planwise_saved_gems';
+function getSavedGems() { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+function isGemSaved(id) { return getSavedGems().some(g => g.id === id); }
+function toggleSaveGem(gemObj, btnEl) {
+    let saved = getSavedGems();
+    const idx = saved.findIndex(g => g.id === gemObj.id);
+    if (idx >= 0) {
+        saved.splice(idx, 1); // Remove it (Unsave)
+        btnEl.textContent = '+ Save';
+        btnEl.classList.remove('btn-saved');
+    } else {
+        saved.push(gemObj); // Add it (Save)
+        btnEl.textContent = '✓ Saved';
+        btnEl.classList.add('btn-saved');
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+}
+
+// ==========================================
 // GOOGLE MAPS PLACES AUTOCOMPLETE
 // Called automatically when Maps API loads
 // ==========================================
@@ -587,13 +608,27 @@ function buildPlaceCard(place, index) {
         openPlaceDetail(place.place_id, place);
     });
 
-    // Wire save button
-    card.querySelector('.btn-save').addEventListener('click', function () {
-        this.textContent      = '✓ Saved';
-        this.style.background = 'var(--green)';
-        this.style.borderColor = 'var(--green)';
-        this.style.color      = '#fff';
-        this.disabled         = true;
+    // Wire save button (Toggles LocalStorage)
+    const saveBtn = card.querySelector('.btn-save');
+    const placeObj = {
+        id: place.place_id,
+        name: place.name,
+        location: place.vicinity,
+        lat: place.geometry?.location?.lat(),
+        lng: place.geometry?.location?.lng(),
+        photo: photoUrl,
+        category: tagInfo.tag,
+        source: 'google'
+    };
+    
+    // Check initial state on load
+    if (isGemSaved(placeObj.id)) {
+        saveBtn.textContent = '✓ Saved';
+        saveBtn.classList.add('btn-saved');
+    }
+    
+    saveBtn.addEventListener('click', function () {
+        toggleSaveGem(placeObj, this);
     });
 
     return card;
@@ -924,18 +959,26 @@ async function buildGemCard(gem) {
         openGemPanel(gem, thumbnail);
     });
 
-    card.querySelector('.gem-save-btn').addEventListener('click', function () {
-        if (this.textContent === '✓ Saved') {
-            this.textContent       = '+ Save';
-            this.style.background  = '';
-            this.style.borderColor = '';
-            this.style.color       = '';
-        } else {
-            this.textContent       = '✓ Saved';
-            this.style.background  = 'var(--green)';
-            this.style.borderColor = 'var(--green)';
-            this.style.color       = '#fff';
-        }
+    const saveBtn = card.querySelector('.gem-save-btn');
+    const gemObj = {
+        id: 'gem_' + gem.name.replace(/\s+/g, '') + '_' + gem.lat,
+        name: gem.name,
+        location: gem.locationName,
+        lat: gem.lat,
+        lng: gem.lng,
+        photo: thumbnail || '',
+        category: categories[0] || 'heritage',
+        source: 'community'
+    };
+    
+    // Check initial state on load
+    if (isGemSaved(gemObj.id)) {
+        saveBtn.textContent = '✓ Saved';
+        saveBtn.classList.add('btn-saved');
+    }
+    
+    saveBtn.addEventListener('click', function () {
+        toggleSaveGem(gemObj, this);
     });
 
     return card;
