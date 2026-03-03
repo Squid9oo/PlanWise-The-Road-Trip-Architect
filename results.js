@@ -205,10 +205,6 @@ function applyFilter(filterValue) {
     const countEl    = document.getElementById('results-count');
     const emptyState = document.getElementById('empty-state');
 
-    // Dismiss the multi-activity label whenever any single chip is tapped
-    const multiLabel = document.getElementById('multi-activity-label');
-    if (multiLabel) multiLabel.style.display = 'none';
-
     // Disable homepage multi-activity memory so it doesn't accidentally re-trigger
     homepageActivities = null;
 
@@ -241,24 +237,18 @@ function applyFilter(filterValue) {
 
 // Called when 2+ activities are passed from home page via URL
 function applyMultiFilter(activityList) {
-    const labels = {
-        food:'Food & Drink', nature:'Nature', beach:'Beach', heritage:'Heritage',
-        family:'Family', nightlife:'Nightlife', wellness:'Wellness', shopping:'Shopping',
-    };
     const grid       = document.getElementById('results-grid');
     const countEl    = document.getElementById('results-count');
     const emptyState = document.getElementById('empty-state');
-    const label      = document.getElementById('multi-activity-label');
-    const text       = document.getElementById('multi-activity-text');
 
-    // Keep "All" chip selected visually — no single chip matches multi
-    document.querySelectorAll('.results-filter-row .chip').forEach(c => c.classList.remove('selected'));
-    const allChip = document.querySelector('.results-filter-row .chip[data-filter="all"]');
-    if (allChip) allChip.classList.add('selected');
-
-    // Show the label strip
-    if (text)  text.textContent    = '🎯 Filtered by: ' + activityList.map(a => labels[a] || a).join(', ');
-    if (label) label.style.display = 'flex';
+    // Visually select all chips that match the activities, deselect others
+    document.querySelectorAll('.results-filter-row .chip').forEach(c => {
+        if (activityList.includes(c.dataset.filter)) {
+            c.classList.add('selected');
+        } else {
+            c.classList.remove('selected');
+        }
+    });
 
     // Show cards matching ANY selected activity
     const allCards = grid.querySelectorAll('.feed-card, .gem-card');
@@ -286,15 +276,6 @@ function wireFilterChips() {
     // Multi-activity: show label + filter cards
     if (activities.length > 1) {
         setTimeout(() => applyMultiFilter(activities), 0);
-    }
-    // Wire the "✕ Show All" button on the label
-    const clearBtn = document.getElementById('multi-activity-clear');
-    if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-            const label = document.getElementById('multi-activity-label');
-            if (label) label.style.display = 'none';
-            applyFilter('all');
-        });
     }
 }
 
