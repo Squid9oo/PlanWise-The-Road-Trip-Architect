@@ -175,9 +175,14 @@ window.initResultsSearch = function () {
 
 // ==========================================
 // 4. FILTER CHIPS
-// activeFilter persists so gem cards (added 800ms later) get filtered correctly
+// activeFilter persists so gem cards (added later) are filtered correctly too.
+// When user selected activities on home page, cards are pre-filtered by those
+// activities even when no single chip matches (multi-activity case).
 // ==========================================
 let activeFilter = 'all';
+
+// homepageActivities drives the initial card-level filter separate from chip UI
+const homepageActivities = activities.length > 0 ? activities : null;
 
 function applyFilter(filterValue) {
     const chips      = document.querySelectorAll('.results-filter-row .chip');
@@ -189,21 +194,27 @@ function applyFilter(filterValue) {
 
     // Update chip selected state
     chips.forEach(c => c.classList.remove('selected'));
-    const activeChip = document.querySelector(`.results-filter-row .chip[data-filter="${filterValue}"]`);
+    const activeChip = document.querySelector(
+        `.results-filter-row .chip[data-filter="${filterValue}"]`
+    );
     if (activeChip) activeChip.classList.add('selected');
 
-    // Show / hide cards
+    // Show / hide cards based on chip filter
     const allCards = grid.querySelectorAll('.feed-card, .gem-card');
     let visibleCount = 0;
     allCards.forEach(card => {
-        const categories = (card.dataset.category || '').split(',').map(c => c.trim());
-        const match = filterValue === 'all' || categories.includes(filterValue);
+        const cats  = (card.dataset.category || '').split(',').map(c => c.trim());
+        const match = filterValue === 'all' || cats.includes(filterValue);
         card.style.display = match ? '' : 'none';
         if (match) visibleCount++;
     });
 
-    if (countEl) countEl.innerHTML = `Showing <strong>${visibleCount} result${visibleCount !== 1 ? 's' : ''}</strong> near ${to}`;
-    if (emptyState) emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+    if (countEl) {
+        countEl.innerHTML = `Showing <strong>${visibleCount} result${visibleCount !== 1 ? 's' : ''}</strong> near ${to}`;
+    }
+    if (emptyState) {
+        emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+    }
 }
 
 function wireFilterChips() {
@@ -212,10 +223,11 @@ function wireFilterChips() {
         chip.addEventListener('click', () => applyFilter(chip.dataset.filter));
     });
 
-    // Auto-apply the activity the user chose on the home page
-    // Only if exactly 1 activity was selected (otherwise "All" is the sensible default)
-    if (activities.length === 1 && activities[0]) {
-        applyFilter(activities[0]);
+    // Auto-select chip only when EXACTLY 1 activity was chosen (chip UI supports 1-at-a-time)
+    // For 2+ activities, keep "All" chip selected but cards are already pre-filtered below
+    if (activities.length === 1) {
+        // Use setTimeout(0) so the filter row is definitely visible before we apply
+        setTimeout(() => applyFilter(activities[0]), 0);
     }
 }
 
@@ -249,11 +261,19 @@ async function loadResultsGems() {
 
         cards.forEach(card => {
             card.dataset.source = 'gem';
+
+            // Pre-filter gem cards by homepage activities before appending
+            // so they're already hidden/shown correctly before applyFilter runs
+            if (homepageActivities && homepageActivities.length > 1) {
+                const cats  = (card.dataset.category || '').split(',').map(c => c.trim());
+                const match = homepageActivities.some(act => cats.includes(act));
+                card.style.display = match ? '' : 'none';
+            }
+
             grid.appendChild(card);
         });
 
-        // Re-apply whatever filter chip is currently active
-        // so gem cards obey the same filter as the Places cards
+        // Re-apply the active chip filter so counts and visibility stay consistent
         applyFilter(activeFilter);
 
     } catch (err) {

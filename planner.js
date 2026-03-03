@@ -824,4 +824,27 @@ function formatDuration(totalMins) {
 document.addEventListener('DOMContentLoaded', () => {
     const exportBtn = document.getElementById('btn-export-maps');
     if (exportBtn) exportBtn.addEventListener('click', exportToMaps);
+
+    const clearBtn = document.getElementById('btn-clear-trip');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            const count = getGems().length;
+            if (count === 0) return;
+            const confirmed = window.confirm(
+                `This will remove all ${count} saved stop${count !== 1 ? 's' : ''} from your trip. Are you sure?`
+            );
+            if (!confirmed) return;
+
+            // Wipe all planner localStorage keys
+            localStorage.removeItem(SK_GEMS);
+            localStorage.removeItem(SK_ORDER);
+            localStorage.removeItem(SK_NOTES);
+            localStorage.removeItem(SK_DURATION);
+            localStorage.removeItem(SK_DAYTIMES);
+            localStorage.removeItem(SK_DAYCOUNT);
+            // Keep drive cache — no point re-fetching if user rebuilds same route
+
+            loadPlanner(); // re-renders empty state
+        });
+    }
 });
