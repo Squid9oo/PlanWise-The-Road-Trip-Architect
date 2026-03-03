@@ -467,6 +467,36 @@
 
     <div id="hidden-map" style="display:none;"></div>
 
+    <!-- GEM DETAIL PANEL -->
+    <div class="gem-panel-overlay" id="gem-panel-overlay">
+        <div class="gem-panel" role="dialog" aria-modal="true" aria-labelledby="gem-panel-name">
+
+            <button class="gem-panel-close" id="gem-panel-close" aria-label="Close panel">✕</button>
+
+            <!-- VIDEO EMBED -->
+            <div class="gem-panel-embed-wrapper">
+                <div class="gem-panel-embed" id="gem-panel-embed"></div>
+            </div>
+
+            <!-- DETAILS -->
+            <div class="gem-panel-body">
+                <div class="gem-panel-tag-row">
+                    <span class="card-tag" id="gem-panel-tag"></span>
+                </div>
+                <h2 class="gem-panel-name" id="gem-panel-name"></h2>
+                <p class="gem-panel-location" id="gem-panel-location"></p>
+                <p class="gem-panel-handle" id="gem-panel-handle"></p>
+                <p class="gem-panel-hours" id="gem-panel-hours" style="display:none;"></p>
+
+                <div class="gem-panel-actions">
+                    <a class="btn-panel-maps" id="gem-panel-maps" href="#" target="_blank" rel="noopener" style="display:none;">🗺️ Open in Google Maps</a>
+                    <button class="btn-panel-save" id="gem-panel-save">+ Save</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
     <!-- PLACE DETAIL PANEL -->
     <div class="place-panel-overlay" id="place-panel-overlay">
         <div class="place-panel" id="place-panel" role="dialog" aria-modal="true" aria-labelledby="panel-name">

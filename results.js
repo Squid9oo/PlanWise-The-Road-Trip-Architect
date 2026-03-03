@@ -208,3 +208,44 @@ function wireFilterChips() {
         });
     });
 }
+
+// ==========================================
+// 5. COMMUNITY GEMS — Fetch + render on results page
+// ==========================================
+async function loadResultsGems() {
+
+    const grid       = document.getElementById('results-grid');
+    const filterRow  = document.getElementById('results-filter-row');
+    const countEl    = document.getElementById('results-count');
+
+    if (!grid) return;
+
+    try {
+        const gems = await fetchApprovedGems(); // defined in app.js
+        if (!gems.length) return;
+
+        // Build all gem cards concurrently
+        const cards = await Promise.all(gems.map(gem => buildGemCard(gem)));
+
+        cards.forEach(card => {
+            // Mark as gem so filter chips work correctly
+            card.dataset.source = 'gem';
+            grid.appendChild(card);
+        });
+
+        // Recount visible cards after gems added
+        const allCards   = grid.querySelectorAll('.feed-card, .gem-card');
+        const countText  = `Showing <strong>${allCards.length} results</strong> near ${to}`;
+        if (countEl) countEl.innerHTML = countText;
+
+    } catch (err) {
+        // Gems failed silently — Places results still show fine
+        console.warn('Could not load community gems:', err);
+    }
+}
+
+// Auto-run on results page
+document.addEventListener('DOMContentLoaded', () => {
+    // Small delay so Places cards render first, gems appear after
+    setTimeout(loadResultsGems, 800);
+});

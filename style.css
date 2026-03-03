@@ -1420,3 +1420,395 @@ input:focus-visible {
     accent-color: var(--primary);
     cursor: pointer;
 }
+
+/* ============================================
+   COMMUNITY GEMS — Section + Cards + Panel
+   ============================================ */
+
+/* --- GEMS SECTION (home page) --- */
+.gems-section {
+    padding: 3rem 2rem 4rem;
+    background: var(--bg);
+}
+
+.gems-section-inner {
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.gems-section-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.gems-section-title {
+    font-family: var(--font-display);
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    font-weight: 700;
+    color: var(--dark);
+    margin-bottom: 0.4rem;
+}
+
+.gems-section-sub {
+    font-size: 0.95rem;
+    color: var(--muted);
+    font-weight: 300;
+}
+
+/* --- GEMS ROW — horizontal scrollable on mobile --- */
+.gems-row {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1.25rem;
+}
+
+@media (max-width: 1024px) {
+    .gems-row {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .gems-section { padding: 2rem 1rem 3rem; }
+    .gems-row {
+        display: flex;
+        gap: 1rem;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 1rem;
+        /* Hide scrollbar but keep scrollable */
+        scrollbar-width: none;
+    }
+    .gems-row::-webkit-scrollbar { display: none; }
+}
+
+/* --- GEM CARD --- */
+.gem-card {
+    background: var(--surface);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    transition: transform var(--transition), box-shadow var(--transition);
+    flex-shrink: 0; /* for mobile horizontal scroll */
+}
+
+@media (max-width: 768px) {
+    .gem-card {
+        width: 240px;
+        scroll-snap-align: start;
+    }
+}
+
+.gem-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+.gem-card-media {
+    width: 100%;
+    height: 180px;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    background-color: var(--dark);
+}
+
+.gem-card-platform {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: var(--radius-xl);
+    color: #fff;
+    letter-spacing: 0.03em;
+}
+
+/* Play button overlay */
+.gem-card-play {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 44px;
+    height: 44px;
+    background: rgba(255,255,255,0.22);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: #fff;
+    transition: background var(--transition), transform var(--transition);
+    pointer-events: none;
+}
+
+.gem-card:hover .gem-card-play {
+    background: rgba(255,255,255,0.36);
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* Community Gem badge */
+.gem-card-badge {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(4px);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: var(--radius-xl);
+}
+
+.gem-card-body {
+    padding: 0.85rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.gem-card-body h3 {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--dark);
+    line-height: 1.3;
+    margin-top: 0.2rem;
+}
+
+.gem-card-location {
+    font-size: 0.78rem;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.gem-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.4rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.gem-card-author {
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-weight: 500;
+}
+
+/* ============================================
+   GEM DETAIL PANEL
+   ============================================ */
+
+.gem-panel-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 10, 20, 0.70);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 700;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition), visibility var(--transition);
+}
+
+.gem-panel-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.gem-panel {
+    background: var(--surface);
+    width: 100%;
+    max-width: 680px;
+    max-height: 92vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    overflow-y: auto;
+    position: relative;
+    transform: translateY(100%);
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gem-panel-overlay.active .gem-panel {
+    transform: translateY(0);
+}
+
+/* Desktop — centered modal style */
+@media (min-width: 640px) {
+    .gem-panel-overlay { align-items: center; padding: 1rem; }
+    .gem-panel {
+        border-radius: var(--radius-lg);
+        max-height: 88vh;
+        transform: translateY(24px) scale(0.98);
+    }
+    .gem-panel-overlay.active .gem-panel {
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Close button */
+.gem-panel-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255,255,255,0.92);
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 0.85rem;
+    color: var(--body-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    box-shadow: var(--shadow-sm);
+    transition: background var(--transition), color var(--transition);
+}
+
+.gem-panel-close:hover { background: var(--accent); color: #fff; }
+
+/* --- VIDEO EMBED --- */
+.gem-panel-embed-wrapper {
+    width: 100%;
+    background: #000;
+    position: relative;
+}
+
+/* YouTube / standard iframe — 16:9 */
+.gem-panel-iframe {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    display: block;
+    border: none;
+}
+
+/* TikTok iframe — taller to match TikTok's portrait format */
+.gem-panel-iframe--tiktok {
+    aspect-ratio: 9 / 16;
+    max-height: 480px;
+}
+
+/* TikTok CTA (mobile or short URL) */
+.gem-panel-tiktok-cta {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 2rem 1rem;
+    background: #000;
+}
+
+.gem-panel-thumb {
+    width: 100%;
+    max-width: 320px;
+    aspect-ratio: 9 / 16;
+    background-size: cover;
+    background-position: center;
+    border-radius: var(--radius-md);
+}
+
+.gem-panel-thumb--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    background: #1a1a2e;
+    color: rgba(255,255,255,0.3);
+}
+
+.btn-watch-tiktok {
+    display: inline-block;
+    background: #010101;
+    color: #fff;
+    padding: 0.85rem 2rem;
+    border-radius: var(--radius-xl);
+    font-weight: 700;
+    font-size: 0.95rem;
+    font-family: var(--font-body);
+    text-decoration: none;
+    transition: background var(--transition), transform var(--transition);
+}
+
+.btn-watch-tiktok:hover {
+    background: #333;
+    transform: translateY(-2px);
+}
+
+/* --- PANEL BODY --- */
+.gem-panel-body {
+    padding: 1.5rem 1.75rem 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.gem-panel-tag-row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.gem-panel-name {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--dark);
+    line-height: 1.25;
+}
+
+.gem-panel-location,
+.gem-panel-handle,
+.gem-panel-hours {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+.gem-panel-handle {
+    font-weight: 600;
+    color: var(--body-text);
+}
+
+.gem-panel-hours {
+    font-weight: 500;
+    color: var(--body-text);
+}
+
+/* Panel action buttons */
+.gem-panel-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--border);
+    padding-top: 1rem;
+    margin-top: 0.5rem;
+}
+
+/* Responsive panel */
+@media (max-width: 480px) {
+    .gem-panel-body { padding: 1.25rem 1.25rem 1.75rem; }
+    .gem-panel-name { font-size: 1.2rem; }
+    .gem-panel-iframe--tiktok { max-height: 380px; }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .gem-panel,
+    .gem-panel-overlay { transition: none !important; }
+    .gem-card { transition: none !important; }
+}
