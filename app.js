@@ -925,11 +925,17 @@ async function buildGemCard(gem) {
     });
 
     card.querySelector('.gem-save-btn').addEventListener('click', function () {
-        this.textContent       = '✓ Saved';
-        this.style.background  = 'var(--green)';
-        this.style.borderColor = 'var(--green)';
-        this.style.color       = '#fff';
-        this.disabled          = true;
+        if (this.textContent === '✓ Saved') {
+            this.textContent       = '+ Save';
+            this.style.background  = '';
+            this.style.borderColor = '';
+            this.style.color       = '';
+        } else {
+            this.textContent       = '✓ Saved';
+            this.style.background  = 'var(--green)';
+            this.style.borderColor = 'var(--green)';
+            this.style.color       = '#fff';
+        }
     });
 
     return card;
@@ -1051,11 +1057,17 @@ async function openGemPanel(gem, thumbnail) {
         newBtn.style.color       = '';
         newBtn.disabled          = false;
         newBtn.addEventListener('click', function () {
-            this.textContent       = '✓ Saved';
-            this.style.background  = 'var(--green)';
-            this.style.borderColor = 'var(--green)';
-            this.style.color       = '#fff';
-            this.disabled          = true;
+            if (this.textContent === '✓ Saved') {
+                this.textContent       = '+ Save';
+                this.style.background  = '';
+                this.style.borderColor = '';
+                this.style.color       = '';
+            } else {
+                this.textContent       = '✓ Saved';
+                this.style.background  = 'var(--green)';
+                this.style.borderColor = 'var(--green)';
+                this.style.color       = '#fff';
+            }
         });
     }
 

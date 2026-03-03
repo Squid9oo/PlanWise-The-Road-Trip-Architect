@@ -114,8 +114,8 @@ button { font-family: var(--font-body); cursor: pointer; }
 
 /* --- HERO --- */
 .hero {
-    padding: 5rem 2rem 3rem;
-    min-height: 70vh;
+    padding: 5rem 2rem 0;
+    min-height: auto;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -993,7 +993,7 @@ input:focus-visible {
 .search-card-wrapper {
     position: relative;
     overflow: hidden;
-    padding: 2rem 0;
+    padding: 2rem 0 0 0;
     margin-left: calc(-50vw + 50%);
     margin-right: calc(-50vw + 50%);
     width: 100vw;
