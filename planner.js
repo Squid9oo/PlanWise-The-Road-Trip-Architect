@@ -232,13 +232,19 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
         : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent((gem.name || '') + ' ' + (gem.location || ''))}`;
 
     card.innerHTML = `
-        <div class="drag-handle" aria-hidden="true">⠿</div>
+        <div class="drag-handle" aria-hidden="true" title="Drag to reorder">⠿</div>
         <div class="stop-num">${stopNum}</div>
         <div class="stop-photo" style="background-image: url('${photoUrl}')"></div>
         <div class="stop-info">
             <div class="stop-top-row">
                 <span class="card-tag card-tag--small ${gem.category || 'heritage'}">${categoryLabels[gem.category] || gem.category || 'Attraction'}</span>
-                <button class="btn-remove-stop" data-gem-id="${gem.id}" aria-label="Remove stop">✕</button>
+                <div class="stop-actions">
+                    <div class="btn-reorder-group" aria-label="Reorder stop">
+                        <button class="btn-reorder btn-reorder-up" data-gem-id="${gem.id}" aria-label="Move up">↑</button>
+                        <button class="btn-reorder btn-reorder-down" data-gem-id="${gem.id}" aria-label="Move down">↓</button>
+                    </div>
+                    <button class="btn-remove-stop" data-gem-id="${gem.id}" aria-label="Remove stop">✕</button>
+                </div>
             </div>
             <h3 class="stop-name">${gem.name || 'Unnamed Stop'}</h3>
             <p class="stop-location">📍 ${gem.location || 'Location unavailable'}</p>
@@ -273,6 +279,12 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
 
     // Wire remove button
     card.querySelector('.btn-remove-stop').addEventListener('click', () => removeStop(gem.id));
+
+    // Wire Up/Down reorder buttons (mobile)
+    const upBtn   = card.querySelector('.btn-reorder-up');
+    const downBtn = card.querySelector('.btn-reorder-down');
+    if (upBtn)   upBtn.addEventListener('click',   (e) => { e.stopPropagation(); moveStop(gem.id, 'up');   });
+    if (downBtn) downBtn.addEventListener('click', (e) => { e.stopPropagation(); moveStop(gem.id, 'down'); });
 
     // Wire time-spent → recalculate times (no full re-render needed)
     card.querySelector('.time-spent-select').addEventListener('change', (e) => {
@@ -609,6 +621,32 @@ function removeStop(gemId) {
 
     // Reload — checks for empty state, re-renders
     loadPlanner();
+}
+
+// ==========================================
+// MOVE STOP — Up/Down reorder for mobile
+// Swaps a gem with its neighbour in the same day.
+// ==========================================
+function moveStop(gemId, direction) {
+    const order    = getOrder();
+    const dayCount = getDayCount();
+
+    for (let d = 1; d <= dayCount; d++) {
+        const dayStops = order[d] || [];
+        const idx      = dayStops.indexOf(gemId);
+        if (idx === -1) continue; // not in this day
+
+        const newIdx = direction === 'up' ? idx - 1 : idx + 1;
+        if (newIdx < 0 || newIdx >= dayStops.length) return; // already at top/bottom
+
+        // Swap the two entries
+        [dayStops[idx], dayStops[newIdx]] = [dayStops[newIdx], dayStops[idx]];
+        order[d] = dayStops;
+        saveOrder(order);
+        renderPlanner();
+        fetchAllDriveTimes();
+        return;
+    }
 }
 
 // ==========================================

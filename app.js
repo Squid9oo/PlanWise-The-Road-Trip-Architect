@@ -41,15 +41,22 @@ function showSaveToast(count) {
     toast.innerHTML = `
         🎒 <span>${count} gem${count !== 1 ? 's' : ''} saved — View Planner</span>
         <span class="save-toast-arrow">→</span>
+        <span class="save-toast-close" id="save-toast-close" aria-label="Close">✕</span>
     `;
 
     document.body.appendChild(toast);
 
-    // Auto-dismiss after 4 seconds
-    toastTimer = setTimeout(() => {
-        toast.classList.add('toast-hide');
-        setTimeout(() => toast.remove(), 420);
-    }, 4000);
+    // Wire close button — stops link navigation when ✕ is tapped
+    const closeBtn = document.getElementById('save-toast-close');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            toast.classList.add('toast-hide');
+            setTimeout(() => toast.remove(), 420);
+        });
+    }
+    // No auto-dismiss — stays until user taps ✕ or navigates to planner
 }
 
 // ==========================================
@@ -728,7 +735,7 @@ function openPlaceDetail(placeId, basicPlace) {
         fields: [
             'name', 'formatted_address', 'rating', 'user_ratings_total',
             'opening_hours', 'formatted_phone_number', 'website',
-            'url', 'photos', 'types'
+            'url', 'photos', 'types', 'editorial_summary'
         ],
     }, (place, status) => {
 
@@ -764,6 +771,19 @@ function openPlaceDetail(placeId, basicPlace) {
         // --- Name + Address ---
         document.getElementById('panel-name').textContent    = place.name || '';
         document.getElementById('panel-address').textContent = place.formatted_address || '';
+
+        // --- Description (editorial_summary — not always available) ---
+        let descEl = document.getElementById('panel-description');
+        if (!descEl) {
+            descEl = document.createElement('p');
+            descEl.id        = 'panel-description';
+            descEl.className = 'gem-panel-desc'; // reuse existing desc style
+            const addrEl = document.getElementById('panel-address');
+            addrEl.parentNode.insertBefore(descEl, addrEl.nextSibling);
+        }
+        const summary = place.editorial_summary?.overview;
+        descEl.textContent   = summary || '';
+        descEl.style.display = summary ? 'block' : 'none';
 
         // --- Rating ---
         const ratingEl = document.getElementById('panel-rating');
@@ -912,36 +932,67 @@ function getTikTokVideoId(url) {
     return m ? m[1] : null;
 }
 
-// --- Get thumbnail URL (async) ---
-// YouTube: free, no API key needed
-// TikTok: uses public oEmbed API (no key needed)
+// --- Get thumbnail URL (async, cached in localStorage indefinitely) ---
 async function getGemThumbnail(socialLink) {
+    if (!socialLink) return null;
+
+    // Check thumbnail cache — avoids repeated TikTok oEmbed calls on every page load
+    try {
+        const cache = JSON.parse(localStorage.getItem(THUMB_CACHE_KEY)) || {};
+        if (cache[socialLink]) return cache[socialLink];
+    } catch (_) {}
+
     const platform = detectPlatform(socialLink);
+    let url = null;
 
     if (platform === 'youtube') {
         const id = getYouTubeVideoId(socialLink);
-        if (id) return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+        if (id) url = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
     }
 
     if (platform === 'tiktok') {
         try {
             const res  = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(socialLink)}`);
             const data = await res.json();
-            if (data.thumbnail_url) return data.thumbnail_url;
+            if (data.thumbnail_url) url = data.thumbnail_url;
         } catch (_) {
-            // CORS blocked or network error — fall through to null
+            // CORS blocked or TikTok rate-limited — fall through to null (branded placeholder)
         }
     }
 
-    return null; // caller renders branded placeholder
+    // Save to cache so next page load is instant
+    if (url) {
+        try {
+            const cache = JSON.parse(localStorage.getItem(THUMB_CACHE_KEY)) || {};
+            cache[socialLink] = url;
+            localStorage.setItem(THUMB_CACHE_KEY, JSON.stringify(cache));
+        } catch (_) {}
+    }
+
+    return url;
 }
 
-// --- Fetch all approved gems from Apps Script ---
+// --- Cache keys for performance ---
+const GEM_CACHE_KEY  = 'planwise_gems_cache';
+const THUMB_CACHE_KEY = 'planwise_thumb_cache';
+const GEM_CACHE_TTL  = 5 * 60 * 1000; // 5 minutes — after this, re-fetch fresh data
+
+// --- Fetch all approved gems (cached in localStorage for 5 min) ---
 async function fetchApprovedGems() {
+    try {
+        const raw    = localStorage.getItem(GEM_CACHE_KEY);
+        const cached = raw ? JSON.parse(raw) : null;
+        const isFresh = cached && Array.isArray(cached.gems) && (Date.now() - cached.ts) < GEM_CACHE_TTL;
+        if (isFresh) return cached.gems;
+    } catch (_) {}
+
     try {
         const res  = await fetch(GEMS_API_URL);
         const data = await res.json();
-        if (data.success && Array.isArray(data.gems)) return data.gems;
+        if (data.success && Array.isArray(data.gems)) {
+            localStorage.setItem(GEM_CACHE_KEY, JSON.stringify({ ts: Date.now(), gems: data.gems }));
+            return data.gems;
+        }
     } catch (_) {}
     return [];
 }

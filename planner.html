@@ -335,15 +335,15 @@
             box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.2);
         }
 
-        /* Drag handle */
+        /* Drag handle — desktop only */
         .drag-handle {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 28px;
+            width: 32px;
             flex-shrink: 0;
-            color: var(--border);
-            font-size: 1.1rem;
+            color: var(--muted);
+            font-size: 1.2rem;
             letter-spacing: -2px;
             cursor: grab;
             align-self: stretch;
@@ -354,8 +354,52 @@
         }
 
         .stop-card:hover .drag-handle {
+            color: var(--dark);
+            background: rgba(0, 210, 255, 0.06);
+        }
+
+        /* Reorder buttons — mobile only (Up/Down arrows) */
+        .stop-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            flex-shrink: 0;
+        }
+
+        .btn-reorder-group {
+            display: none;
+            gap: 0.2rem;
+        }
+
+        .btn-reorder {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
             color: var(--muted);
-            background: var(--bg);
+            width: 30px;
+            height: 30px;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition);
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            font-family: var(--font-body);
+        }
+
+        .btn-reorder:hover,
+        .btn-reorder:active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--dark);
+        }
+
+        /* On mobile: show Up/Down buttons, hide drag handle */
+        @media (max-width: 768px) {
+            .drag-handle { display: none; }
+            .btn-reorder-group { display: flex; }
         }
 
         /* Stop number badge */

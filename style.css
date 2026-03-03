@@ -351,6 +351,10 @@ button { font-family: var(--font-body); cursor: pointer; }
     color: var(--body-text);
     background: var(--bg);
     transition: all var(--transition);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    cursor: pointer;
 }
 
 .chip:hover {
@@ -1516,8 +1520,9 @@ input:focus-visible {
     flex-shrink: 0; /* for mobile horizontal scroll */
 }
 
+/* Scoped: fixed width only inside the home page gems-row horizontal scroll */
 @media (max-width: 768px) {
-    .gem-card {
+    .gems-row .gem-card {
         width: 240px;
         scroll-snap-align: start;
     }
@@ -1971,6 +1976,27 @@ input:focus-visible {
     color: var(--primary);
     font-size: 1rem;
     flex-shrink: 0;
+}
+
+/* Close button on the save toast */
+.save-toast-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.15);
+    font-size: 0.65rem;
+    flex-shrink: 0;
+    margin-left: 0.15rem;
+    transition: background var(--transition);
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+.save-toast-close:hover {
+    background: rgba(255, 71, 126, 0.5);
 }
 
 @media (max-width: 480px) {

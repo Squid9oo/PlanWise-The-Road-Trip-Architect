@@ -215,9 +215,8 @@ function wireFilterChips() {
 // ==========================================
 async function loadResultsGems() {
 
-    const grid       = document.getElementById('results-grid');
-    const filterRow  = document.getElementById('results-filter-row');
-    const countEl    = document.getElementById('results-count');
+    const grid      = document.getElementById('results-grid');
+    const countEl   = document.getElementById('results-count');
 
     if (!grid) return;
 
@@ -225,19 +224,36 @@ async function loadResultsGems() {
         const gems = await fetchApprovedGems(); // defined in app.js
         if (!gems.length) return;
 
-        // Build all gem cards concurrently
-        const cards = await Promise.all(gems.map(gem => buildGemCard(gem)));
+        // Filter gems to match selected activities from URL params
+        // If no activities selected, show all gems
+        const filteredGems = activities.length > 0
+            ? gems.filter(gem => {
+                const gemCats = (gem.category || '').split(',').map(c => c.trim());
+                return activities.some(act => gemCats.includes(act));
+              })
+            : gems;
+
+        if (!filteredGems.length) return;
+
+        // Build all gem cards concurrently (parallel thumbnail fetches)
+        const cards = await Promise.all(filteredGems.map(gem => buildGemCard(gem)));
 
         cards.forEach(card => {
-            // Mark as gem so filter chips work correctly
             card.dataset.source = 'gem';
             grid.appendChild(card);
         });
 
         // Recount visible cards after gems added
-        const allCards   = grid.querySelectorAll('.feed-card, .gem-card');
-        const countText  = `Showing <strong>${allCards.length} results</strong> near ${to}`;
-        if (countEl) countEl.innerHTML = countText;
+        const allCards  = grid.querySelectorAll('.feed-card, .gem-card');
+        if (countEl) {
+            countEl.innerHTML = `Showing <strong>${allCards.length} results</strong> near ${to}`;
+        }
+
+        // Auto-apply filter chip if exactly 1 activity was selected on home page
+        if (activities.length === 1) {
+            const chip = document.querySelector(`.results-filter-row .chip[data-filter="${activities[0]}"]`);
+            if (chip) chip.click();
+        }
 
     } catch (err) {
         // Gems failed silently — Places results still show fine
