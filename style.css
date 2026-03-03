@@ -1636,10 +1636,12 @@ input:focus-visible {
     max-width: 680px;
     max-height: 92vh;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-    overflow-y: auto;
+    overflow: hidden; /* panel itself never scrolls */
     position: relative;
     transform: translateY(100%);
     transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    flex-direction: column;
 }
 
 .gem-panel-overlay.active .gem-panel {
@@ -1653,6 +1655,8 @@ input:focus-visible {
         border-radius: var(--radius-lg);
         max-height: 88vh;
         transform: translateY(24px) scale(0.98);
+        display: flex;
+        flex-direction: column;
     }
     .gem-panel-overlay.active .gem-panel {
         transform: translateY(0) scale(1);
@@ -1687,6 +1691,8 @@ input:focus-visible {
     width: 100%;
     background: #000;
     position: relative;
+    flex-shrink: 0; /* video never shrinks — always fully visible */
+    overflow: hidden;
 }
 
 /* YouTube / standard iframe — 16:9 */
@@ -1755,6 +1761,9 @@ input:focus-visible {
     display: flex;
     flex-direction: column;
     gap: 0.6rem;
+    overflow-y: auto; /* only the details section scrolls */
+    flex: 1;
+    min-height: 0; /* required for flex overflow to work correctly */
 }
 
 .gem-panel-tag-row {
