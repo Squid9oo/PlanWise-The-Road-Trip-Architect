@@ -245,6 +245,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const toLng   = document.getElementById('city-to-lng').value || fromLng;
             const finalToCity = toCity || fromCity;
 
+            const radiusValue = document.getElementById('radius-select')?.value || '50000';
+
             const params = new URLSearchParams({
                 from:       fromCity,
                 to:         finalToCity,
@@ -256,6 +258,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 dateTo:     toDate,
                 transport:  transport,
                 activities: activities.join(','),
+                radius:     radiusValue,
             });
 
             setTimeout(() => {

@@ -17,6 +17,7 @@ const toLng      = parseFloat(params.get('toLng'));
 const activities = params.get('activities')
                     ? params.get('activities').split(',').filter(Boolean)
                     : [];
+const searchRadius = parseInt(params.get('radius'), 10) || 50000;
 
 // ==========================================
 // 2. POPULATE TRIP SUMMARY BAR
@@ -146,7 +147,7 @@ function runPlacesSearch(locations, service, onComplete) {
 
     locations.forEach((location, locIndex) => {
         PLACE_TYPES.forEach(type => {
-            service.nearbySearch({ location, radius: 25000, type }, (results, status) => {
+            service.nearbySearch({ location, radius: searchRadius, type }, (results, status) => {
                 completed++;
                 if (status === google.maps.places.PlacesServiceStatus.OK && results) {
                     locationResults[locIndex] = locationResults[locIndex].concat(results);
@@ -534,7 +535,8 @@ async function loadResultsGems() {
             // parseFloat ensures Google Sheets text strings become actual math numbers
             const gLat = parseFloat(gem.lat);
             const gLng = parseFloat(gem.lng);
-            return window.activeSearchPoints.some(pt => getDistanceKm(gLat, gLng, pt.lat, pt.lng) <= 50);
+            const radiusKm = searchRadius / 1000; // convert metres to km
+            return window.activeSearchPoints.some(pt => getDistanceKm(gLat, gLng, pt.lat, pt.lng) <= radiusKm);
         });
 
         if (!filteredGems.length) return;
