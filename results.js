@@ -205,6 +205,12 @@ function renderResults(unique) {
     countEl.style.display   = 'block';
     countEl.innerHTML       = `Showing <strong>${firstBatch.length} gems</strong> near ${to}`;
 
+    // Show search tip if Places results are low
+    const tipEl = document.getElementById('results-tip');
+    if (tipEl) {
+        tipEl.style.display = allPlaces.length < 20 ? 'flex' : 'none';
+    }
+
     updateLoadMoreButton();
     wireFilterChips();
     loadResultsGems();
@@ -303,12 +309,13 @@ function applyFilter(filterValue) {
     homepageActivities = null;
     activeFilter = filterValue;
 
-    // Update chip selected state
-    chips.forEach(c => c.classList.remove('selected'));
-    const activeChip = document.querySelector(
-        `.results-filter-row .chip[data-filter="${filterValue}"]`
-    );
-    if (activeChip) activeChip.classList.add('selected');
+    // Update chip selected state — only reset all chips when "All" is clicked
+    // For single-category, wireFilterChips() already toggled the chip visually
+    if (filterValue === 'all') {
+        chips.forEach(c => c.classList.remove('selected'));
+        const allChip = document.querySelector('.results-filter-row .chip[data-filter="all"]');
+        if (allChip) allChip.classList.add('selected');
+    }
 
     // Update URL so refresh preserves the active filter
     const url = new URL(window.location);
@@ -426,14 +433,44 @@ function applyMultiFilter(activityList) {
 
 function wireFilterChips() {
     const chips = document.querySelectorAll('.results-filter-row .chip');
+
     chips.forEach(chip => {
-        chip.addEventListener('click', () => applyFilter(chip.dataset.filter));
+        chip.addEventListener('click', () => {
+            const value = chip.dataset.filter;
+
+            if (value === 'all') {
+                // "All" resets everything
+                applyFilter('all');
+                return;
+            }
+
+            // Toggle this chip on/off
+            chip.classList.toggle('selected');
+
+            // Deselect "All" chip whenever a category is toggled on
+            const allChip = document.querySelector('.results-filter-row .chip[data-filter="all"]');
+            if (allChip) allChip.classList.remove('selected');
+
+            // Collect all currently selected category chips
+            const selected = [...document.querySelectorAll('.results-filter-row .chip.selected')]
+                .map(c => c.dataset.filter)
+                .filter(f => f !== 'all');
+
+            if (selected.length === 0) {
+                // Nothing selected → go back to All
+                applyFilter('all');
+            } else if (selected.length === 1) {
+                applyFilter(selected[0]);
+            } else {
+                applyMultiFilter(selected);
+            }
+        });
     });
 
+    // Auto-apply URL activities on first load
     if (activities.length === 1) {
         setTimeout(() => applyFilter(activities[0]), 0);
     }
-    // Multi-activity: show label + filter cards
     if (activities.length > 1) {
         setTimeout(() => applyMultiFilter(activities), 0);
     }
@@ -545,6 +582,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         backToTopBtn.addEventListener('click', () => {
             window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+
+    const tipClose = document.getElementById('results-tip-close');
+    if (tipClose) {
+        tipClose.addEventListener('click', () => {
+            const tip = document.getElementById('results-tip');
+            if (tip) tip.style.display = 'none';
         });
     }
 });
