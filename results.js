@@ -647,12 +647,15 @@ function toggleMapView() {
     const toggleIcon   = document.querySelector('.btn-map-toggle .toggle-icon');
 
     if (isMapActive) {
-        mapContainer.style.display = 'block';
-        if (toggleText) toggleText.textContent = 'Show List';
-        if (toggleIcon) toggleIcon.textContent = '📄';
-        renderResultsMap();
-    } else {
-        mapContainer.style.display = 'none';
+            mapContainer.style.display = 'block';
+            if (toggleText) toggleText.textContent = 'Show List';
+            if (toggleIcon) toggleIcon.textContent = '📄';
+            renderResultsMap();
+            
+            // Smoothly scroll to the top so the map is perfectly framed
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            mapContainer.style.display = 'none';
         if (toggleText) toggleText.textContent = 'Show Map';
         if (toggleIcon) toggleIcon.textContent = '🗺️';
     }
