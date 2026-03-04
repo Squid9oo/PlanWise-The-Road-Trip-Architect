@@ -21,6 +21,19 @@ function toggleSaveGem(gemObj, btnEl) {
         showSaveToast(saved.length); // 🎒 Show toast only on save, not unsave
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+    updateNavBadge(); // Update the header count
+}
+
+// ==========================================
+// NAV BADGE — Update "My Trip" count
+// ==========================================
+function updateNavBadge() {
+    const count = getSavedGems().length;
+    const text  = count > 0 ? `🎒 My Trip (${count})` : '🎒 My Trip';
+    const btnIndex   = document.getElementById('nav-mytrip-index');
+    const btnResults = document.getElementById('nav-mytrip-results');
+    if (btnIndex)   btnIndex.textContent   = text;
+    if (btnResults) btnResults.textContent = text;
 }
 
 // ==========================================
@@ -125,6 +138,8 @@ window.initMap = function () {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+
+    updateNavBadge(); // Initialize header count on page load
 
     // ==========================================
     // 1. ACTIVITY CHIPS — Toggle selected state
