@@ -235,20 +235,14 @@ function loadMoreResults() {
     const countEl = document.getElementById('results-count');
     const batch   = filteredPlaces.slice(loadedCount, loadedCount + BATCH_SIZE);
 
-    // Insert before the first community gem card so Places stay grouped
-    const firstGemCard = grid.querySelector('.gem-card');
-
+    // Places append after gems (gems-first order)
     batch.forEach((place, i) => {
         const card = buildPlaceCard(place, loadedCount + i);
         if (place.geometry?.location) {
             card.dataset.lat = place.geometry.location.lat();
             card.dataset.lng = place.geometry.location.lng();
         }
-        if (firstGemCard) {
-            grid.insertBefore(card, firstGemCard);
-        } else {
-            grid.appendChild(card);
-        }
+        grid.appendChild(card);
     });
 
     loadedCount += batch.length;
@@ -351,23 +345,18 @@ function applyFilter(filterValue) {
         });
     }
 
-    // Remove all Places cards from grid, re-render first batch
+    // Remove all Places cards from grid, re-render after gems (gems-first order)
     grid.querySelectorAll('.feed-card').forEach(card => card.remove());
     loadedCount = 0;
 
-    const batch        = filteredPlaces.slice(0, BATCH_SIZE);
-    const firstGemCard = grid.querySelector('.gem-card');
+    const batch = filteredPlaces.slice(0, BATCH_SIZE);
     batch.forEach((place, i) => {
         const card = buildPlaceCard(place, i);
         if (place.geometry?.location) {
             card.dataset.lat = place.geometry.location.lat();
             card.dataset.lng = place.geometry.location.lng();
         }
-        if (firstGemCard) {
-            grid.insertBefore(card, firstGemCard);
-        } else {
-            grid.appendChild(card);
-        }
+        grid.appendChild(card);
     });
     loadedCount = batch.length;
 
@@ -422,23 +411,18 @@ function applyMultiFilter(activityList) {
         return activityList.includes(tag);
     });
 
-    // Remove all Places cards, re-render first batch
+    // Remove all Places cards, re-render after gems (gems-first order)
     grid.querySelectorAll('.feed-card').forEach(card => card.remove());
     loadedCount = 0;
 
-    const batch        = filteredPlaces.slice(0, BATCH_SIZE);
-    const firstGemCard = grid.querySelector('.gem-card');
+    const batch = filteredPlaces.slice(0, BATCH_SIZE);
     batch.forEach((place, i) => {
         const card = buildPlaceCard(place, i);
         if (place.geometry?.location) {
             card.dataset.lat = place.geometry.location.lat();
             card.dataset.lng = place.geometry.location.lng();
         }
-        if (firstGemCard) {
-            grid.insertBefore(card, firstGemCard);
-        } else {
-            grid.appendChild(card);
-        }
+        grid.appendChild(card);
     });
     loadedCount = batch.length;
 
@@ -571,7 +555,13 @@ async function loadResultsGems() {
                 card.style.display = match ? '' : 'none';
             }
 
-            grid.appendChild(card);
+            // Gems first: insert before the first Google Places card
+            const firstPlacesCard = grid.querySelector('.feed-card');
+            if (firstPlacesCard) {
+                grid.insertBefore(card, firstPlacesCard);
+            } else {
+                grid.appendChild(card);
+            }
         });
 
         // Lightweight filter — show/hide gem cards only (don't re-render Places)
