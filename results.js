@@ -164,43 +164,12 @@ window.initResultsSearch = function () {
     const map     = new google.maps.Map(mapEl, { center: { lat: toLat, lng: toLng }, zoom: 12 });
     const service = new google.maps.places.PlacesService(map);
     const dest    = { lat: toLat, lng: toLng };
-    window.activeSearchPoints = [dest]; // Default to destination
-
-    // Route search if start point is different from destination
-    const hasFrom    = !isNaN(fromLat) && !isNaN(fromLng);
-    const isSameSpot = hasFrom && Math.abs(fromLat - toLat) < 0.01 && Math.abs(fromLng - toLng) < 0.01;
-
-    if (hasFrom && !isSameSpot) {
-        const directionsService = new google.maps.DirectionsService();
-        directionsService.route({
-            origin:      { lat: fromLat, lng: fromLng },
-            destination: dest,
-            travelMode:  google.maps.TravelMode.DRIVING,
-        }, (result, status) => {
-            if (status !== 'OK' || !result.routes[0]) {
-                runPlacesSearch([dest], service, renderResults); // graceful fallback
-                return;
-            }
-            const path = result.routes[0].overview_path;
-            const len  = path.length;
-            if (len < 4) { runPlacesSearch([dest], service, renderResults); return; }
-
-            // Extract 2 evenly-spaced midpoints along the route
-            const mid1 = { lat: path[Math.floor(len * 0.33)].lat(), lng: path[Math.floor(len * 0.33)].lng() };
-            const mid2 = { lat: path[Math.floor(len * 0.66)].lat(), lng: path[Math.floor(len * 0.66)].lng() };
-
-            // Save for geo-filtering community gems
-            window.activeSearchPoints = [mid1, mid2, dest]; 
-
-            const loadingP = document.querySelector('#results-loading p');
-            if (loadingP) loadingP.textContent = '🛣️ Searching along your route...';
-
-            runPlacesSearch([mid1, mid2, dest], service, renderResults);
-        });
-    } else {
-        // No start point or radius search — destination only
-        runPlacesSearch([dest], service, renderResults);
-    }
+    
+    // PIVOT: Destination-Only search. 
+    // We removed the Directions API route math to improve UX and save API quota.
+    window.activeSearchPoints = [dest]; 
+    
+    runPlacesSearch([dest], service, renderResults);
 
 };
 
@@ -318,7 +287,7 @@ async function loadResultsGems() {
         const gems = await fetchApprovedGems(); // defined in app.js
         if (!gems.length) return;
 
-        // Filter gems by activities AND geography (within 50km of any route point)
+        // Filter gems by activities AND geography (within 50km of destination)
         const filteredGems = gems.filter(gem => {
             // 1. Activity filter
             const gemCats = (gem.category || '').split(',').map(c => c.trim());
