@@ -713,6 +713,81 @@
         @media (prefers-reduced-motion: reduce) {
             .stop-card, .btn-add-day, .btn-export { transition: none !important; }
         }
+
+        /* --- TRIP MAP --- */
+        .planner-map-wrapper {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .planner-map-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1.25rem;
+            background: var(--dark);
+            color: #fff;
+        }
+
+        .planner-map-title {
+            font-size: 0.82rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .planner-map-toggle {
+            background: rgba(255,255,255,0.1);
+            border: 1.5px solid rgba(255,255,255,0.2);
+            color: #fff;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+
+        .planner-map-toggle:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        .planner-map-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .planner-map-container {
+            width: 100%;
+            transition: height 0.3s ease;
+        }
+
+        .planner-map-container.map-collapsed {
+            height: 0 !important;
+            overflow: hidden;
+        }
+
+        /* Stop card highlight when clicked from map pin */
+        .stop-card.map-highlight {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.25);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .planner-map-container { height: 260px !important; }
+            .planner-map-container.map-collapsed { height: 0 !important; }
+        }
+
+        @media (max-width: 480px) {
+            .planner-map-container { height: 220px !important; }
+            .planner-map-container.map-collapsed { height: 0 !important; }
+        }
     </style>
 </head>
 <body>
@@ -783,6 +858,16 @@
 
         <!-- PLANNER MAIN (shown when gems exist) -->
         <div class="planner-main" id="planner-main" style="display:none;">
+
+            <!-- TRIP MAP -->
+            <div class="planner-map-wrapper" id="planner-map-wrapper">
+                <div class="planner-map-header">
+                    <span class="planner-map-title">🗺️ Trip Overview</span>
+                    <button class="planner-map-toggle" id="planner-map-toggle" aria-label="Toggle map">▼</button>
+                </div>
+                <div class="planner-map-container" id="planner-map" style="height:340px;"></div>
+            </div>
+
             <!-- Day sections injected here by planner.js -->
             <div id="planner-content"></div>
         </div>
