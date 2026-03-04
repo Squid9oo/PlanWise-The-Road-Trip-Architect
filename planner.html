@@ -184,6 +184,39 @@
             border-color: var(--primary);
             box-shadow: 0 0 0 4px rgba(0, 210, 255, 0.15);
         }
+        .search-input-group {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+        }
+        .hotel-toggle-input {
+            display: none;
+        }
+        .hotel-toggle-btn {
+            background: var(--surface);
+            border: 1.5px solid var(--border);
+            color: var(--muted);
+            padding: 0 1.25rem;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            border-radius: var(--radius-xl);
+            font-size: 0.9rem;
+            font-weight: 600;
+            font-family: var(--font-body);
+            cursor: pointer;
+            transition: all var(--transition);
+            white-space: nowrap;
+        }
+        .hotel-toggle-input:checked + .hotel-toggle-btn {
+            background: rgba(0, 210, 255, 0.1);
+            border-color: var(--primary);
+            color: var(--primary-dark);
+        }
+        @media (max-width: 768px) {
+            .search-input-group { flex-direction: column; align-items: stretch; }
+            .hotel-toggle-btn { justify-content: center; height: 48px; }
+        }
         .btn-optimize-day {
             background: rgba(0, 210, 255, 0.1);
             border: 1.5px solid rgba(0, 210, 255, 0.3);
@@ -888,7 +921,13 @@
 
         <!-- EMPTY STATE -->
         <div class="planner-search-wrapper">
-            <input type="text" id="planner-add-search" class="planner-search-input" placeholder="🔍 Search for a place to add to your trip...">
+            <div class="search-input-group">
+                <input type="text" id="planner-add-search" class="planner-search-input" placeholder="🔍 Search for a place to add to your trip...">
+                <label class="hotel-toggle-label">
+                    <input type="checkbox" id="planner-hotel-toggle" class="hotel-toggle-input">
+                    <span class="hotel-toggle-btn">🏨 Add as Hotel</span>
+                </label>
+            </div>
         </div>
 
         <div class="planner-empty-state" id="planner-empty" style="display:none;">

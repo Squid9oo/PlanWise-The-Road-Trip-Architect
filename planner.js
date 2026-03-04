@@ -1058,24 +1058,77 @@ function handleManualAdd(autocomplete) {
     const place = autocomplete.getPlace();
     if (!place.geometry || !place.geometry.location) return;
 
-    const newGem = {
-        id: place.place_id || 'manual_' + Date.now(),
-        name: place.name,
-        location: place.formatted_address || '',
-        lat: place.geometry.location.lat(),
-        lng: place.geometry.location.lng(),
-        photo: place.photos && place.photos.length > 0 ? place.photos[0].getUrl({ maxWidth: 400 }) : '',
-        category: 'heritage' // default catch-all
-    };
+    const isHotel = document.getElementById('planner-hotel-toggle')?.checked;
+    const baseId  = place.place_id || 'manual_' + Date.now();
+    const photo   = place.photos && place.photos.length > 0 ? place.photos[0].getUrl({ maxWidth: 400 }) : '';
+    
+    let gems  = getGems();
+    let order = getOrder();
 
-    const gems = getGems();
-    if (!gems.find(g => g.id === newGem.id)) {
-        gems.push(newGem);
+    if (isHotel) {
+        // Create TWO gems: Check-in (End of Day 1) & Wake-up (Start of Day 2)
+        const checkIn = {
+            id: baseId + '_in',
+            name: '🏨 Check-in: ' + place.name,
+            location: place.formatted_address || '',
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+            photo: photo,
+            category: 'wellness' // Using wellness tag for relaxing vibe
+        };
+        const wakeUp = {
+            id: baseId + '_out',
+            name: '🌅 Wake up: ' + place.name,
+            location: place.formatted_address || '',
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+            photo: photo,
+            category: 'wellness'
+        };
+
+        if (!gems.find(g => g.id === checkIn.id)) gems.push(checkIn);
+        if (!gems.find(g => g.id === wakeUp.id))  gems.push(wakeUp);
         localStorage.setItem(SK_GEMS, JSON.stringify(gems));
+
+        // Ensure Day 2 exists
+        let dayCount = getDayCount();
+        if (dayCount < 2) {
+            saveDayCount(2);
+            const times = getDayTimes();
+            times[2] = '09:00';
+            saveDayTimes(times);
+            order[2] = [];
+        }
+
+        // Add to order
+        if (!order[1]) order[1] = [];
+        if (!order[2]) order[2] = [];
+        order[1].push(checkIn.id);      // Bottom of Day 1
+        order[2].unshift(wakeUp.id);    // Top of Day 2
+        saveOrder(order);
+
+        // Reset toggle
+        document.getElementById('planner-hotel-toggle').checked = false;
+
+    } else {
+        // Standard single gem logic
+        const newGem = {
+            id: baseId,
+            name: place.name,
+            location: place.formatted_address || '',
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+            photo: photo,
+            category: 'heritage'
+        };
+        if (!gems.find(g => g.id === newGem.id)) {
+            gems.push(newGem);
+            localStorage.setItem(SK_GEMS, JSON.stringify(gems));
+        }
     }
     
     document.getElementById('planner-add-search').value = '';
-    loadPlanner(); // normaliseOrder handles adding it to Day 1
+    loadPlanner(); // re-renders everything
 }
 
 function getDistanceKm(lat1, lng1, lat2, lng2) {
