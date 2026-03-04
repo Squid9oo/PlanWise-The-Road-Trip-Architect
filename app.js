@@ -247,6 +247,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const radiusValue = document.getElementById('radius-select')?.value || '50000';
 
+            // SAVE ORIGIN ANCHOR: Memorize the departure city for the Planner (Phase A)
+            const originLat = document.getElementById('city-from-lat').value;
+            const originLng = document.getElementById('city-from-lng').value;
+            if (fromCity && originLat && originLng) {
+                localStorage.setItem('planwise_origin', JSON.stringify({
+                    name: `🏡 Departing from: ${fromCity}`,
+                    lat: originLat,
+                    lng: originLng
+                }));
+            }
+
             const params = new URLSearchParams({
                 from:       fromCity,
                 to:         finalToCity,

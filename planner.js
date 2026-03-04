@@ -89,9 +89,45 @@ function saveDayCount(c)  { localStorage.setItem(SK_DAYCOUNT,   String(c)); }
 function saveDriveCache(c){ localStorage.setItem(SK_DRIVECACHE, JSON.stringify(c)); }
 
 // ==========================================
+// HOME ANCHOR INJECTION (Phase B)
+// ==========================================
+function ensureOriginAnchor() {
+    const originRaw = localStorage.getItem('planwise_origin');
+    // If no origin, or we already injected it this trip, do nothing
+    if (!originRaw || localStorage.getItem('planwise_origin_injected')) return;
+
+    const origin = JSON.parse(originRaw);
+    let gems = getGems();
+    
+    // Create the special starting point card
+    const anchorGem = {
+        id: 'gem_origin_anchor',
+        name: origin.name, // e.g. "🏡 Departing from: Puchong"
+        location: 'Start Line',
+        lat: origin.lat,
+        lng: origin.lng,
+        photo: 'https://images.unsplash.com/photo-1494522855154-9297ac14b55f?auto=format&fit=crop&w=400&q=80', // Aesthetic road photo
+        category: 'heritage'
+    };
+    
+    gems.push(anchorGem);
+    localStorage.setItem(SK_GEMS, JSON.stringify(gems));
+    
+    // Force it to the absolute TOP of Day 1
+    let order = getOrder();
+    if (!order[1]) order[1] = [];
+    order[1].unshift('gem_origin_anchor');
+    saveOrder(order);
+    
+    // Mark as injected so it doesn't duplicate if user refreshes
+    localStorage.setItem('planwise_origin_injected', 'true');
+}
+
+// ==========================================
 // MAIN ENTRY — called from initMap
 // ==========================================
 function loadPlanner() {
+    ensureOriginAnchor(); // Inject Home Anchor before loading gems
     const gems = getGems();
 
     if (gems.length === 0) {
@@ -1111,6 +1147,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem(SK_DURATION);
             localStorage.removeItem(SK_DAYTIMES);
             localStorage.removeItem(SK_DAYCOUNT);
+            localStorage.removeItem('planwise_origin_injected'); // Reset the anchor so it respawns next trip
             // Keep drive cache — no point re-fetching if user rebuilds same route
 
             loadPlanner(); // re-renders empty state
