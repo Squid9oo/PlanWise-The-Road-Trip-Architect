@@ -296,7 +296,11 @@ async function loadResultsGems() {
 
             // 2. Geography filter
             if (!window.activeSearchPoints || window.activeSearchPoints.length === 0) return true;
-            return window.activeSearchPoints.some(pt => getDistanceKm(gem.lat, gem.lng, pt.lat, pt.lng) <= 50);
+            
+            // parseFloat ensures Google Sheets text strings become actual math numbers
+            const gLat = parseFloat(gem.lat);
+            const gLng = parseFloat(gem.lng);
+            return window.activeSearchPoints.some(pt => getDistanceKm(gLat, gLng, pt.lat, pt.lng) <= 50);
         });
 
         if (!filteredGems.length) return;
@@ -332,8 +336,6 @@ async function loadResultsGems() {
     }
 }
 
-// Auto-run on results page
-document.addEventListener('DOMContentLoaded', () => {
-    // Small delay so Places cards render first, gems appear after
-    setTimeout(loadResultsGems, 800);
-});
+// NOTE: Auto-run timer removed. 
+// loadResultsGems() is now safely called directly by renderResults() 
+// once the Google Places search has finished finding the destination.
