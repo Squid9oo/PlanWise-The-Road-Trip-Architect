@@ -272,11 +272,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 radius:     radiusValue,
             });
 
+            // Save trip duration so planner auto-creates the right number of days
+            if (fromDate && toDate) {
+                const dFrom  = new Date(fromDate);
+                const dTo    = new Date(toDate);
+                const nights = Math.round((dTo - dFrom) / (1000 * 60 * 60 * 24));
+                if (nights > 0) localStorage.setItem('planwise_trip_nights', String(nights));
+            }
+
             setTimeout(() => {
                 window.location.href = `results.html?${params.toString()}`;
             }, 1200);
         }
-
         // --- Check for gems from a previous trip ---
         const existingGems = getSavedGems();
         if (existingGems.length > 0) {

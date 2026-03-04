@@ -96,6 +96,31 @@ function isDepartureCard(gemId) {
 }
 
 // ==========================================
+// AUTO-CREATE DAYS FROM TRIP DURATION
+// ==========================================
+function ensureTripDays() {
+    const nights = parseInt(localStorage.getItem('planwise_trip_nights'), 10);
+    if (!nights || nights <= 0) return;
+
+    const requiredDays = nights + 1;  // 3 nights = 4 days
+    const currentDays  = getDayCount();
+
+    if (currentDays >= requiredDays) return; // Already enough days
+
+    const order = getOrder();
+    const times = getDayTimes();
+
+    for (let d = currentDays + 1; d <= requiredDays; d++) {
+        if (!order[d]) order[d] = [];
+        if (!times[d]) times[d] = '09:00';
+    }
+
+    saveDayCount(requiredDays);
+    saveOrder(order);
+    saveDayTimes(times);
+}
+
+// ==========================================
 // HOME ANCHOR INJECTION (Phase B)
 // ==========================================
 function ensureOriginAnchor() {
@@ -140,6 +165,7 @@ function ensureOriginAnchor() {
 // ==========================================
 function loadPlanner() {
     ensureOriginAnchor(); // Inject Home Anchor before loading gems
+    ensureTripDays();     // Auto-create days based on trip duration
     const gems = getGems();
 
     if (gems.length === 0) {
@@ -1330,6 +1356,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem(SK_DAYTIMES);
             localStorage.removeItem(SK_DAYCOUNT);
             localStorage.removeItem('planwise_origin_injected'); // Reset the anchor so it respawns next trip
+            localStorage.removeItem('planwise_trip_nights');     // Reset so next trip gets fresh day count
             // Keep drive cache — no point re-fetching if user rebuilds same route
 
             loadPlanner(); // re-renders empty state
