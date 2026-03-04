@@ -1334,6 +1334,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const exportBtn = document.getElementById('btn-export-maps');
     if (exportBtn) exportBtn.addEventListener('click', exportToMaps);
 
+    // Wire print / save as PDF
+    const printBtn = document.getElementById('btn-print-trip');
+    if (printBtn) printBtn.addEventListener('click', () => window.print());
+
     // Wire preview close button
     const previewCloseBtn = document.getElementById('preview-close');
     if (previewCloseBtn) previewCloseBtn.addEventListener('click', hidePreview);
