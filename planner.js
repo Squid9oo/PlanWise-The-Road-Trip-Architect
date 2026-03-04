@@ -56,6 +56,16 @@ window.initMap = function () {
         });
     }
 
+    // Initialize Manual Search Autocomplete
+    const addInput = document.getElementById('planner-add-search');
+    if (addInput) {
+        const autocomplete = new google.maps.places.Autocomplete(addInput, {
+            componentRestrictions: { country: 'my' },
+            fields: ['place_id', 'name', 'geometry', 'formatted_address', 'photos', 'types']
+        });
+        autocomplete.addListener('place_changed', () => handleManualAdd(autocomplete));
+    }
+
     loadPlanner();
 };
 
@@ -195,6 +205,7 @@ function buildDaySection(dayNum, gems, startTime, notes, durations) {
             <span class="day-stop-count">${gems.length} stop${gems.length !== 1 ? 's' : ''}</span>
         </div>
         <div class="day-header-right">
+            <button class="btn-optimize-day" data-day="${dayNum}" title="Sort stops by shortest distance">🪄 Optimize</button>
             <label class="day-start-label">⏰ Start</label>
             <input type="time" class="day-start-time" value="${startTime}" data-day="${dayNum}">
             ${dayNum > 1
@@ -215,6 +226,12 @@ function buildDaySection(dayNum, gems, startTime, notes, durations) {
     const removeDayBtn = header.querySelector('.btn-remove-day');
     if (removeDayBtn) {
         removeDayBtn.addEventListener('click', () => removeDay(dayNum));
+    }
+
+    // Wire optimize button
+    const optimizeBtn = header.querySelector('.btn-optimize-day');
+    if (optimizeBtn) {
+        optimizeBtn.addEventListener('click', () => optimizeDayRoute(dayNum));
     }
 
     section.appendChild(header);
@@ -996,6 +1013,77 @@ function formatDuration(totalMins) {
     const h = Math.floor(totalMins / 60);
     const m = totalMins % 60;
     return m > 0 ? `${h}h ${m}min` : `${h}h`;
+}
+
+// ==========================================
+// NEW: MANUAL SEARCH & ROUTE OPTIMIZATION
+// ==========================================
+function handleManualAdd(autocomplete) {
+    const place = autocomplete.getPlace();
+    if (!place.geometry || !place.geometry.location) return;
+
+    const newGem = {
+        id: place.place_id || 'manual_' + Date.now(),
+        name: place.name,
+        location: place.formatted_address || '',
+        lat: place.geometry.location.lat(),
+        lng: place.geometry.location.lng(),
+        photo: place.photos && place.photos.length > 0 ? place.photos[0].getUrl({ maxWidth: 400 }) : '',
+        category: 'heritage' // default catch-all
+    };
+
+    const gems = getGems();
+    if (!gems.find(g => g.id === newGem.id)) {
+        gems.push(newGem);
+        localStorage.setItem(SK_GEMS, JSON.stringify(gems));
+    }
+    
+    document.getElementById('planner-add-search').value = '';
+    loadPlanner(); // normaliseOrder handles adding it to Day 1
+}
+
+function getDistanceKm(lat1, lng1, lat2, lng2) {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+}
+
+function optimizeDayRoute(dayNum) {
+    const order = getOrder();
+    let stopIds = order[dayNum] || [];
+    if (stopIds.length < 3) return; // 1 or 2 stops don't need sorting
+
+    const gems = getGems();
+    const gemMap = {};
+    gems.forEach(g => { gemMap[g.id] = g; });
+
+    // Keep stop 1 as the anchor, sort the rest by nearest neighbor
+    const optimized = [stopIds[0]];
+    let unvisited = stopIds.slice(1);
+    let currentId = stopIds[0];
+
+    while (unvisited.length > 0) {
+        let nearestId = unvisited[0];
+        let minDistance = Infinity;
+
+        unvisited.forEach(id => {
+            const dist = getDistanceKm(gemMap[currentId].lat, gemMap[currentId].lng, gemMap[id].lat, gemMap[id].lng);
+            if (dist < minDistance) { minDistance = dist; nearestId = id; }
+        });
+
+        optimized.push(nearestId);
+        unvisited = unvisited.filter(id => id !== nearestId);
+        currentId = nearestId;
+    }
+
+    order[dayNum] = optimized;
+    saveOrder(order);
+    renderPlanner();
+    fetchAllDriveTimes();
 }
 
 // ==========================================
