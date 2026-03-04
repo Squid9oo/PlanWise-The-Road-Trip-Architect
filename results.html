@@ -97,47 +97,6 @@
             color: #fff;
         }
 
-        /* --- MAP PLACEHOLDER --- */
-        .map-section {
-            padding: 2rem 2rem 0;
-            max-width: 1280px;
-            margin: 0 auto;
-        }
-
-        .map-placeholder {
-            width: 100%;
-            height: 320px;
-            background: linear-gradient(135deg, #e8f4f8 0%, #d4edf5 100%);
-            border-radius: var(--radius-md);
-            border: 2px dashed var(--border);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 0.75rem;
-            color: var(--muted);
-        }
-
-        .map-placeholder-icon {
-            font-size: 3rem;
-            line-height: 1;
-        }
-
-        .map-placeholder-title {
-            font-family: var(--font-display);
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--body-text);
-        }
-
-        .map-placeholder-sub {
-            font-size: 0.85rem;
-            color: var(--muted);
-            text-align: center;
-            max-width: 300px;
-            line-height: 1.5;
-        }
-
         /* --- RESULTS SECTION --- */
         .results-section {
             padding: 2rem 2rem 5rem;
@@ -205,15 +164,12 @@
         @media (max-width: 768px) {
             .trip-bar { padding: 0.85rem 1rem; top: 57px; }
             .trip-city { font-size: 1rem; }
-            .map-section { padding: 1rem 1rem 0; }
-            .map-placeholder { height: 220px; }
             .results-section { padding: 1.5rem 1rem 3rem; }
         }
 
         @media (max-width: 480px) {
             .trip-bar-inner { gap: 0.6rem; }
             .btn-edit-search { display: none; } /* too cramped on small phones */
-            .map-placeholder { height: 180px; }
         }
 
         /* --- FILTER CHIPS ROW --- */
@@ -281,15 +237,6 @@
                 <!-- Badges injected by JS -->
             </div>
             <a href="index.html" class="btn-edit-search">✏️ Edit Search</a>
-        </div>
-    </div>
-
-    <!-- MAP PLACEHOLDER -->
-    <div class="map-section">
-        <div class="map-placeholder" id="map-container">
-            <div class="map-placeholder-icon">🗺️</div>
-            <p class="map-placeholder-title">Interactive Map Coming Soon</p>
-            <p class="map-placeholder-sub">Google Maps route visualisation will show your gems along the road here.</p>
         </div>
     </div>
 
