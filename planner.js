@@ -93,9 +93,15 @@ function loadPlanner() {
     document.getElementById('planner-empty').style.display = 'none';
     document.getElementById('planner-main').style.display  = 'block';
 
+    // Trigger map resize now that container is visible
+    // (Google Maps can't calculate size inside display:none)
+    if (plannerMap) {
+        google.maps.event.trigger(plannerMap, 'resize');
+    }
+
     normaliseOrder(gems);
     renderPlanner();
-    fetchAllDriveTimes(); // async — updates connectors + times after render
+    fetchAllDriveTimes();
 }
 
 // ==========================================
