@@ -444,10 +444,15 @@ function wireFilterChips() {
                 return;
             }
 
-            // Toggle this chip on/off
-            chip.classList.toggle('selected');
+            // Toggle this chip on/off explicitly
+            const isActive = chip.classList.contains('selected');
+            if (isActive) {
+                chip.classList.remove('selected');
+            } else {
+                chip.classList.add('selected');
+            }
 
-            // Deselect "All" chip whenever a category is toggled on
+            // Deselect "All" chip whenever any category is active
             const allChip = document.querySelector('.results-filter-row .chip[data-filter="all"]');
             if (allChip) allChip.classList.remove('selected');
 

@@ -129,9 +129,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // 1. ACTIVITY CHIPS — Toggle selected state
     // ==========================================
-    const chips = document.querySelectorAll('.chip');
+    const activityChips = document.querySelectorAll('#activity-chips .chip');
 
-    chips.forEach(chip => {
+    activityChips.forEach(chip => {
         chip.addEventListener('click', () => {
             chip.classList.toggle('selected');
         });
