@@ -93,12 +93,6 @@ function loadPlanner() {
     document.getElementById('planner-empty').style.display = 'none';
     document.getElementById('planner-main').style.display  = 'block';
 
-    // Trigger map resize now that container is visible
-    // (Google Maps can't calculate size inside display:none)
-    if (plannerMap) {
-        google.maps.event.trigger(plannerMap, 'resize');
-    }
-
     normaliseOrder(gems);
     renderPlanner();
     fetchAllDriveTimes();
@@ -930,13 +924,17 @@ function renderPlannerMap() {
     }
 
     // Fit map to show all pins
+    // Use setTimeout to let Google Maps finish any pending resize first
     if (hasPoints) {
-        plannerMap.fitBounds(bounds, { top: 40, bottom: 40, left: 40, right: 40 });
-        // Prevent over-zoom on single stop
-        const listener = google.maps.event.addListener(plannerMap, 'idle', () => {
-            if (plannerMap.getZoom() > 15) plannerMap.setZoom(15);
-            google.maps.event.removeListener(listener);
-        });
+        google.maps.event.trigger(plannerMap, 'resize');
+        setTimeout(() => {
+            plannerMap.fitBounds(bounds, { top: 40, bottom: 40, left: 40, right: 40 });
+            // Prevent over-zoom when stops are close together
+            const listener = google.maps.event.addListener(plannerMap, 'idle', () => {
+                if (plannerMap.getZoom() > 15) plannerMap.setZoom(15);
+                google.maps.event.removeListener(listener);
+            });
+        }, 150);
     }
 }
 
