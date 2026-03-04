@@ -87,9 +87,10 @@ const PLACE_TYPES = [
 ];
 
 // --- Pagination + Shuffle State ---
-let allPlaces   = [];  // Full shuffled/interleaved array
-let loadedCount = 0;   // How many Places cards have been rendered so far
-const BATCH_SIZE = 12; // Cards per page
+let allPlaces      = [];  // Full shuffled/interleaved array (never changes after load)
+let filteredPlaces = [];  // Subset based on active category filter
+let loadedCount    = 0;   // How many from filteredPlaces are rendered
+const BATCH_SIZE   = 12;  // Cards per page
 
 // --- Fisher-Yates Shuffle (randomises array in place) ---
 function shuffleArray(arr) {
@@ -191,10 +192,11 @@ function renderResults(unique) {
         allPlaces = unique.slice();
         shuffleArray(allPlaces);
     }
+    filteredPlaces = allPlaces.slice();
     loadedCount = 0;
 
     // Render first batch only — Load More handles the rest
-    const firstBatch = allPlaces.slice(0, BATCH_SIZE);
+    const firstBatch = filteredPlaces.slice(0, BATCH_SIZE);
     firstBatch.forEach((place, i) => grid.appendChild(buildPlaceCard(place, i)));
     loadedCount = firstBatch.length;
 
@@ -212,14 +214,14 @@ function renderResults(unique) {
 // LOAD MORE — Append next batch of Places cards
 // ==========================================
 function loadMoreResults() {
-    const grid      = document.getElementById('results-grid');
-    const countEl   = document.getElementById('results-count');
-    const nextBatch = allPlaces.slice(loadedCount, loadedCount + BATCH_SIZE);
+    const grid    = document.getElementById('results-grid');
+    const countEl = document.getElementById('results-count');
+    const batch   = filteredPlaces.slice(loadedCount, loadedCount + BATCH_SIZE);
 
     // Insert before the first community gem card so Places stay grouped
     const firstGemCard = grid.querySelector('.gem-card');
 
-    nextBatch.forEach((place, i) => {
+    batch.forEach((place, i) => {
         const card = buildPlaceCard(place, loadedCount + i);
         if (firstGemCard) {
             grid.insertBefore(card, firstGemCard);
@@ -228,37 +230,25 @@ function loadMoreResults() {
         }
     });
 
-    loadedCount += nextBatch.length;
+    loadedCount += batch.length;
     updateLoadMoreButton();
 
-    // Re-apply current filter to all cards (including new ones)
-    const selectedChips   = [...document.querySelectorAll('.results-filter-row .chip.selected')];
-    const selectedFilters = selectedChips.map(c => c.dataset.filter).filter(f => f !== 'all');
-
+    // Count all visible cards (Places + gems)
     let visibleCount = 0;
     grid.querySelectorAll('.feed-card, .gem-card').forEach(card => {
-        if (selectedFilters.length > 0) {
-            const cats  = (card.dataset.category || '').split(',').map(c => c.trim());
-            const match = selectedFilters.some(f => cats.includes(f));
-            card.style.display = match ? '' : 'none';
-            if (match) visibleCount++;
-        } else {
-            card.style.display = '';
-            visibleCount++;
-        }
+        if (card.style.display !== 'none') visibleCount++;
     });
-
     if (countEl) countEl.innerHTML = `Showing <strong>${visibleCount} gems</strong> near ${to}`;
 }
 
 function updateLoadMoreButton() {
     const btn = document.getElementById('btn-load-more');
     if (!btn) return;
-    if (loadedCount >= allPlaces.length) {
+    if (loadedCount >= filteredPlaces.length) {
         btn.style.display = 'none';
     } else {
         btn.style.display = 'block';
-        const remaining = allPlaces.length - loadedCount;
+        const remaining = filteredPlaces.length - loadedCount;
         btn.textContent = `Load More Gems (${remaining} remaining) ✦`;
     }
 }
@@ -310,9 +300,7 @@ function applyFilter(filterValue) {
     const countEl    = document.getElementById('results-count');
     const emptyState = document.getElementById('empty-state');
 
-    // Disable homepage multi-activity memory so it doesn't accidentally re-trigger
     homepageActivities = null;
-
     activeFilter = filterValue;
 
     // Update chip selected state
@@ -322,22 +310,57 @@ function applyFilter(filterValue) {
     );
     if (activeChip) activeChip.classList.add('selected');
 
-    // Show / hide cards based on chip filter
-    const allCards = grid.querySelectorAll('.feed-card, .gem-card');
-    let visibleCount = 0;
-    allCards.forEach(card => {
+    // Update URL so refresh preserves the active filter
+    const url = new URL(window.location);
+    if (filterValue === 'all') {
+        url.searchParams.delete('activities');
+    } else {
+        url.searchParams.set('activities', filterValue);
+    }
+    history.replaceState({}, '', url);
+
+    // Re-filter the full Places array by category
+    if (filterValue === 'all') {
+        filteredPlaces = allPlaces.slice();
+    } else {
+        filteredPlaces = allPlaces.filter(place => {
+            const tag = getTagInfo(place.types || []).tag;
+            return tag === filterValue;
+        });
+    }
+
+    // Remove all Places cards from grid, re-render first batch
+    grid.querySelectorAll('.feed-card').forEach(card => card.remove());
+    loadedCount = 0;
+
+    const batch        = filteredPlaces.slice(0, BATCH_SIZE);
+    const firstGemCard = grid.querySelector('.gem-card');
+    batch.forEach((place, i) => {
+        const card = buildPlaceCard(place, i);
+        if (firstGemCard) {
+            grid.insertBefore(card, firstGemCard);
+        } else {
+            grid.appendChild(card);
+        }
+    });
+    loadedCount = batch.length;
+
+    // Show/hide community gem cards based on filter
+    grid.querySelectorAll('.gem-card').forEach(card => {
         const cats  = (card.dataset.category || '').split(',').map(c => c.trim());
         const match = filterValue === 'all' || cats.includes(filterValue);
         card.style.display = match ? '' : 'none';
-        if (match) visibleCount++;
     });
 
-    if (countEl) {
-        countEl.innerHTML = `Showing <strong>${visibleCount} result${visibleCount !== 1 ? 's' : ''}</strong> near ${to}`;
-    }
-    if (emptyState) {
-        emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
-    }
+    // Count all visible cards
+    let visibleCount = 0;
+    grid.querySelectorAll('.feed-card, .gem-card').forEach(card => {
+        if (card.style.display !== 'none') visibleCount++;
+    });
+
+    updateLoadMoreButton();
+    if (countEl) countEl.innerHTML = `Showing <strong>${visibleCount} gems</strong> near ${to}`;
+    if (emptyState) emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
 }
 
 // Called when 2+ activities are passed from home page via URL
@@ -346,7 +369,9 @@ function applyMultiFilter(activityList) {
     const countEl    = document.getElementById('results-count');
     const emptyState = document.getElementById('empty-state');
 
-    // Visually select all chips that match the activities, deselect others
+    activeFilter = 'multi';
+
+    // Visually select matching chips
     document.querySelectorAll('.results-filter-row .chip').forEach(c => {
         if (activityList.includes(c.dataset.filter)) {
             c.classList.add('selected');
@@ -355,18 +380,48 @@ function applyMultiFilter(activityList) {
         }
     });
 
-    // Show cards matching ANY selected activity
-    const allCards = grid.querySelectorAll('.feed-card, .gem-card');
-    let visible = 0;
-    allCards.forEach(card => {
+    // Update URL so refresh preserves multi-filter
+    const url = new URL(window.location);
+    url.searchParams.set('activities', activityList.join(','));
+    history.replaceState({}, '', url);
+
+    // Re-filter full Places array by any matching category
+    filteredPlaces = allPlaces.filter(place => {
+        const tag = getTagInfo(place.types || []).tag;
+        return activityList.includes(tag);
+    });
+
+    // Remove all Places cards, re-render first batch
+    grid.querySelectorAll('.feed-card').forEach(card => card.remove());
+    loadedCount = 0;
+
+    const batch        = filteredPlaces.slice(0, BATCH_SIZE);
+    const firstGemCard = grid.querySelector('.gem-card');
+    batch.forEach((place, i) => {
+        const card = buildPlaceCard(place, i);
+        if (firstGemCard) {
+            grid.insertBefore(card, firstGemCard);
+        } else {
+            grid.appendChild(card);
+        }
+    });
+    loadedCount = batch.length;
+
+    // Show/hide community gem cards
+    grid.querySelectorAll('.gem-card').forEach(card => {
         const cats  = (card.dataset.category || '').split(',').map(c => c.trim());
         const match = activityList.some(act => cats.includes(act));
         card.style.display = match ? '' : 'none';
-        if (match) visible++;
     });
 
-    if (countEl)    countEl.innerHTML          = `Showing <strong>${visible} result${visible !== 1 ? 's' : ''}</strong> near ${to}`;
-    if (emptyState) emptyState.style.display   = visible === 0 ? 'block' : 'none';
+    let visibleCount = 0;
+    grid.querySelectorAll('.feed-card, .gem-card').forEach(card => {
+        if (card.style.display !== 'none') visibleCount++;
+    });
+
+    updateLoadMoreButton();
+    if (countEl)    countEl.innerHTML        = `Showing <strong>${visibleCount} gems</strong> near ${to}`;
+    if (emptyState) emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
 }
 
 function wireFilterChips() {
@@ -442,13 +497,26 @@ async function loadResultsGems() {
             grid.appendChild(card);
         });
 
-        // Re-apply the active filter so counts and visibility stay consistent
-        // If multi-activities were passed and no single chip was clicked, keep the multi-filter
-        if (homepageActivities && homepageActivities.length > 1 && activeFilter === 'all') {
-            applyMultiFilter(homepageActivities);
-        } else {
-            applyFilter(activeFilter);
+        // Lightweight filter — show/hide gem cards only (don't re-render Places)
+        const filterList = (homepageActivities && homepageActivities.length > 0)
+            ? homepageActivities
+            : (activeFilter !== 'all' && activeFilter !== 'multi') ? [activeFilter] : null;
+
+        if (filterList) {
+            grid.querySelectorAll('.gem-card').forEach(card => {
+                const cats  = (card.dataset.category || '').split(',').map(c => c.trim());
+                const match = filterList.some(f => cats.includes(f));
+                card.style.display = match ? '' : 'none';
+            });
         }
+
+        // Update visible count to include new gem cards
+        let visibleCount = 0;
+        grid.querySelectorAll('.feed-card, .gem-card').forEach(card => {
+            if (card.style.display !== 'none') visibleCount++;
+        });
+        const countEl = document.getElementById('results-count');
+        if (countEl) countEl.innerHTML = `Showing <strong>${visibleCount} gems</strong> near ${to}`;
 
     } catch (err) {
         // Gems failed silently — Places results still show fine
