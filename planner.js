@@ -17,11 +17,45 @@ const SK_DRIVECACHE = 'planwise_drive_cache';    // {"lat1,lng1|lat2,lng2": {min
 let distanceService = null;
 let dragState = { gemId: null, fromDay: null };
 
+// --- Map State ---
+let plannerMap     = null;
+let mapMarkers     = [];
+let mapPolylines   = [];
+
 // ==========================================
 // MAPS API CALLBACK — fires when script loads
 // ==========================================
 window.initMap = function () {
     distanceService = new google.maps.DistanceMatrixService();
+
+    // Create planner map (centered on Malaysia)
+    const mapEl = document.getElementById('planner-map');
+    if (mapEl) {
+        plannerMap = new google.maps.Map(mapEl, {
+            center: { lat: 4.2, lng: 108.0 },
+            zoom: 7,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: true,
+            zoomControl: true,
+            styles: [
+                { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+                { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+            ],
+        });
+    }
+
+    // Wire map collapse toggle
+    const toggleBtn = document.getElementById('planner-map-toggle');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            const container = document.getElementById('planner-map');
+            container.classList.toggle('map-collapsed');
+            toggleBtn.classList.toggle('collapsed');
+            toggleBtn.textContent = container.classList.contains('map-collapsed') ? '▶' : '▼';
+        });
+    }
+
     loadPlanner();
 };
 
@@ -287,6 +321,13 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
                 rows="2">${noteText}</textarea>
         </div>
     `;
+
+    // Wire card click → pan map to this gem's pin
+    card.addEventListener('click', (e) => {
+        // Don't pan if user clicked a button, select, textarea, or link
+        if (e.target.closest('button, select, textarea, a')) return;
+        panMapToGem(gem.id);
+    });
 
     // Wire remove button
     card.querySelector('.btn-remove-stop').addEventListener('click', () => removeStop(gem.id));
@@ -796,6 +837,133 @@ function onDropOnDay(e) {
     this.classList.remove('drag-over');
     renderPlanner();
     fetchAllDriveTimes();
+}
+
+// ==========================================
+// PLANNER MAP — Render pins + route lines
+// ==========================================
+const DAY_COLORS = ['#00d2ff', '#27ae60', '#e67e22', '#8e44ad', '#ff477e', '#d35400'];
+
+function renderPlannerMap() {
+    if (!plannerMap) return;
+
+    // Clear old markers + polylines
+    mapMarkers.forEach(m => m.setMap(null));
+    mapPolylines.forEach(p => p.setMap(null));
+    mapMarkers   = [];
+    mapPolylines = [];
+
+    const gems     = getGems();
+    const order    = getOrder();
+    const dayCount = getDayCount();
+    const gemMap   = {};
+    gems.forEach(g => { gemMap[g.id] = g; });
+
+    const bounds   = new google.maps.LatLngBounds();
+    let stopNum    = 0;
+    let hasPoints  = false;
+
+    for (let d = 1; d <= dayCount; d++) {
+        const stopIds  = (order[d] || []).filter(id => gemMap[id]);
+        const dayColor = DAY_COLORS[(d - 1) % DAY_COLORS.length];
+        const pathCoords = [];
+
+        stopIds.forEach((id, idx) => {
+            const gem = gemMap[id];
+            const lat = parseFloat(gem.lat);
+            const lng = parseFloat(gem.lng);
+            if (isNaN(lat) || isNaN(lng)) return;
+
+            stopNum++;
+            hasPoints = true;
+            const pos = { lat, lng };
+            bounds.extend(pos);
+            pathCoords.push(pos);
+
+            // Numbered marker
+            const marker = new google.maps.Marker({
+                position: pos,
+                map: plannerMap,
+                label: {
+                    text: String(stopNum),
+                    color: '#fff',
+                    fontWeight: '700',
+                    fontSize: '12px',
+                },
+                icon: {
+                    path: google.maps.SymbolPath.CIRCLE,
+                    fillColor: dayColor,
+                    fillOpacity: 1,
+                    strokeColor: '#fff',
+                    strokeWeight: 2,
+                    scale: 16,
+                },
+                title: gem.name || 'Stop ' + stopNum,
+            });
+
+            // Info window on click
+            marker.addListener('click', () => {
+                scrollToStopCard(id);
+            });
+
+            mapMarkers.push(marker);
+        });
+
+        // Draw polyline for this day's route
+        if (pathCoords.length >= 2) {
+            const polyline = new google.maps.Polyline({
+                path: pathCoords,
+                geodesic: true,
+                strokeColor: dayColor,
+                strokeOpacity: 0.85,
+                strokeWeight: 4,
+            });
+            polyline.setMap(plannerMap);
+            mapPolylines.push(polyline);
+        }
+    }
+
+    // Fit map to show all pins
+    if (hasPoints) {
+        plannerMap.fitBounds(bounds, { top: 40, bottom: 40, left: 40, right: 40 });
+        // Prevent over-zoom on single stop
+        const listener = google.maps.event.addListener(plannerMap, 'idle', () => {
+            if (plannerMap.getZoom() > 15) plannerMap.setZoom(15);
+            google.maps.event.removeListener(listener);
+        });
+    }
+}
+
+// Scroll to a stop card + highlight it briefly
+function scrollToStopCard(gemId) {
+    const card = document.querySelector(`.stop-card[data-gem-id="${gemId}"]`);
+    if (!card) return;
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.classList.add('map-highlight');
+    setTimeout(() => card.classList.remove('map-highlight'), 2000);
+}
+
+// Pan map to a gem's pin (called when user clicks a stop card)
+function panMapToGem(gemId) {
+    if (!plannerMap) return;
+    const gems   = getGems();
+    const gem    = gems.find(g => g.id === gemId);
+    if (!gem) return;
+    const lat = parseFloat(gem.lat);
+    const lng = parseFloat(gem.lng);
+    if (isNaN(lat) || isNaN(lng)) return;
+    plannerMap.panTo({ lat, lng });
+    plannerMap.setZoom(14);
+
+    // Bounce the matching marker
+    const idx = mapMarkers.findIndex(m => {
+        const p = m.getPosition();
+        return Math.abs(p.lat() - lat) < 0.0001 && Math.abs(p.lng() - lng) < 0.0001;
+    });
+    if (idx >= 0) {
+        mapMarkers[idx].setAnimation(google.maps.Animation.BOUNCE);
+        setTimeout(() => mapMarkers[idx].setAnimation(null), 1400);
+    }
 }
 
 // ==========================================
