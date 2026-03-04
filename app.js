@@ -377,6 +377,10 @@ document.addEventListener('DOMContentLoaded', () => {
             gemForm.style.display    = '';
             gemSuccess.style.display = 'none';
             gemForm.reset();
+            // Reset submit button so user can submit another gem
+            gemSubmit.disabled = false;
+            gemSubmit.querySelector('.btn-text').style.display    = 'inline';
+            gemSubmit.querySelector('.btn-loading').style.display = 'none';
             document.querySelectorAll('#gem-chips .chip, #dining-chips .chip')
                     .forEach(c => c.classList.remove('selected'));
             document.getElementById('gem-lat').value = '';
