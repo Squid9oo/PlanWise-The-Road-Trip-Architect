@@ -100,11 +100,16 @@ function isDepartureCard(gemId) {
 // ==========================================
 function ensureOriginAnchor() {
     const originRaw = localStorage.getItem('planwise_origin');
-    // If no origin, or we already injected it this trip, do nothing
-    if (!originRaw || localStorage.getItem('planwise_origin_injected')) return;
+    if (!originRaw) return;
+
+    // Check if the anchor card actually exists in saved gems
+    const gems = getGems();
+    const anchorExists = gems.some(g => g.id === 'gem_origin_anchor');
+
+    // If anchor already exists, nothing to do
+    if (anchorExists) return;
 
     const origin = JSON.parse(originRaw);
-    let gems = getGems();
     
     // Create the special starting point card
     const anchorGem = {
