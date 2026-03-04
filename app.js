@@ -746,6 +746,15 @@ function getTagInfo(types) {
     if (types.includes('shopping_mall')) {
         return { tag: 'shopping', tagLabel: 'Shopping', platform: 'instagram', platformLabel: '📸 Google Places' };
     }
+    if (types.includes('restaurant') || types.includes('cafe') || types.includes('bakery')) {
+        return { tag: 'food', tagLabel: 'Food & Drink', platform: 'tiktok', platformLabel: '▶ Google Places' };
+    }
+    if (types.includes('spa')) {
+        return { tag: 'wellness', tagLabel: 'Wellness & Spa', platform: 'instagram', platformLabel: '📸 Google Places' };
+    }
+    if (types.includes('night_club') || types.includes('bar')) {
+        return { tag: 'nightlife', tagLabel: 'Nightlife', platform: 'tiktok', platformLabel: '▶ Google Places' };
+    }
     if (types.includes('tourist_attraction') || types.includes('point_of_interest')) {
         return { tag: 'heritage', tagLabel: 'Tourist Attraction', platform: 'youtube', platformLabel: '📍 Google Places' };
     }

@@ -309,12 +309,6 @@
         <button class="chip" data-filter="shopping">🛍️ Shopping</button>
     </div>
 
-    <!-- MULTI-ACTIVITY LABEL — shown when 2+ activities selected on home page -->
-    <div id="multi-activity-label" style="display:none; align-items:center; gap:0.75rem; flex-wrap:wrap; margin-bottom:0.5rem;">
-        <span id="multi-activity-text" style="font-size:0.82rem; font-weight:600; color:var(--primary-dark);"></span>
-        <button id="multi-activity-clear" style="background:transparent; border:1.5px solid var(--border); color:var(--muted); padding:0.25rem 0.75rem; border-radius:var(--radius-xl); font-size:0.75rem; font-weight:600; font-family:var(--font-body); cursor:pointer;">✕ Show All</button>
-    </div>
-
     <!-- LOADING SPINNER -->
     <div class="feed-loading" id="results-loading">
         <div class="loading-spinner"></div>
@@ -446,6 +440,9 @@
         </div>
         <!-- end #results-grid -->
 
+        <!-- LOAD MORE BUTTON -->
+        <button class="btn-load-more" id="btn-load-more" style="display:none;">Load More Gems ✦</button>
+
         <!-- EMPTY STATE — shown by JS if no cards match -->
         <div class="empty-state" id="empty-state" style="display:none;">
             <div class="empty-state-icon">🔍</div>
@@ -473,6 +470,9 @@
     </footer>
 
     <div id="hidden-map" style="display:none;"></div>
+
+    <!-- BACK TO TOP — floats bottom-right after scrolling -->
+    <button class="btn-back-to-top" id="btn-back-to-top" aria-label="Back to top">↑</button>
 
     <!-- GEM DETAIL PANEL -->
     <div class="gem-panel-overlay" id="gem-panel-overlay">

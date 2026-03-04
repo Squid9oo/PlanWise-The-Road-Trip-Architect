@@ -83,7 +83,58 @@ document.addEventListener('DOMContentLoaded', () => {
 const PLACE_TYPES = [
     'tourist_attraction', 'park', 'museum', 'zoo',
     'amusement_park', 'shopping_mall', 'restaurant', 'spa', 'night_club',
+    'cafe', 'bakery', 'bar', 'art_gallery', 'aquarium',
 ];
+
+// --- Pagination + Shuffle State ---
+let allPlaces   = [];  // Full shuffled/interleaved array
+let loadedCount = 0;   // How many Places cards have been rendered so far
+const BATCH_SIZE = 12; // Cards per page
+
+// --- Fisher-Yates Shuffle (randomises array in place) ---
+function shuffleArray(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+// --- Category Interleave ---
+// Groups places by PlanWise category, shuffles within each group,
+// then round-robins so the feed alternates: food → nature → heritage → family …
+function interleaveByCategory(places) {
+    const groups = {};
+    places.forEach(place => {
+        const tag = getTagInfo(place.types || []).tag;
+        if (!groups[tag]) groups[tag] = [];
+        groups[tag].push(place);
+    });
+
+    // Shuffle within each category group
+    Object.values(groups).forEach(arr => shuffleArray(arr));
+
+    // Shuffle the category order too so it's not always the same sequence
+    const keys = Object.keys(groups);
+    shuffleArray(keys);
+
+    // Round-robin: pick one from each category in turn
+    const result   = [];
+    const pointers = {};
+    keys.forEach(k => { pointers[k] = 0; });
+    let exhausted = 0;
+
+    while (exhausted < keys.length) {
+        for (const key of keys) {
+            if (pointers[key] < groups[key].length) {
+                result.push(groups[key][pointers[key]]);
+                pointers[key]++;
+                if (pointers[key] >= groups[key].length) exhausted++;
+            }
+        }
+    }
+    return result;
+}
 
 // Search at one or more lat/lng points, combine + quality-filter, then call onComplete
 function runPlacesSearch(locations, service, onComplete) {
@@ -102,17 +153,18 @@ function runPlacesSearch(locations, service, onComplete) {
                 if (completed === total) {
                     let finalUnique = [];
                     const seen = new Set();
-                    const perLocLimit = Math.ceil(18 / locations.length);
 
-                    // Pull top rated places from EACH location equally
+                    // Deduplicate, quality-filter, cap at 60
                     locationResults.forEach(locArray => {
                         const uniqueLoc = locArray
                             .filter(p => { if (seen.has(p.place_id)) return false; seen.add(p.place_id); return true; })
-                            .filter(p => p.rating >= 4.0 && p.user_ratings_total >= 100)
-                            .sort((a, b) => (b.rating || 0) - (a.rating || 0))
-                            .slice(0, perLocLimit);
+                            .filter(p => p.rating >= 4.0 && p.user_ratings_total >= 100);
                         finalUnique = finalUnique.concat(uniqueLoc);
                     });
+
+                    // Sort by rating, then cap — Load More handles pagination
+                    finalUnique.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+                    finalUnique = finalUnique.slice(0, 60);
 
                     onComplete(finalUnique);
                 }
@@ -132,15 +184,83 @@ function renderResults(unique) {
     loadingEl.style.display = 'none';
     if (unique.length === 0) { emptyState.style.display = 'block'; return; }
 
-    unique.forEach((place, i) => grid.appendChild(buildPlaceCard(place, i)));
+    // Shuffle or interleave depending on whether user picked activities
+    if (activities.length === 0) {
+        allPlaces = interleaveByCategory(unique);
+    } else {
+        allPlaces = unique.slice();
+        shuffleArray(allPlaces);
+    }
+    loadedCount = 0;
+
+    // Render first batch only — Load More handles the rest
+    const firstBatch = allPlaces.slice(0, BATCH_SIZE);
+    firstBatch.forEach((place, i) => grid.appendChild(buildPlaceCard(place, i)));
+    loadedCount = firstBatch.length;
+
     grid.style.display      = '';
     filterRow.style.display = 'flex';
     countEl.style.display   = 'block';
-    countEl.innerHTML       = `Showing <strong>${unique.length} gems</strong> near ${to}`;
+    countEl.innerHTML       = `Showing <strong>${firstBatch.length} gems</strong> near ${to}`;
+
+    updateLoadMoreButton();
     wireFilterChips();
-    
-    // Fetch community gems now that we know the search points
-    loadResultsGems(); 
+    loadResultsGems();
+}
+
+// ==========================================
+// LOAD MORE — Append next batch of Places cards
+// ==========================================
+function loadMoreResults() {
+    const grid      = document.getElementById('results-grid');
+    const countEl   = document.getElementById('results-count');
+    const nextBatch = allPlaces.slice(loadedCount, loadedCount + BATCH_SIZE);
+
+    // Insert before the first community gem card so Places stay grouped
+    const firstGemCard = grid.querySelector('.gem-card');
+
+    nextBatch.forEach((place, i) => {
+        const card = buildPlaceCard(place, loadedCount + i);
+        if (firstGemCard) {
+            grid.insertBefore(card, firstGemCard);
+        } else {
+            grid.appendChild(card);
+        }
+    });
+
+    loadedCount += nextBatch.length;
+    updateLoadMoreButton();
+
+    // Re-apply current filter to all cards (including new ones)
+    const selectedChips   = [...document.querySelectorAll('.results-filter-row .chip.selected')];
+    const selectedFilters = selectedChips.map(c => c.dataset.filter).filter(f => f !== 'all');
+
+    let visibleCount = 0;
+    grid.querySelectorAll('.feed-card, .gem-card').forEach(card => {
+        if (selectedFilters.length > 0) {
+            const cats  = (card.dataset.category || '').split(',').map(c => c.trim());
+            const match = selectedFilters.some(f => cats.includes(f));
+            card.style.display = match ? '' : 'none';
+            if (match) visibleCount++;
+        } else {
+            card.style.display = '';
+            visibleCount++;
+        }
+    });
+
+    if (countEl) countEl.innerHTML = `Showing <strong>${visibleCount} gems</strong> near ${to}`;
+}
+
+function updateLoadMoreButton() {
+    const btn = document.getElementById('btn-load-more');
+    if (!btn) return;
+    if (loadedCount >= allPlaces.length) {
+        btn.style.display = 'none';
+    } else {
+        btn.style.display = 'block';
+        const remaining = allPlaces.length - loadedCount;
+        btn.textContent = `Load More Gems (${remaining} remaining) ✦`;
+    }
 }
 
 window.initResultsSearch = function () {
@@ -339,3 +459,24 @@ async function loadResultsGems() {
 // NOTE: Auto-run timer removed. 
 // loadResultsGems() is now safely called directly by renderResults() 
 // once the Google Places search has finished finding the destination.
+
+// ==========================================
+// 6. LOAD MORE + BACK TO TOP — Wire buttons
+// ==========================================
+document.addEventListener('DOMContentLoaded', () => {
+    const loadMoreBtn  = document.getElementById('btn-load-more');
+    const backToTopBtn = document.getElementById('btn-back-to-top');
+
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', loadMoreResults);
+    }
+
+    if (backToTopBtn) {
+        window.addEventListener('scroll', () => {
+            backToTopBtn.classList.toggle('visible', window.scrollY > 400);
+        });
+        backToTopBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
+});

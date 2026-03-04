@@ -2072,3 +2072,85 @@ input:focus-visible {
 @media (max-width: 480px) {
     .confirm-modal-actions { flex-direction: column; }
 }
+
+/* ============================================
+   LOAD MORE BUTTON
+   ============================================ */
+.btn-load-more {
+    display: block;
+    margin: 2rem auto 0;
+    background: var(--dark);
+    color: #fff;
+    border: none;
+    padding: 0.85rem 2.5rem;
+    border-radius: var(--radius-xl);
+    font-size: 0.9rem;
+    font-weight: 700;
+    font-family: var(--font-body);
+    cursor: pointer;
+    transition: background var(--transition), transform var(--transition);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-load-more:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+.btn-load-more:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+}
+
+/* ============================================
+   BACK TO TOP — Floating button
+   ============================================ */
+.btn-back-to-top {
+    position: fixed;
+    bottom: 5.5rem;
+    right: 1.5rem;
+    z-index: 400;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--dark);
+    color: #fff;
+    border: 1.5px solid rgba(255,255,255,0.15);
+    font-size: 1.2rem;
+    font-family: var(--font-body);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    transition: background var(--transition), transform var(--transition), opacity 0.3s ease;
+}
+
+.btn-back-to-top.visible {
+    display: flex;
+}
+
+.btn-back-to-top:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+.btn-back-to-top:focus-visible {
+    outline: 3px solid var(--primary);
+    outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+    .btn-back-to-top {
+        bottom: 5rem;
+        right: 1rem;
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn-back-to-top { transition: none !important; }
+    .btn-load-more { transition: none !important; }
+}
