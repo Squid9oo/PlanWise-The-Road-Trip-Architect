@@ -95,6 +95,12 @@ function loadPlanner() {
 
     normaliseOrder(gems);
     renderPlanner();
+    
+    // Delay map render to ensure DOM has updated container dimensions
+    setTimeout(() => {
+        renderPlannerMap();
+    }, 100);
+
     fetchAllDriveTimes();
 }
 
@@ -165,6 +171,11 @@ function renderPlanner() {
 
     updateSummaryBar();
     wireDragDrop();
+    
+    // Redraw map pins and lines whenever planner re-renders
+    if (plannerMap) {
+        setTimeout(renderPlannerMap, 100);
+    }
 }
 
 // ==========================================
@@ -924,17 +935,15 @@ function renderPlannerMap() {
     }
 
     // Fit map to show all pins
-    // Use setTimeout to let Google Maps finish any pending resize first
     if (hasPoints) {
         google.maps.event.trigger(plannerMap, 'resize');
-        setTimeout(() => {
-            plannerMap.fitBounds(bounds, { top: 40, bottom: 40, left: 40, right: 40 });
-            // Prevent over-zoom when stops are close together
-            const listener = google.maps.event.addListener(plannerMap, 'idle', () => {
-                if (plannerMap.getZoom() > 15) plannerMap.setZoom(15);
-                google.maps.event.removeListener(listener);
-            });
-        }, 150);
+        plannerMap.fitBounds(bounds, { top: 40, bottom: 40, left: 40, right: 40 });
+        
+        // Prevent over-zoom when stops are close together
+        const listener = google.maps.event.addListener(plannerMap, 'idle', () => {
+            if (plannerMap.getZoom() > 15) plannerMap.setZoom(15);
+            google.maps.event.removeListener(listener);
+        });
     }
 }
 
