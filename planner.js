@@ -18,9 +18,10 @@ let distanceService = null;
 let dragState = { gemId: null, fromDay: null };
 
 // --- Map State ---
-let plannerMap     = null;
-let mapMarkers     = [];
-let mapPolylines   = [];
+let plannerMap      = null;
+let mapMarkers      = [];
+let mapPolylines    = [];
+let collapsedDays   = new Set();   // Track which days are collapsed
 
 // ==========================================
 // MAPS API CALLBACK — fires when script loads
@@ -61,7 +62,7 @@ window.initMap = function () {
     if (addInput) {
         const autocomplete = new google.maps.places.Autocomplete(addInput, {
             componentRestrictions: { country: 'my' },
-            fields: ['place_id', 'name', 'geometry', 'formatted_address', 'photos', 'types']
+            fields: ['place_id', 'name', 'geometry', 'formatted_address', 'photos', 'types', 'rating', 'user_ratings_total']
         });
         autocomplete.addListener('place_changed', () => handleManualAdd(autocomplete));
     }
@@ -305,12 +306,24 @@ function buildDaySection(dayNum, gems, startTime, notes, durations) {
 
     section.appendChild(body);
 
-    // Wire collapse toggle
+    // Wire collapse toggle + persist state in memory
     const collapseBtn = header.querySelector('.btn-collapse-day');
     if (collapseBtn) {
+        // Restore collapse state from memory
+        if (collapsedDays.has(dayNum)) {
+            body.classList.add('day-collapsed');
+            collapseBtn.textContent = '▶';
+        }
+
         collapseBtn.addEventListener('click', () => {
             body.classList.toggle('day-collapsed');
-            collapseBtn.textContent = body.classList.contains('day-collapsed') ? '▶' : '▼';
+            if (body.classList.contains('day-collapsed')) {
+                collapsedDays.add(dayNum);
+                collapseBtn.textContent = '▶';
+            } else {
+                collapsedDays.delete(dayNum);
+                collapseBtn.textContent = '▼';
+            }
         });
     }
 
@@ -1081,81 +1094,161 @@ function formatDuration(totalMins) {
 // ==========================================
 // NEW: MANUAL SEARCH & ROUTE OPTIMIZATION
 // ==========================================
+// --- Pending place for preview flow ---
+let pendingPlace = null;
+
 function handleManualAdd(autocomplete) {
     const place = autocomplete.getPlace();
     if (!place.geometry || !place.geometry.location) return;
+    pendingPlace = place;
+    showPlacePreview(place);
+    document.getElementById('planner-add-search').value = '';
+}
 
-    const isHotel = document.getElementById('planner-hotel-toggle')?.checked;
-    const baseId  = place.place_id || 'manual_' + Date.now();
-    const photo   = place.photos && place.photos.length > 0 ? place.photos[0].getUrl({ maxWidth: 400 }) : '';
-    
+function showPlacePreview(place) {
+    const preview   = document.getElementById('planner-preview');
+    const photoEl   = document.getElementById('preview-photo');
+    const nameEl    = document.getElementById('preview-name');
+    const addressEl = document.getElementById('preview-address');
+    const ratingEl  = document.getElementById('preview-rating');
+    const actionsEl = document.getElementById('preview-actions');
+
+    // Photo
+    const photoUrl = (place.photos && place.photos.length > 0)
+        ? place.photos[0].getUrl({ maxWidth: 400 })
+        : 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80';
+    photoEl.style.backgroundImage = `url('${photoUrl}')`;
+
+    // Name + address
+    nameEl.textContent    = place.name || 'Unknown Place';
+    addressEl.textContent = place.formatted_address || '';
+
+    // Rating + reviews
+    if (place.rating) {
+        const fullStars = Math.floor(place.rating);
+        const halfStar  = (place.rating % 1 >= 0.3) ? '½' : '';
+        const stars     = '★'.repeat(fullStars) + halfStar;
+        const reviews   = place.user_ratings_total
+            ? `(${place.user_ratings_total.toLocaleString()} reviews)` : '';
+        ratingEl.innerHTML = `<span class="stars">${stars}</span> ${place.rating} ${reviews}`;
+    } else {
+        ratingEl.innerHTML = '<span style="color:var(--muted);">No reviews yet</span>';
+    }
+
+    // Action buttons — one "Add to Day X" per day + Hotel button
+    const dayCount = getDayCount();
+    let html = '';
+    for (let d = 1; d <= dayCount; d++) {
+        html += `<button class="btn-preview-day" data-day="${d}">+ Day ${d}</button>`;
+    }
+    html += `<button class="btn-preview-hotel">🏨 Add as Hotel</button>`;
+    actionsEl.innerHTML = html;
+
+    // Wire day buttons
+    actionsEl.querySelectorAll('.btn-preview-day').forEach(btn => {
+        btn.addEventListener('click', () => {
+            confirmAddToDay(pendingPlace, parseInt(btn.dataset.day, 10));
+        });
+    });
+
+    // Wire hotel button
+    const hotelBtn = actionsEl.querySelector('.btn-preview-hotel');
+    if (hotelBtn) hotelBtn.addEventListener('click', () => confirmAddAsHotel(pendingPlace));
+
+    preview.style.display = 'flex';
+}
+
+function hidePreview() {
+    const preview = document.getElementById('planner-preview');
+    if (preview) preview.style.display = 'none';
+    pendingPlace = null;
+}
+
+function confirmAddToDay(place, dayNum) {
+    const baseId = place.place_id || 'manual_' + Date.now();
+    const photo  = (place.photos && place.photos.length > 0)
+        ? place.photos[0].getUrl({ maxWidth: 400 }) : '';
+
     let gems  = getGems();
     let order = getOrder();
 
-    if (isHotel) {
-        // Create TWO gems: Check-in (End of Day 1) & Wake-up (Start of Day 2)
-        const checkIn = {
-            id: baseId + '_in',
-            name: '🏨 Check-in: ' + place.name,
-            location: place.formatted_address || '',
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng(),
-            photo: photo,
-            category: 'wellness' // Using wellness tag for relaxing vibe
-        };
-        const wakeUp = {
-            id: baseId + '_out',
-            name: '🌅 Wake up: ' + place.name,
-            location: place.formatted_address || '',
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng(),
-            photo: photo,
-            category: 'wellness'
-        };
+    const newGem = {
+        id:       baseId,
+        name:     place.name,
+        location: place.formatted_address || '',
+        lat:      place.geometry.location.lat(),
+        lng:      place.geometry.location.lng(),
+        photo:    photo,
+        category: 'heritage'
+    };
 
-        if (!gems.find(g => g.id === checkIn.id)) gems.push(checkIn);
-        if (!gems.find(g => g.id === wakeUp.id))  gems.push(wakeUp);
+    if (!gems.find(g => g.id === newGem.id)) {
+        gems.push(newGem);
         localStorage.setItem(SK_GEMS, JSON.stringify(gems));
-
-        // Ensure Day 2 exists
-        let dayCount = getDayCount();
-        if (dayCount < 2) {
-            saveDayCount(2);
-            const times = getDayTimes();
-            times[2] = '09:00';
-            saveDayTimes(times);
-            order[2] = [];
-        }
-
-        // Add to order
-        if (!order[1]) order[1] = [];
-        if (!order[2]) order[2] = [];
-        order[1].push(checkIn.id);      // Bottom of Day 1
-        order[2].unshift(wakeUp.id);    // Top of Day 2
-        saveOrder(order);
-
-        // Reset toggle
-        document.getElementById('planner-hotel-toggle').checked = false;
-
-    } else {
-        // Standard single gem logic
-        const newGem = {
-            id: baseId,
-            name: place.name,
-            location: place.formatted_address || '',
-            lat: place.geometry.location.lat(),
-            lng: place.geometry.location.lng(),
-            photo: photo,
-            category: 'heritage'
-        };
-        if (!gems.find(g => g.id === newGem.id)) {
-            gems.push(newGem);
-            localStorage.setItem(SK_GEMS, JSON.stringify(gems));
-        }
     }
-    
-    document.getElementById('planner-add-search').value = '';
-    loadPlanner(); // re-renders everything
+
+    // Add to the user's chosen day
+    if (!order[dayNum]) order[dayNum] = [];
+    order[dayNum].push(baseId);
+    saveOrder(order);
+
+    hidePreview();
+    loadPlanner();
+}
+
+function confirmAddAsHotel(place) {
+    const baseId = place.place_id || 'manual_' + Date.now();
+    const photo  = (place.photos && place.photos.length > 0)
+        ? place.photos[0].getUrl({ maxWidth: 400 }) : '';
+
+    let gems  = getGems();
+    let order = getOrder();
+
+    const checkIn = {
+        id:       baseId + '_in',
+        name:     '🏨 Check-in: ' + place.name,
+        location: place.formatted_address || '',
+        lat:      place.geometry.location.lat(),
+        lng:      place.geometry.location.lng(),
+        photo:    photo,
+        category: 'wellness'
+    };
+    const wakeUp = {
+        id:       baseId + '_out',
+        name:     '🌅 Wake up: ' + place.name,
+        location: place.formatted_address || '',
+        lat:      place.geometry.location.lat(),
+        lng:      place.geometry.location.lng(),
+        photo:    photo,
+        category: 'wellness'
+    };
+
+    if (!gems.find(g => g.id === checkIn.id)) gems.push(checkIn);
+    if (!gems.find(g => g.id === wakeUp.id))  gems.push(wakeUp);
+    localStorage.setItem(SK_GEMS, JSON.stringify(gems));
+
+    // Check-in → end of last existing day, Wake-up → start of next day
+    let dayCount = getDayCount();
+    const lastDay = dayCount;
+    const nextDay = dayCount + 1;
+
+    // Create next day if it doesn't exist
+    if (dayCount < nextDay) {
+        saveDayCount(nextDay);
+        const times = getDayTimes();
+        times[nextDay] = '09:00';
+        saveDayTimes(times);
+        order[nextDay] = [];
+    }
+
+    if (!order[lastDay]) order[lastDay] = [];
+    if (!order[nextDay]) order[nextDay] = [];
+    order[lastDay].push(checkIn.id);
+    order[nextDay].unshift(wakeUp.id);
+    saveOrder(order);
+
+    hidePreview();
+    loadPlanner();
 }
 
 function getDistanceKm(lat1, lng1, lat2, lng2) {
@@ -1209,6 +1302,10 @@ function optimizeDayRoute(dayNum) {
 document.addEventListener('DOMContentLoaded', () => {
     const exportBtn = document.getElementById('btn-export-maps');
     if (exportBtn) exportBtn.addEventListener('click', exportToMaps);
+
+    // Wire preview close button
+    const previewCloseBtn = document.getElementById('preview-close');
+    if (previewCloseBtn) previewCloseBtn.addEventListener('click', hidePreview);
 
     const clearBtn = document.getElementById('btn-clear-trip');
     if (clearBtn) {
