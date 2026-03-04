@@ -88,6 +88,12 @@ function saveDayTimes(t)  { localStorage.setItem(SK_DAYTIMES,   JSON.stringify(t
 function saveDayCount(c)  { localStorage.setItem(SK_DAYCOUNT,   String(c)); }
 function saveDriveCache(c){ localStorage.setItem(SK_DRIVECACHE, JSON.stringify(c)); }
 
+// --- Departure Card Detection ---
+// Origin anchor + hotel wake-up cards are departure points, not destinations
+function isDepartureCard(gemId) {
+    return gemId === 'gem_origin_anchor' || gemId.endsWith('_out');
+}
+
 // ==========================================
 // HOME ANCHOR INJECTION (Phase B)
 // ==========================================
@@ -237,6 +243,7 @@ function buildDaySection(dayNum, gems, startTime, notes, durations) {
     header.className = 'day-header';
     header.innerHTML = `
         <div class="day-header-left">
+            <button class="btn-collapse-day" data-day="${dayNum}" aria-label="Toggle day section">▼</button>
             <span class="day-badge">Day ${dayNum}</span>
             <span class="day-stop-count">${gems.length} stop${gems.length !== 1 ? 's' : ''}</span>
         </div>
@@ -297,6 +304,16 @@ function buildDaySection(dayNum, gems, startTime, notes, durations) {
     }
 
     section.appendChild(body);
+
+    // Wire collapse toggle
+    const collapseBtn = header.querySelector('.btn-collapse-day');
+    if (collapseBtn) {
+        collapseBtn.addEventListener('click', () => {
+            body.classList.toggle('day-collapsed');
+            collapseBtn.textContent = body.classList.contains('day-collapsed') ? '▶' : '▼';
+        });
+    }
+
     return section;
 }
 
@@ -355,6 +372,11 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
                 </div>
             </div>
             <div class="stop-bottom-row">
+                ${isDepartureCard(gem.id) ? `
+                <div class="spend-group">
+                    <span class="spend-label" style="text-transform:none; font-weight:700; color:var(--primary-dark);">🚗 Departure Point</span>
+                </div>
+                ` : `
                 <div class="spend-group">
                     <label class="spend-label">Time spent</label>
                     <select class="time-spent-select" data-gem-id="${gem.id}">
@@ -365,6 +387,7 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
                         <option value="180" ${durationMins === 180 ? 'selected' : ''}>3 hours</option>
                     </select>
                 </div>
+                `}
                 ${getDayCount() > 1 ? `
                 <div class="spend-group">
                     <label class="spend-label">Move to</label>
@@ -403,12 +426,15 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
     if (downBtn) downBtn.addEventListener('click', (e) => { e.stopPropagation(); moveStop(gem.id, 'down'); });
 
     // Wire time-spent → recalculate times (no full re-render needed)
-    card.querySelector('.time-spent-select').addEventListener('change', (e) => {
-        const durations           = getDurations();
-        durations[gem.id]         = parseInt(e.target.value, 10);
-        saveDurations(durations);
-        calculateCascadingTimes();
-    });
+    const timeSpentEl = card.querySelector('.time-spent-select');
+    if (timeSpentEl) {
+        timeSpentEl.addEventListener('change', (e) => {
+            const durations           = getDurations();
+            durations[gem.id]         = parseInt(e.target.value, 10);
+            saveDurations(durations);
+            calculateCascadingTimes();
+        });
+    }
 
     // Wire move-to-day select
     const moveDayEl = card.querySelector('.move-day-select');
@@ -597,7 +623,8 @@ function calculateCascadingTimes() {
             }
 
             // 3. Add time spent at this stop → move clock forward
-            const spent = durations[gemId] || 60;
+            // Departure cards (origin anchor + hotel wake-ups) use 0 minutes
+            const spent = isDepartureCard(gemId) ? 0 : (durations[gemId] || 60);
             current.setMinutes(current.getMinutes() + spent);
 
             // 4. Add drive time to NEXT stop → move clock forward

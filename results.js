@@ -541,6 +541,9 @@ async function loadResultsGems() {
 
         if (!filteredGems.length) return;
 
+        // Shuffle gems so they appear in random order each visit (same as Places cards)
+        shuffleArray(filteredGems);
+
         // Build all gem cards concurrently (parallel thumbnail fetches)
         const cards = await Promise.all(filteredGems.map(gem => buildGemCard(gem)));
 
