@@ -197,13 +197,24 @@ function renderResults(unique) {
 
     // Render first batch only — Load More handles the rest
     const firstBatch = filteredPlaces.slice(0, BATCH_SIZE);
-    firstBatch.forEach((place, i) => grid.appendChild(buildPlaceCard(place, i)));
+    firstBatch.forEach((place, i) => {
+        const card = buildPlaceCard(place, i);
+        if (place.geometry?.location) {
+            card.dataset.lat = place.geometry.location.lat();
+            card.dataset.lng = place.geometry.location.lng();
+        }
+        grid.appendChild(card);
+    });
     loadedCount = firstBatch.length;
 
     grid.style.display      = '';
     filterRow.style.display = 'flex';
     countEl.style.display   = 'block';
     countEl.innerHTML       = `Showing <strong>${firstBatch.length} gems</strong> near ${to}`;
+
+    // Show map toggle button now that we have results
+    const mapToggleBtn = document.getElementById('btn-map-toggle');
+    if (mapToggleBtn) mapToggleBtn.style.display = 'flex';
 
     // Show search tip if Places results are low
     const tipEl = document.getElementById('results-tip');
@@ -229,6 +240,10 @@ function loadMoreResults() {
 
     batch.forEach((place, i) => {
         const card = buildPlaceCard(place, loadedCount + i);
+        if (place.geometry?.location) {
+            card.dataset.lat = place.geometry.location.lat();
+            card.dataset.lng = place.geometry.location.lng();
+        }
         if (firstGemCard) {
             grid.insertBefore(card, firstGemCard);
         } else {
@@ -344,6 +359,10 @@ function applyFilter(filterValue) {
     const firstGemCard = grid.querySelector('.gem-card');
     batch.forEach((place, i) => {
         const card = buildPlaceCard(place, i);
+        if (place.geometry?.location) {
+            card.dataset.lat = place.geometry.location.lat();
+            card.dataset.lng = place.geometry.location.lng();
+        }
         if (firstGemCard) {
             grid.insertBefore(card, firstGemCard);
         } else {
@@ -368,6 +387,11 @@ function applyFilter(filterValue) {
     updateLoadMoreButton();
     if (countEl) countEl.innerHTML = `Showing <strong>${visibleCount} gems</strong> near ${to}`;
     if (emptyState) emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+
+    // If map is currently visible, redraw the pins to match new filter
+    if (document.body.classList.contains('map-view-active') && typeof renderResultsMap === 'function') {
+        renderResultsMap();
+    }
 }
 
 // Called when 2+ activities are passed from home page via URL
@@ -406,6 +430,10 @@ function applyMultiFilter(activityList) {
     const firstGemCard = grid.querySelector('.gem-card');
     batch.forEach((place, i) => {
         const card = buildPlaceCard(place, i);
+        if (place.geometry?.location) {
+            card.dataset.lat = place.geometry.location.lat();
+            card.dataset.lng = place.geometry.location.lng();
+        }
         if (firstGemCard) {
             grid.insertBefore(card, firstGemCard);
         } else {
@@ -429,6 +457,11 @@ function applyMultiFilter(activityList) {
     updateLoadMoreButton();
     if (countEl)    countEl.innerHTML        = `Showing <strong>${visibleCount} gems</strong> near ${to}`;
     if (emptyState) emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+
+    // If map is currently visible, redraw the pins to match new filter
+    if (document.body.classList.contains('map-view-active') && typeof renderResultsMap === 'function') {
+        renderResultsMap();
+    }
 }
 
 function wireFilterChips() {
@@ -525,8 +558,10 @@ async function loadResultsGems() {
         // Build all gem cards concurrently (parallel thumbnail fetches)
         const cards = await Promise.all(filteredGems.map(gem => buildGemCard(gem)));
 
-        cards.forEach(card => {
+        cards.forEach((card, i) => {
             card.dataset.source = 'gem';
+            card.dataset.lat    = filteredGems[i].lat;
+            card.dataset.lng    = filteredGems[i].lng;
 
             // Pre-filter gem cards by homepage activities before appending
             // so they're already hidden/shown correctly before applyFilter runs
@@ -597,4 +632,125 @@ document.addEventListener('DOMContentLoaded', () => {
             if (tip) tip.style.display = 'none';
         });
     }
+});
+
+// ==========================================
+// 7. RESULTS MAP — Interactive Map View
+// ==========================================
+let resultsMap     = null;
+let resultsMarkers = [];
+
+function toggleMapView() {
+    const isMapActive  = document.body.classList.toggle('map-view-active');
+    const mapContainer = document.getElementById('results-map-container');
+    const toggleText   = document.querySelector('.btn-map-toggle .toggle-text');
+    const toggleIcon   = document.querySelector('.btn-map-toggle .toggle-icon');
+
+    if (isMapActive) {
+        mapContainer.style.display = 'block';
+        if (toggleText) toggleText.textContent = 'Show List';
+        if (toggleIcon) toggleIcon.textContent = '📄';
+        renderResultsMap();
+    } else {
+        mapContainer.style.display = 'none';
+        if (toggleText) toggleText.textContent = 'Show Map';
+        if (toggleIcon) toggleIcon.textContent = '🗺️';
+    }
+}
+
+function renderResultsMap() {
+    const mapEl = document.getElementById('results-map');
+    if (!mapEl) return;
+
+    if (!resultsMap) {
+        resultsMap = new google.maps.Map(mapEl, {
+            center: { lat: toLat, lng: toLng },
+            zoom: 12,
+            mapTypeControl: false,
+            streetViewControl: false,
+            fullscreenControl: true,
+            styles: [
+                { featureType: 'poi', stylers: [{ visibility: 'off' }] },
+                { featureType: 'transit', stylers: [{ visibility: 'off' }] },
+            ],
+        });
+    }
+
+    // Clear existing markers
+    resultsMarkers.forEach(m => m.setMap(null));
+    resultsMarkers = [];
+
+    const bounds = new google.maps.LatLngBounds();
+    let hasPoints = false;
+
+    // Loop through all visible cards to drop pins
+    document.querySelectorAll('.feed-card, .gem-card').forEach(card => {
+        if (card.style.display === 'none') return;
+        
+        const lat = parseFloat(card.dataset.lat);
+        const lng = parseFloat(card.dataset.lng);
+        if (isNaN(lat) || isNaN(lng)) return;
+
+        const isGem = card.dataset.source === 'gem';
+        const pos = { lat, lng };
+        bounds.extend(pos);
+        hasPoints = true;
+
+        const marker = new google.maps.Marker({
+            position: pos,
+            map: resultsMap,
+            icon: isGem ? undefined : {
+                path: google.maps.SymbolPath.CIRCLE,
+                fillColor: '#ff477e',
+                fillOpacity: 1,
+                strokeColor: '#fff',
+                strokeWeight: 2,
+                scale: 10,
+            },
+            label: isGem ? { text: '💎', fontSize: '18px' } : undefined,
+            title: card.querySelector('h3')?.textContent || 'Gem',
+            zIndex: isGem ? 100 : 10
+        });
+
+        // Click pin -> switch back to list view, scroll to card, and highlight
+        marker.addListener('click', () => {
+            if (document.body.classList.contains('map-view-active')) {
+                toggleMapView();
+            }
+            // Add a tiny delay to allow CSS grid to render before scrolling
+            setTimeout(() => {
+                card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                card.style.transition = 'box-shadow 0.3s ease, transform 0.3s ease';
+                const originalShadow = card.style.boxShadow;
+                const originalTransform = card.style.transform;
+                card.style.boxShadow = '0 0 0 4px var(--primary)';
+                card.style.transform = 'translateY(-8px)';
+                setTimeout(() => {
+                    card.style.boxShadow = originalShadow;
+                    card.style.transform = originalTransform;
+                }, 2000);
+            }, 100);
+        });
+
+        resultsMarkers.push(marker);
+    });
+
+    // Fit bounds after DOM update
+    if (hasPoints) {
+        google.maps.event.trigger(resultsMap, 'resize');
+        setTimeout(() => {
+            resultsMap.fitBounds(bounds, { top: 40, bottom: 40, left: 40, right: 40 });
+            // Prevent over-zoom
+            const listener = google.maps.event.addListener(resultsMap, 'idle', () => {
+                if (resultsMap.getZoom() > 15) resultsMap.setZoom(15);
+                google.maps.event.removeListener(listener);
+            });
+        }, 150);
+    }
+}
+
+// Wire the map toggle button
+document.addEventListener('DOMContentLoaded', () => {
+    const toggleBtn = document.getElementById('btn-map-toggle');
+    if (toggleBtn) toggleBtn.addEventListener('click', toggleMapView);
 });

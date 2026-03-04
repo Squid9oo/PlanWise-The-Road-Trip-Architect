@@ -204,6 +204,55 @@
             font-size: 0.9rem;
             text-decoration: none;
         }
+
+        /* --- INTERACTIVE MAP (Session 23) --- */
+        #results-map-container {
+            width: 100%;
+            height: 600px;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+        }
+
+        #results-map { width: 100%; height: 100%; }
+
+        .btn-map-toggle {
+            position: fixed;
+            bottom: 2rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 400;
+            background: var(--dark);
+            color: #fff;
+            border: none;
+            padding: 0.85rem 1.75rem;
+            border-radius: var(--radius-xl);
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all var(--transition);
+        }
+
+        .btn-map-toggle:hover {
+            background: var(--primary-dark);
+            transform: translateX(-50%) translateY(-2px);
+        }
+
+        .map-view-active #results-grid,
+        .map-view-active #btn-load-more {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            #results-map-container { height: 65vh; margin-bottom: 1.5rem; }
+            .btn-map-toggle { bottom: 1.5rem; padding: 0.75rem 1.5rem; font-size: 0.9rem; }
+        }
     </style>
 </head>
 <body>
@@ -260,6 +309,10 @@
     <div class="results-tip" id="results-tip" style="display:none;">
         <span class="results-tip-text">💡 Tip: Try a specific area like "Georgetown, Penang" or "Batu Ferringhi" instead of just "Penang" — you'll get more targeted results.</span>
         <button class="results-tip-close" id="results-tip-close" aria-label="Dismiss tip">✕</button>
+    </div>
+
+    <div id="results-map-container" style="display:none;">
+        <div id="results-map"></div>
     </div>
 
     <!-- LOADING SPINNER -->
@@ -424,7 +477,10 @@
 
     <div id="hidden-map" style="display:none;"></div>
 
-    <!-- BACK TO TOP — floats bottom-right after scrolling -->
+    <button class="btn-map-toggle" id="btn-map-toggle" style="display:none;">
+        <span class="toggle-icon">🗺️</span> <span class="toggle-text">Show Map</span>
+    </button>
+
     <button class="btn-back-to-top" id="btn-back-to-top" aria-label="Back to top">↑</button>
 
     <!-- GEM DETAIL PANEL -->
