@@ -171,6 +171,15 @@ function loadPlanner() {
     if (gems.length === 0) {
         document.getElementById('planner-empty').style.display  = 'flex';
         document.getElementById('planner-main').style.display   = 'none';
+        // Reset summary bar so stale data doesn't persist
+        const countEl = document.getElementById('summary-stops');
+        const daysEl  = document.getElementById('summary-days');
+        const kmEl    = document.getElementById('summary-km');
+        const timeEl  = document.getElementById('summary-time');
+        if (countEl) countEl.textContent = '0 stops';
+        if (daysEl)  daysEl.textContent  = '0 days';
+        if (kmEl)    kmEl.textContent    = '-- km';
+        if (timeEl)  timeEl.textContent  = '-- drive';
         return;
     }
 
@@ -381,7 +390,7 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
     card.className      = 'stop-card';
     card.dataset.gemId  = gem.id;
     card.dataset.day    = dayNum;
-    card.draggable      = true;
+    card.draggable      = !isDepartureCard(gem.id);
 
     const photoUrl = gem.photo
         || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80';
@@ -517,6 +526,16 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
             saveNotes(notes);
         }, 400);
     });
+
+    // Lock departure cards — prevent reordering
+    if (isDepartureCard(gem.id)) {
+        const reorderGroup = card.querySelector('.btn-reorder-group');
+        if (reorderGroup) reorderGroup.style.display = 'none';
+        const dragHandle = card.querySelector('.drag-handle');
+        if (dragHandle) dragHandle.style.display = 'none';
+        const moveDayEl = card.querySelector('.move-day-select');
+        if (moveDayEl) moveDayEl.closest('.spend-group').style.display = 'none';
+    }
 
     return card;
 }
@@ -1405,13 +1424,27 @@ document.addEventListener('DOMContentLoaded', () => {
             const list = document.getElementById('accommodation-list');
             const rows = list.querySelectorAll('.accom-input');
             if (rows.length >= 10) return alert('Maximum 10 hotels allowed.');
-            
+
+            const row = document.createElement('div');
+            row.style.cssText = 'display:flex; align-items:center; gap:0.5rem;';
+
             const newInput = document.createElement('input');
             newInput.type = 'text';
             newInput.className = 'accom-input';
             newInput.placeholder = `e.g. Day ${rows.length + 1} - Hotel ${String.fromCharCode(65 + rows.length)}`;
-            newInput.style.cssText = 'width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.5rem; font-family: var(--font-body); font-size: 0.9rem; margin-top: 0.5rem;';
-            list.appendChild(newInput);
+            newInput.style.cssText = 'flex:1; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.5rem; font-family: var(--font-body); font-size: 0.9rem; color: var(--body-text);';
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.textContent = '✕';
+            removeBtn.style.cssText = 'background:transparent; border:1.5px solid rgba(255,71,126,0.35); color:rgba(255,71,126,0.8); width:32px; height:32px; border-radius:50%; font-size:0.75rem; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.22s ease;';
+            removeBtn.addEventListener('mouseenter', () => { removeBtn.style.background = 'var(--accent)'; removeBtn.style.borderColor = 'var(--accent)'; removeBtn.style.color = '#fff'; });
+            removeBtn.addEventListener('mouseleave', () => { removeBtn.style.background = 'transparent'; removeBtn.style.borderColor = 'rgba(255,71,126,0.35)'; removeBtn.style.color = 'rgba(255,71,126,0.8)'; });
+            removeBtn.addEventListener('click', () => row.remove());
+
+            row.appendChild(newInput);
+            row.appendChild(removeBtn);
+            list.appendChild(row);
         });
     }
 
