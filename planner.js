@@ -256,6 +256,18 @@ function renderPlanner() {
     updateSummaryBar();
     wireDragDrop();
     
+    // HIDE TIME SPENT ON FINAL STOP: 
+    // The very last card of the trip represents arrival at the final destination
+    const allStops = document.querySelectorAll('.stop-card');
+    if (allStops.length > 0) {
+        const lastStop = allStops[allStops.length - 1];
+        const spendGroup = lastStop.querySelector('.spend-group');
+        // Don't hide if the last card happens to be a hotel check-in/out
+        if (spendGroup && !lastStop.dataset.gemId.endsWith('_in') && !lastStop.dataset.gemId.endsWith('_out')) {
+            spendGroup.style.display = 'none';
+        }
+    }
+    
     // Redraw map pins and lines whenever planner re-renders
     if (plannerMap) {
         setTimeout(renderPlannerMap, 100);
@@ -1188,9 +1200,33 @@ function showPlacePreview(place) {
         });
     });
 
-    // Wire hotel button
+    // Wire hotel button — Ask for Check-in/out days
     const hotelBtn = actionsEl.querySelector('.btn-preview-hotel');
-    if (hotelBtn) hotelBtn.addEventListener('click', () => confirmAddAsHotel(pendingPlace));
+    if (hotelBtn) {
+        hotelBtn.addEventListener('click', () => {
+            let dayOpts = '';
+            for(let d=1; d<=dayCount+1; d++) dayOpts += `<option value="${d}">Day ${d}</option>`;
+            
+            actionsEl.innerHTML = `
+                <div style="display:flex; gap:0.5rem; align-items:center; width:100%; margin-top:0.5rem; flex-wrap:wrap; background:var(--surface); padding:0.5rem; border-radius:var(--radius-sm); border:1px solid var(--border);">
+                    <label style="font-size:0.75rem; font-weight:700;">Check-in:</label>
+                    <select id="hotel-in-day" style="padding:0.2rem; font-size:0.8rem;">${dayOpts}</select>
+                    <label style="font-size:0.75rem; font-weight:700;">Check-out:</label>
+                    <select id="hotel-out-day" style="padding:0.2rem; font-size:0.8rem;">
+                        ${dayOpts.replace('value="2"', 'value="2" selected')}
+                    </select>
+                    <button class="btn-preview-day" id="btn-confirm-hotel" style="background:var(--primary-dark);">Save Hotel</button>
+                </div>
+            `;
+            
+            document.getElementById('btn-confirm-hotel').addEventListener('click', () => {
+                const inDay = parseInt(document.getElementById('hotel-in-day').value, 10);
+                const outDay = parseInt(document.getElementById('hotel-out-day').value, 10);
+                if(outDay <= inDay) return alert("Check-out day must be after Check-in day.");
+                confirmAddAsHotel(pendingPlace, inDay, outDay);
+            });
+        });
+    }
 
     preview.style.display = 'flex';
 }
@@ -1233,7 +1269,7 @@ function confirmAddToDay(place, dayNum) {
     loadPlanner();
 }
 
-function confirmAddAsHotel(place) {
+function confirmAddAsHotel(place, inDay, outDay) {
     const baseId = place.place_id || 'manual_' + Date.now();
     const photo  = (place.photos && place.photos.length > 0)
         ? place.photos[0].getUrl({ maxWidth: 400 }) : '';
@@ -1264,25 +1300,22 @@ function confirmAddAsHotel(place) {
     if (!gems.find(g => g.id === wakeUp.id))  gems.push(wakeUp);
     localStorage.setItem(SK_GEMS, JSON.stringify(gems));
 
-    // SMART HOTEL ROUTING v2: Chain hotels based on the last checkout (wake-up) day
+    // Use the exact days chosen by the user in the UI
     let dayCount = getDayCount();
-    let latestWakeUpDay = 0;
-    
-    // Scan all days to find the furthest wake-up card
-    for (let d = 1; d <= dayCount; d++) {
-        const dayStops = order[d] || [];
-        if (dayStops.some(id => id.endsWith('_out'))) {
-            latestWakeUpDay = d;
-        }
-    }
-    
-    // If no hotels yet, start Day 1. Otherwise, check-in on the day you checked out of the last hotel.
-    const checkInDay = latestWakeUpDay > 0 ? latestWakeUpDay : 1;
-    
-    const lastDay = checkInDay;
-    const nextDay = checkInDay + 1;
+    const lastDay = inDay;
+    const nextDay = outDay;
 
-    // Create next day if it doesn't exist
+    // Ensure we have enough days generated in the planner
+    const maxDayNeeded = Math.max(dayCount, nextDay);
+    if (dayCount < maxDayNeeded) {
+        saveDayCount(maxDayNeeded);
+        const times = getDayTimes();
+        for (let d = dayCount + 1; d <= maxDayNeeded; d++) {
+            if (!times[d]) times[d] = '09:00';
+            if (!order[d]) order[d] = [];
+        }
+        saveDayTimes(times);
+    }
     if (dayCount < nextDay) {
         saveDayCount(nextDay);
         const times = getDayTimes();
