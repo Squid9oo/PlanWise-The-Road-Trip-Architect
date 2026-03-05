@@ -429,6 +429,12 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
                         <option value="90"  ${durationMins === 90  ? 'selected' : ''}>1.5 hours</option>
                         <option value="120" ${durationMins === 120 ? 'selected' : ''}>2 hours</option>
                         <option value="180" ${durationMins === 180 ? 'selected' : ''}>3 hours</option>
+                        <option value="240" ${durationMins === 240 ? 'selected' : ''}>4 hours</option>
+                        <option value="300" ${durationMins === 300 ? 'selected' : ''}>5 hours</option>
+                        <option value="360" ${durationMins === 360 ? 'selected' : ''}>6 hours</option>
+                        <option value="420" ${durationMins === 420 ? 'selected' : ''}>7 hours</option>
+                        <option value="480" ${durationMins === 480 ? 'selected' : ''}>8 hours</option>
+                        <option value="540" ${durationMins === 540 ? 'selected' : ''}>9 hours</option>
                     </select>
                 </div>
                 `}
@@ -1258,10 +1264,23 @@ function confirmAddAsHotel(place) {
     if (!gems.find(g => g.id === wakeUp.id))  gems.push(wakeUp);
     localStorage.setItem(SK_GEMS, JSON.stringify(gems));
 
-    // Check-in → end of last existing day, Wake-up → start of next day
+    // SMART HOTEL ROUTING v2: Chain hotels based on the last checkout (wake-up) day
     let dayCount = getDayCount();
-    const lastDay = dayCount;
-    const nextDay = dayCount + 1;
+    let latestWakeUpDay = 0;
+    
+    // Scan all days to find the furthest wake-up card
+    for (let d = 1; d <= dayCount; d++) {
+        const dayStops = order[d] || [];
+        if (dayStops.some(id => id.endsWith('_out'))) {
+            latestWakeUpDay = d;
+        }
+    }
+    
+    // If no hotels yet, start Day 1. Otherwise, check-in on the day you checked out of the last hotel.
+    const checkInDay = latestWakeUpDay > 0 ? latestWakeUpDay : 1;
+    
+    const lastDay = checkInDay;
+    const nextDay = checkInDay + 1;
 
     // Create next day if it doesn't exist
     if (dayCount < nextDay) {
@@ -1331,6 +1350,11 @@ function optimizeDayRoute(dayNum) {
 // (Dynamic content is wired inside buildStopCard)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
+    // Inject Travel Dates from search
+    const savedDates = localStorage.getItem('planwise_trip_dates');
+    const datesInput = document.querySelector('.meta-field input[placeholder*="12-14 Nov"]');
+    if (savedDates && datesInput) datesInput.value = savedDates;
+
     const exportBtn = document.getElementById('btn-export-maps');
     if (exportBtn) exportBtn.addEventListener('click', exportToMaps);
 

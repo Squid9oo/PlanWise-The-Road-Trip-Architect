@@ -14,6 +14,7 @@ function toggleSaveGem(gemObj, btnEl) {
         saved.splice(idx, 1); // Remove it (Unsave)
         btnEl.textContent = '+ Save';
         btnEl.classList.remove('btn-saved');
+        updateSaveToast(saved.length); // 🎒 Sync toast on unsave
     } else {
         saved.push(gemObj); // Add it (Save)
         btnEl.textContent = '✓ Saved';
@@ -40,6 +41,14 @@ function updateNavBadge() {
 // SAVE TOAST — Floating badge after saving
 // ==========================================
 let toastTimer = null;
+
+function updateSaveToast(count) {
+    const existing = document.getElementById('save-toast');
+    if (existing) {
+        if (count === 0) existing.remove();
+        else existing.querySelector('span').textContent = `${count} gem${count !== 1 ? 's' : ''} saved — View Planner`;
+    }
+}
 
 function showSaveToast(count) {
     // Remove any existing toast first
@@ -278,6 +287,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const dTo    = new Date(toDate);
                 const nights = Math.round((dTo - dFrom) / (1000 * 60 * 60 * 24));
                 if (nights > 0) localStorage.setItem('planwise_trip_nights', String(nights));
+                
+                // Format dates for the Planner print view (e.g. "12-14 Nov 2026")
+                const options = { day: 'numeric', month: 'short', year: 'numeric' };
+                const dateStr = `${dFrom.toLocaleDateString('en-GB', {day:'numeric', month:'short'})} - ${dTo.toLocaleDateString('en-GB', options)}`;
+                localStorage.setItem('planwise_trip_dates', dateStr);
             }
 
             setTimeout(() => {

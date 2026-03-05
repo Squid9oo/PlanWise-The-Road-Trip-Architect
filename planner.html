@@ -1195,13 +1195,13 @@
                 border-radius: 0;
             }
 
-            /* --- Stop card — Premium Timeline Layout --- */
+            /* --- Stop card — Excel Cell Layout --- */
             .stop-card {
                 box-shadow: none !important; border: none !important; transform: none !important;
                 border-bottom: 1px solid #eaeaea !important; border-radius: 0;
-                padding: 0.4cm 0; margin: 0; cursor: default;
+                padding: 0.3cm; margin: 0; cursor: default;
                 break-inside: avoid; page-break-inside: avoid;
-                display: flex !important; align-items: flex-start; gap: 0.5cm;
+                display: flex !important; flex-direction: column !important; align-items: flex-start !important; gap: 0.15cm !important;
             }
 
             .stop-card:hover {
@@ -1256,12 +1256,17 @@
                 color: #555;
             }
 
-            /* --- Day section spacing --- */
-            .day-section {
-                margin-bottom: 0.5cm;
-                break-inside: avoid;
-                page-break-inside: avoid;
+            /* --- EXCEL/BOARD LAYOUT (Side-by-side columns) --- */
+            #planner-content {
+                display: flex !important; flex-direction: row !important;
+                gap: 0.3cm !important; align-items: flex-start !important;
             }
+            .day-section {
+                flex: 1 !important; min-width: 0; /* Prevents column blowout */
+                margin-bottom: 0.5cm; border: 1.5px solid #0a0a23 !important;
+                break-inside: avoid; page-break-inside: avoid;
+            }
+            .day-header { justify-content: center !important; text-align: center; }
 
             /* --- Remove all transitions and animations --- */
             * {
@@ -1343,12 +1348,16 @@
                     <input type="text" placeholder="e.g. 12-14 Nov 2026">
                 </div>
                 <div class="meta-field">
-                    <label>Pax & Transport</label>
-                    <input type="text" placeholder="e.g. 4 Adults, Honda City">
+                    <label>No. of Pax</label>
+                    <input type="text" placeholder="e.g. 4 Adults, 2 Kids">
                 </div>
                 <div class="meta-field">
-                    <label>Accommodation</label>
-                    <input type="text" placeholder="e.g. The Banjaran Hotsprings">
+                    <label>Transport Mode</label>
+                    <input type="text" placeholder="e.g. Honda City">
+                </div>
+                <div class="meta-field" style="grid-column: 1 / -1;">
+                    <label>Accommodation(s)</label>
+                    <input type="text" placeholder="e.g. Hotel A (Day 1-2), Hotel B (Day 3)">
                 </div>
             </div>
         </div>
