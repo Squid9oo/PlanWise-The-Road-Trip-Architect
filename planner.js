@@ -1450,7 +1450,28 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem(SK_DAYCOUNT);
             localStorage.removeItem('planwise_origin_injected'); // Reset the anchor so it respawns next trip
             localStorage.removeItem('planwise_trip_nights');     // Reset so next trip gets fresh day count
+            localStorage.removeItem('planwise_trip_dates');      // Reset travel dates display
             // Keep drive cache — no point re-fetching if user rebuilds same route
+
+            // Reset Trip Details form inputs
+            const tripTitle = document.querySelector('.trip-title-input');
+            if (tripTitle) tripTitle.value = '';
+
+            document.querySelectorAll('.trip-meta-grid .meta-field input').forEach(input => {
+                input.value = '';
+            });
+
+            // Reset accommodation rows back to a single empty row
+            const accomList = document.getElementById('accommodation-list');
+            if (accomList) {
+                accomList.innerHTML = '';
+                const freshInput = document.createElement('input');
+                freshInput.type = 'text';
+                freshInput.className = 'accom-input';
+                freshInput.placeholder = 'e.g. Day 1 - Hotel A';
+                freshInput.style.cssText = 'width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.5rem; font-family: var(--font-body); font-size: 0.9rem; color: var(--body-text);';
+                accomList.appendChild(freshInput);
+            }
 
             loadPlanner(); // re-renders empty state
         });
