@@ -105,6 +105,9 @@ function ensureTripDays() {
     const requiredDays = nights + 1;  // 3 nights = 4 days
     const currentDays  = getDayCount();
 
+    // One-shot: clear the trigger so removed days don't resurrect
+    localStorage.removeItem('planwise_trip_nights');
+
     if (currentDays >= requiredDays) return; // Already enough days
 
     const order = getOrder();
@@ -390,7 +393,7 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
     card.className      = 'stop-card';
     card.dataset.gemId  = gem.id;
     card.dataset.day    = dayNum;
-    card.draggable      = !isDepartureCard(gem.id);
+    card.draggable      = !(gem.id.endsWith('_out') && stopNum === 1);
 
     const photoUrl = gem.photo
         || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80';
@@ -437,7 +440,7 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
                 </div>
             </div>
             <div class="stop-bottom-row">
-                ${isDepartureCard(gem.id) ? `
+                ${isDepartureCard(gem.id) && stopNum === 1 ? `
                 <div class="spend-group">
                     <span class="spend-label" style="text-transform:none; font-weight:700; color:var(--primary-dark);">🚗 Departure Point</span>
                 </div>
@@ -527,16 +530,22 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
         }, 400);
     });
 
-    // Lock departure cards — prevent reordering and removal
-    if (isDepartureCard(gem.id)) {
+    // Lock hotel wake-up cards at slot 1 — position-locked but deletable
+    if (gem.id.endsWith('_out') && stopNum === 1) {
         const reorderGroup = card.querySelector('.btn-reorder-group');
         if (reorderGroup) reorderGroup.style.display = 'none';
         const dragHandle = card.querySelector('.drag-handle');
         if (dragHandle) dragHandle.style.display = 'none';
         const moveDayEl = card.querySelector('.move-day-select');
         if (moveDayEl) moveDayEl.closest('.spend-group').style.display = 'none';
-        const removeBtn = card.querySelector('.btn-remove-stop');
-        if (removeBtn) removeBtn.style.display = 'none';
+    }
+
+    // Add linked-pair hint on hotel cards
+    if (gem.id.endsWith('_in') || gem.id.endsWith('_out')) {
+        const hint = document.createElement('p');
+        hint.style.cssText = 'font-size:0.72rem; color:var(--muted); font-style:italic; margin-top:0.2rem;';
+        hint.textContent = '🔗 Linked stay — removing this also removes the paired check-in/wake-up card';
+        card.querySelector('.stop-info').appendChild(hint);
     }
 
     return card;
@@ -706,8 +715,8 @@ function calculateCascadingTimes() {
             }
 
             // 3. Add time spent at this stop → move clock forward
-            // Departure cards (origin anchor + hotel wake-ups) use 0 minutes
-            const spent = isDepartureCard(gemId) ? 0 : (durations[gemId] || 60);
+            // Departure cards at slot 1 (origin anchor + hotel wake-ups) use 0 minutes
+            const spent = (isDepartureCard(gemId) && i === 0) ? 0 : (durations[gemId] || 60);
             current.setMinutes(current.getMinutes() + spent);
 
             // 4. Add drive time to NEXT stop → move clock forward
@@ -842,15 +851,20 @@ function removeDay(dayNum) {
 // REMOVE STOP
 // ==========================================
 function removeStop(gemId) {
-    // Remove from saved gems
+    // Find paired hotel card (check-in ↔ wake-up)
+    let pairedId = null;
+    if (gemId.endsWith('_in'))  pairedId = gemId.replace(/_in$/, '_out');
+    if (gemId.endsWith('_out')) pairedId = gemId.replace(/_out$/, '_in');
+
+    // Remove from saved gems (+ paired hotel if applicable)
     let gems = getGems();
-    gems     = gems.filter(g => g.id !== gemId);
+    gems     = gems.filter(g => g.id !== gemId && g.id !== pairedId);
     localStorage.setItem(SK_GEMS, JSON.stringify(gems));
 
-    // Remove from order in all days
+    // Remove from order in all days (+ paired hotel if applicable)
     const order = getOrder();
     for (const d in order) {
-        order[d] = (order[d] || []).filter(id => id !== gemId);
+        order[d] = (order[d] || []).filter(id => id !== gemId && id !== pairedId);
     }
     saveOrder(order);
 
@@ -874,10 +888,10 @@ function moveStop(gemId, direction) {
         const newIdx = direction === 'up' ? idx - 1 : idx + 1;
         if (newIdx < 0 || newIdx >= dayStops.length) return; // already at top/bottom
 
-        // Block: nothing can swap into index 0 if a departure card owns it
-        if (newIdx === 0 && isDepartureCard(dayStops[0])) return;
-        // Block: departure card can't move down either (belt-and-suspenders)
-        if (isDepartureCard(gemId)) return;
+        // Block: nothing can swap into index 0 if a hotel wake-up card owns it
+        if (newIdx === 0 && dayStops[0].endsWith('_out')) return;
+        // Block: hotel wake-up can't move from index 0
+        if (gemId.endsWith('_out') && idx === 0) return;
 
         // Swap the two entries
         [dayStops[idx], dayStops[newIdx]] = [dayStops[newIdx], dayStops[idx]];
@@ -963,11 +977,11 @@ function onDropOnCard(e) {
     const targetDay = parseInt(this.dataset.day, 10);
     if (!dragState.gemId || dragState.gemId === targetId) return;
 
-    // Block: can't drop before a departure card (it must stay at index 0)
+    // Block: can't drop before a hotel wake-up card (it must stay at index 0)
     const order = getOrder();
     const targetDayStops = order[targetDay] || [];
     const targetIdx = targetDayStops.indexOf(targetId);
-    if (targetIdx === 0 && isDepartureCard(targetId)) return;
+    if (targetIdx === 0 && targetId.endsWith('_out')) return;
 
     // Remove dragged gem from its current day
     for (const d in order) {
