@@ -1217,17 +1217,19 @@ function showPlacePreview(place) {
     const hotelBtn = actionsEl.querySelector('.btn-preview-hotel');
     if (hotelBtn) {
         hotelBtn.addEventListener('click', () => {
-            let dayOpts = '';
-            for(let d=1; d<=dayCount+1; d++) dayOpts += `<option value="${d}">Day ${d}</option>`;
+            let inDayOpts = '';
+            let outDayOpts = '';
+            // Max Check-in is Day Count (You can't check in after you go home)
+            for(let d=1; d<=dayCount; d++) inDayOpts += `<option value="${d}">Day ${d}</option>`;
+            // Check-out can be up to Day Count + 1 (Waking up the morning after the trip ends)
+            for(let d=2; d<=dayCount+1; d++) outDayOpts += `<option value="${d}">Day ${d}</option>`;
             
             actionsEl.innerHTML = `
                 <div style="display:flex; gap:0.5rem; align-items:center; width:100%; margin-top:0.5rem; flex-wrap:wrap; background:var(--surface); padding:0.5rem; border-radius:var(--radius-sm); border:1px solid var(--border);">
                     <label style="font-size:0.75rem; font-weight:700;">Check-in:</label>
-                    <select id="hotel-in-day" style="padding:0.2rem; font-size:0.8rem;">${dayOpts}</select>
+                    <select id="hotel-in-day" style="padding:0.2rem; font-size:0.8rem;">${inDayOpts}</select>
                     <label style="font-size:0.75rem; font-weight:700;">Check-out:</label>
-                    <select id="hotel-out-day" style="padding:0.2rem; font-size:0.8rem;">
-                        ${dayOpts.replace('value="2"', 'value="2" selected')}
-                    </select>
+                    <select id="hotel-out-day" style="padding:0.2rem; font-size:0.8rem;">${outDayOpts}</select>
                     <button class="btn-preview-day" id="btn-confirm-hotel" style="background:var(--primary-dark);">Save Hotel</button>
                 </div>
             `;
@@ -1396,6 +1398,23 @@ function optimizeDayRoute(dayNum) {
 // (Dynamic content is wired inside buildStopCard)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
+    // Wire + Add Hotel Row logic
+    const addAccomBtn = document.getElementById('btn-add-accom');
+    if (addAccomBtn) {
+        addAccomBtn.addEventListener('click', () => {
+            const list = document.getElementById('accommodation-list');
+            const rows = list.querySelectorAll('.accom-input');
+            if (rows.length >= 10) return alert('Maximum 10 hotels allowed.');
+            
+            const newInput = document.createElement('input');
+            newInput.type = 'text';
+            newInput.className = 'accom-input';
+            newInput.placeholder = `e.g. Day ${rows.length + 1} - Hotel ${String.fromCharCode(65 + rows.length)}`;
+            newInput.style.cssText = 'width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.5rem; font-family: var(--font-body); font-size: 0.9rem; margin-top: 0.5rem;';
+            list.appendChild(newInput);
+        });
+    }
+
     // Inject Travel Dates from search
     const savedDates = localStorage.getItem('planwise_trip_dates');
     const datesInput = document.querySelector('.meta-field input[placeholder*="12-14 Nov"]');
