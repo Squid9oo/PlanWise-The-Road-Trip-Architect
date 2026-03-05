@@ -387,7 +387,7 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
     card.className      = 'stop-card';
     card.dataset.gemId  = gem.id;
     card.dataset.day    = dayNum;
-    card.draggable      = !(gem.id.endsWith('_out') && stopNum === 1);
+    card.draggable      = !(gem.id.includes('_out') && stopNum === 1);
 
     // Clean up origin anchor display globally (strip Departing From / Start Line)
     let displayName     = gem.name || 'Unnamed Stop';
@@ -538,7 +538,7 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
     });
 
     // Lock hotel wake-up cards at slot 1 — position-locked but deletable
-    if (gem.id.endsWith('_out') && stopNum === 1) {
+    if (gem.id.includes('_out') && stopNum === 1) {
         const reorderGroup = card.querySelector('.btn-reorder-group');
         if (reorderGroup) reorderGroup.style.display = 'none';
         const dragHandle = card.querySelector('.drag-handle');
@@ -547,8 +547,14 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
         if (moveDayEl) moveDayEl.closest('.spend-group').style.display = 'none';
     }
 
+    // Hide "Move to Day" for Check-ins to protect multi-day blocks
+    if (gem.id.includes('_in')) {
+        const moveDayEl = card.querySelector('.move-day-select');
+        if (moveDayEl) moveDayEl.closest('.spend-group').style.display = 'none';
+    }
+
     // Add linked-pair hint on hotel cards
-    if (gem.id.endsWith('_in') || gem.id.endsWith('_out')) {
+    if (gem.id.includes('_in') || gem.id.includes('_out')) {
         const hint = document.createElement('p');
         hint.style.cssText = 'font-size:0.72rem; color:var(--muted); font-style:italic; margin-top:0.2rem;';
         hint.textContent = '🔗 Linked stay — removing this also removes the paired check-in/wake-up card';
@@ -858,29 +864,29 @@ function removeDay(dayNum) {
 // REMOVE STOP
 // ==========================================
 function removeStop(gemId) {
-    // Find paired hotel card (check-in ↔ wake-up)
-    let pairedId = null;
-    if (gemId.endsWith('_in'))  pairedId = gemId.replace(/_in$/, '_out');
-    if (gemId.endsWith('_out')) pairedId = gemId.replace(/_out$/, '_in');
+    let isHotel = gemId.includes('_in') || gemId.includes('_out');
+    let baseId = isHotel ? (gemId.includes('_in') ? gemId.split('_in')[0] : gemId.split('_out')[0]) : null;
 
-    // Prevent Origin Anchor from respawning
-    if (gemId === 'gem_origin_anchor') {
-        localStorage.removeItem('planwise_origin');
-    }
+    if (gemId === 'gem_origin_anchor') localStorage.removeItem('planwise_origin');
 
-    // Remove from saved gems (+ paired hotel if applicable)
+    // Sweep all associated hotel cards
     let gems = getGems();
-    gems     = gems.filter(g => g.id !== gemId && g.id !== pairedId);
+    if (isHotel) {
+        gems = gems.filter(g => !(g.id === baseId + '_in' || g.id.startsWith(baseId + '_out')));
+    } else {
+        gems = gems.filter(g => g.id !== gemId);
+    }
     localStorage.setItem(SK_GEMS, JSON.stringify(gems));
 
-    // Remove from order in all days (+ paired hotel if applicable)
     const order = getOrder();
     for (const d in order) {
-        order[d] = (order[d] || []).filter(id => id !== gemId && id !== pairedId);
+        if (isHotel) {
+            order[d] = (order[d] || []).filter(id => !(id === baseId + '_in' || id.startsWith(baseId + '_out')));
+        } else {
+            order[d] = (order[d] || []).filter(id => id !== gemId);
+        }
     }
     saveOrder(order);
-
-    // Reload — checks for empty state, re-renders
     loadPlanner();
 }
 
@@ -901,9 +907,9 @@ function moveStop(gemId, direction) {
         if (newIdx < 0 || newIdx >= dayStops.length) return; // already at top/bottom
 
         // Block: nothing can swap into index 0 if a hotel wake-up card owns it
-        if (newIdx === 0 && dayStops[0].endsWith('_out')) return;
+        if (newIdx === 0 && dayStops[0].includes('_out')) return;
         // Block: hotel wake-up can't move from index 0
-        if (gemId.endsWith('_out') && idx === 0) return;
+        if (gemId.includes('_out') && idx === 0) return;
 
         // Swap the two entries
         [dayStops[idx], dayStops[newIdx]] = [dayStops[newIdx], dayStops[idx]];
@@ -1358,42 +1364,28 @@ function confirmAddToDay(place, dayNum) {
 
 function confirmAddAsHotel(place, inDay, outDay) {
     const baseId = place.place_id || 'manual_' + Date.now();
-    const photo  = (place.photos && place.photos.length > 0)
-        ? place.photos[0].getUrl({ maxWidth: 400 }) : '';
+    const photo  = (place.photos && place.photos.length > 0) ? place.photos[0].getUrl({ maxWidth: 400 }) : '';
+    let gems = getGems(), order = getOrder();
 
-    let gems  = getGems();
-    let order = getOrder();
+    // 1. Double-Booking Validator
+    for (let d = inDay + 1; d <= outDay; d++) {
+        if ((order[d] || []).some(id => id.includes('_out'))) {
+            alert(`You already have a hotel scheduled for Day ${d}. Please remove your existing accommodation for that date before adding a new one.`);
+            return;
+        }
+    }
 
+    // 2. Create Check-in
     const checkIn = {
-        id:       baseId + '_in',
-        name:     '🏨 Check-in: ' + place.name,
-        location: place.formatted_address || '',
-        lat:      place.geometry.location.lat(),
-        lng:      place.geometry.location.lng(),
-        photo:    photo,
-        category: 'wellness'
+        id: baseId + '_in', name: '🏨 Check-in: ' + place.name,
+        location: place.formatted_address || '', lat: place.geometry.location.lat(),
+        lng: place.geometry.location.lng(), photo: photo, category: 'wellness'
     };
-    const wakeUp = {
-        id:       baseId + '_out',
-        name:     '🌅 Wake up: ' + place.name,
-        location: place.formatted_address || '',
-        lat:      place.geometry.location.lat(),
-        lng:      place.geometry.location.lng(),
-        photo:    photo,
-        category: 'wellness'
-    };
-
     if (!gems.find(g => g.id === checkIn.id)) gems.push(checkIn);
-    if (!gems.find(g => g.id === wakeUp.id))  gems.push(wakeUp);
-    localStorage.setItem(SK_GEMS, JSON.stringify(gems));
 
-    // Use the exact days chosen by the user in the UI
+    // 3. Setup Days & Generate Wake-ups
     let dayCount = getDayCount();
-    const lastDay = inDay;
-    const nextDay = outDay;
-
-    // Ensure we have enough days generated in the planner
-    const maxDayNeeded = Math.max(dayCount, nextDay);
+    const maxDayNeeded = Math.max(dayCount, outDay);
     if (dayCount < maxDayNeeded) {
         saveDayCount(maxDayNeeded);
         const times = getDayTimes();
@@ -1403,20 +1395,25 @@ function confirmAddAsHotel(place, inDay, outDay) {
         }
         saveDayTimes(times);
     }
-    if (dayCount < nextDay) {
-        saveDayCount(nextDay);
-        const times = getDayTimes();
-        times[nextDay] = '09:00';
-        saveDayTimes(times);
-        order[nextDay] = [];
+
+    if (!order[inDay]) order[inDay] = [];
+    order[inDay].push(checkIn.id);
+
+    // Loop through every morning to drop a Wake-up card
+    for (let d = inDay + 1; d <= outDay; d++) {
+        const wakeId = baseId + '_out_' + d;
+        const wakeUp = {
+            id: wakeId, name: '🌅 Wake up: ' + place.name,
+            location: place.formatted_address || '', lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(), photo: photo, category: 'wellness'
+        };
+        if (!gems.find(g => g.id === wakeUp.id)) gems.push(wakeUp);
+        if (!order[d]) order[d] = [];
+        order[d].unshift(wakeId);
     }
 
-    if (!order[lastDay]) order[lastDay] = [];
-    if (!order[nextDay]) order[nextDay] = [];
-    order[lastDay].push(checkIn.id);
-    order[nextDay].unshift(wakeUp.id);
+    localStorage.setItem(SK_GEMS, JSON.stringify(gems));
     saveOrder(order);
-
     hidePreview();
     loadPlanner();
 }
