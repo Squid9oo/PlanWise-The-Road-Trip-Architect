@@ -527,7 +527,7 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
         }, 400);
     });
 
-    // Lock departure cards — prevent reordering
+    // Lock departure cards — prevent reordering and removal
     if (isDepartureCard(gem.id)) {
         const reorderGroup = card.querySelector('.btn-reorder-group');
         if (reorderGroup) reorderGroup.style.display = 'none';
@@ -535,6 +535,8 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
         if (dragHandle) dragHandle.style.display = 'none';
         const moveDayEl = card.querySelector('.move-day-select');
         if (moveDayEl) moveDayEl.closest('.spend-group').style.display = 'none';
+        const removeBtn = card.querySelector('.btn-remove-stop');
+        if (removeBtn) removeBtn.style.display = 'none';
     }
 
     return card;
@@ -872,6 +874,11 @@ function moveStop(gemId, direction) {
         const newIdx = direction === 'up' ? idx - 1 : idx + 1;
         if (newIdx < 0 || newIdx >= dayStops.length) return; // already at top/bottom
 
+        // Block: nothing can swap into index 0 if a departure card owns it
+        if (newIdx === 0 && isDepartureCard(dayStops[0])) return;
+        // Block: departure card can't move down either (belt-and-suspenders)
+        if (isDepartureCard(gemId)) return;
+
         // Swap the two entries
         [dayStops[idx], dayStops[newIdx]] = [dayStops[newIdx], dayStops[idx]];
         order[d] = dayStops;
@@ -956,7 +963,11 @@ function onDropOnCard(e) {
     const targetDay = parseInt(this.dataset.day, 10);
     if (!dragState.gemId || dragState.gemId === targetId) return;
 
+    // Block: can't drop before a departure card (it must stay at index 0)
     const order = getOrder();
+    const targetDayStops = order[targetDay] || [];
+    const targetIdx = targetDayStops.indexOf(targetId);
+    if (targetIdx === 0 && isDepartureCard(targetId)) return;
 
     // Remove dragged gem from its current day
     for (const d in order) {
@@ -965,9 +976,9 @@ function onDropOnCard(e) {
 
     // Insert before the target card in the target day
     if (!order[targetDay]) order[targetDay] = [];
-    const targetIdx = order[targetDay].indexOf(targetId);
-    if (targetIdx >= 0) {
-        order[targetDay].splice(targetIdx, 0, dragState.gemId);
+    const newTargetIdx = order[targetDay].indexOf(targetId);
+    if (newTargetIdx >= 0) {
+        order[targetDay].splice(newTargetIdx, 0, dragState.gemId);
     } else {
         order[targetDay].push(dragState.gemId);
     }
