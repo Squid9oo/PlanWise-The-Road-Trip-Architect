@@ -863,6 +863,11 @@ function removeStop(gemId) {
     if (gemId.endsWith('_in'))  pairedId = gemId.replace(/_in$/, '_out');
     if (gemId.endsWith('_out')) pairedId = gemId.replace(/_out$/, '_in');
 
+    // Prevent Origin Anchor from respawning
+    if (gemId === 'gem_origin_anchor') {
+        localStorage.removeItem('planwise_origin');
+    }
+
     // Remove from saved gems (+ paired hotel if applicable)
     let gems = getGems();
     gems     = gems.filter(g => g.id !== gemId && g.id !== pairedId);
@@ -918,12 +923,28 @@ function moveStopToDay(gemId, fromDay, toDay) {
     if (fromDay === toDay) return;
     const order = getOrder();
 
-    // Remove from source day
+    // 1. Move the primary card
     order[fromDay] = (order[fromDay] || []).filter(id => id !== gemId);
-
-    // Append to end of target day
     if (!order[toDay]) order[toDay] = [];
     order[toDay].push(gemId);
+
+    // 2. Handle linked hotel check-in card (drag Wake-up to next day)
+    if (gemId.endsWith('_in')) {
+        const outId = gemId.replace(/_in$/, '_out');
+        for (let d in order) {
+            order[d] = (order[d] || []).filter(id => id !== outId);
+        }
+        const nextDay = toDay + 1;
+        let dayCount = getDayCount();
+        if (nextDay > dayCount) {
+            saveDayCount(nextDay);
+            const times = getDayTimes();
+            times[nextDay] = '09:00';
+            saveDayTimes(times);
+        }
+        if (!order[nextDay]) order[nextDay] = [];
+        order[nextDay].unshift(outId); // Wake-up always goes to Slot 1
+    }
 
     saveOrder(order);
     renderPlanner();
