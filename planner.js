@@ -399,8 +399,13 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
     let displayName     = gem.name || 'Unnamed Stop';
     let displayLocation = gem.location || 'Location unavailable';
     if (gem.id === 'gem_origin_anchor' && stopNum !== 1) {
-        displayName     = displayName.replace(/^🏡\s*Departing from:\s*/i, '');
-        displayLocation = displayLocation === 'Start Line' ? (displayName || 'Saved location') : displayLocation;
+        const colonIdx = displayName.indexOf(':');
+        if (colonIdx !== -1) {
+            displayName = displayName.substring(colonIdx + 1).trim();
+        }
+        if (displayLocation === 'Start Line') {
+            displayLocation = displayName || 'Saved location';
+        }
     }
 
     const photoUrl = gem.photo
@@ -437,8 +442,8 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
                     <button class="btn-remove-stop" data-gem-id="${gem.id}" aria-label="Remove stop">✕</button>
                 </div>
             </div>
-            <h3 class="stop-name">${gem.name || 'Unnamed Stop'}</h3>
-            <p class="stop-location">📍 ${gem.location || 'Location unavailable'}</p>
+            <h3 class="stop-name">${displayName}</h3>
+            <p class="stop-location">📍 ${displayLocation}</p>
             <div class="stop-timing-row">
                 <div class="arrival-badge">
                     🕐 <span class="arrival-time" data-gem-id="${gem.id}">--:--</span>
