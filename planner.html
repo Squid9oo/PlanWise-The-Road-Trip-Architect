@@ -1090,7 +1090,6 @@
             .planner-search-wrapper,
             .planner-preview-card,
             .planner-empty-state,
-            .planner-map-wrapper,
             .site-footer,
             .btn-add-day,
             .btn-remove-stop,
@@ -1110,6 +1109,19 @@
             /* --- Force collapsed days to show --- */
             .day-body.day-collapsed {
                 display: block !important;
+            }
+
+            /* --- Full Page Map for Print --- */
+            .planner-map-wrapper {
+                display: block !important;
+                page-break-before: always;
+                border: none !important;
+                margin: 0 !important;
+            }
+            .planner-map-header { display: none !important; }
+            .planner-map-container { 
+                height: 26cm !important; 
+                width: 100% !important; 
             }
 
             /* --- Reset page layout --- */
@@ -1307,33 +1319,20 @@
         </div>
     </section>
 
-    <!-- TRIP SUMMARY BAR -->
-    <div class="planner-summary-bar" id="planner-summary-bar">
-        <div class="summary-bar-inner">
-            <div class="summary-stat">
-                <strong id="summary-stops">0 stops</strong>
-            </div>
-            <div class="summary-divider"></div>
-            <div class="summary-stat">
-                <strong id="summary-days">1 day</strong>
-            </div>
-            <div class="summary-divider"></div>
-            <div class="summary-stat">
-                <span class="summary-highlight" id="summary-km">-- km</span>
-            </div>
-            <div class="summary-divider"></div>
-            <div class="summary-stat">
-                <span class="summary-highlight" id="summary-time">-- drive</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- MAIN CONTENT -->
     <main>
 
-        <!-- EMPTY STATE -->
         <div class="trip-details-form">
             <input type="text" class="trip-title-input" placeholder="Name your trip (e.g. Ipoh Weekend Retreat)...">
+            
+            <div class="summary-bar-inner" id="planner-summary-bar" style="margin-bottom: 1.5rem; background: var(--bg); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border);">
+                <div class="summary-stat"><strong id="summary-stops" style="color:var(--dark);">0 stops</strong></div>
+                <div class="summary-divider" style="background:var(--border);"></div>
+                <div class="summary-stat"><strong id="summary-days" style="color:var(--dark);">1 day</strong></div>
+                <div class="summary-divider" style="background:var(--border);"></div>
+                <div class="summary-stat"><span class="summary-highlight" id="summary-km" style="color:var(--primary-dark)!important; font-weight:700;">-- km</span></div>
+                <div class="summary-divider" style="background:var(--border);"></div>
+                <div class="summary-stat"><span class="summary-highlight" id="summary-time" style="color:var(--primary-dark)!important; font-weight:700;">-- drive</span></div>
+            </div>
             <div class="trip-meta-grid">
                 <div class="meta-field">
                     <label>Travel Dates</label>
@@ -1347,9 +1346,12 @@
                     <label>Transport Mode</label>
                     <input type="text" placeholder="e.g. Honda City">
                 </div>
-                <div class="meta-field" style="grid-column: 1 / -1;">
+                <div class="meta-field" id="accommodation-container" style="grid-column: 1 / -1;">
                     <label>Accommodation(s)</label>
-                    <input type="text" placeholder="e.g. Hotel A (Day 1-2), Hotel B (Day 3)">
+                    <div id="accommodation-list" style="display:flex; flex-direction:column; gap:0.5rem;">
+                        <input type="text" class="accom-input" placeholder="e.g. Day 1 - Hotel A">
+                    </div>
+                    <button type="button" id="btn-add-accom" style="margin-top:0.5rem; background:transparent; color:var(--primary-dark); border:none; font-size:0.85rem; font-weight:700; cursor:pointer; text-align:left; padding:0;">+ Add Hotel Row</button>
                 </div>
             </div>
         </div>
@@ -1394,6 +1396,10 @@
 
             <!-- Day sections injected here by planner.js -->
             <div id="planner-content"></div>
+            
+            <div style="margin-top: 2rem; display: flex; justify-content: flex-end;">
+                <button class="btn-export" onclick="window.print()" style="background:var(--dark); color:#fff; padding: 0.85rem 2rem; font-weight: 700; border: none; border-radius: var(--radius-xl); cursor: pointer;">🖨️ Print / Save PDF</button>
+            </div>
         </div>
 
     </main>
