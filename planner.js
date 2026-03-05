@@ -89,12 +89,6 @@ function saveDayTimes(t)  { localStorage.setItem(SK_DAYTIMES,   JSON.stringify(t
 function saveDayCount(c)  { localStorage.setItem(SK_DAYCOUNT,   String(c)); }
 function saveDriveCache(c){ localStorage.setItem(SK_DRIVECACHE, JSON.stringify(c)); }
 
-// --- Departure Card Detection ---
-// Origin anchor + hotel wake-up cards are departure points, not destinations
-function isDepartureCard(gemId) {
-    return gemId === 'gem_origin_anchor' || gemId.endsWith('_out');
-}
-
 // ==========================================
 // AUTO-CREATE DAYS FROM TRIP DURATION
 // ==========================================
@@ -395,16 +389,16 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
     card.dataset.day    = dayNum;
     card.draggable      = !(gem.id.endsWith('_out') && stopNum === 1);
 
-    // Clean up origin anchor display when it's not at Slot 1 (converted to normal stop)
+    // Clean up origin anchor display globally (strip Departing From / Start Line)
     let displayName     = gem.name || 'Unnamed Stop';
     let displayLocation = gem.location || 'Location unavailable';
-    if (gem.id === 'gem_origin_anchor' && stopNum !== 1) {
+    if (gem.id === 'gem_origin_anchor') {
         const colonIdx = displayName.indexOf(':');
         if (colonIdx !== -1) {
             displayName = displayName.substring(colonIdx + 1).trim();
         }
         if (displayLocation === 'Start Line') {
-            displayLocation = displayName || 'Saved location';
+            displayLocation = 'Saved location';
         }
     }
 
@@ -453,7 +447,7 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
                 </div>
             </div>
             <div class="stop-bottom-row">
-                ${isDepartureCard(gem.id) && stopNum === 1 ? `
+                ${stopNum === 1 ? `
                 <div class="spend-group">
                     <span class="spend-label" style="text-transform:none; font-weight:700; color:var(--primary-dark);">🚗 Departure Point</span>
                 </div>
@@ -728,8 +722,8 @@ function calculateCascadingTimes() {
             }
 
             // 3. Add time spent at this stop → move clock forward
-            // Departure cards at slot 1 (origin anchor + hotel wake-ups) use 0 minutes
-            const spent = (isDepartureCard(gemId) && i === 0) ? 0 : (durations[gemId] || 60);
+            // Slot 1 of any day is always a departure point (0 minutes spent)
+            const spent = (i === 0) ? 0 : (durations[gemId] || 60);
             current.setMinutes(current.getMinutes() + spent);
 
             // 4. Add drive time to NEXT stop → move clock forward
