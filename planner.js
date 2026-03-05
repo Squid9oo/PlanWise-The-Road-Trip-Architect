@@ -395,6 +395,14 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
     card.dataset.day    = dayNum;
     card.draggable      = !(gem.id.endsWith('_out') && stopNum === 1);
 
+    // Clean up origin anchor display when it's not at Slot 1 (converted to normal stop)
+    let displayName     = gem.name || 'Unnamed Stop';
+    let displayLocation = gem.location || 'Location unavailable';
+    if (gem.id === 'gem_origin_anchor' && stopNum !== 1) {
+        displayName     = displayName.replace(/^🏡\s*Departing from:\s*/i, '');
+        displayLocation = displayLocation === 'Start Line' ? (displayName || 'Saved location') : displayLocation;
+    }
+
     const photoUrl = gem.photo
         || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80';
 
