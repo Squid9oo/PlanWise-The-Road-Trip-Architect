@@ -1198,6 +1198,8 @@ async function buildGemCard(gem) {
         category: categories[0] || 'heritage',
         source: 'community'
     };
+
+    card.dataset.gemId = gemObj.id;
     
     // Check initial state on load
     if (isGemSaved(gemObj.id)) {
@@ -1345,6 +1347,20 @@ async function openGemPanel(gem, thumbnail) {
 
         newBtn.addEventListener('click', function () {
             toggleSaveGem(gemObj, this);
+            // Sync the matching gem card's save button in the results grid
+            const gridCard = document.querySelector(`.gem-card[data-gem-id="${gemObj.id}"]`);
+            if (gridCard) {
+                const gridBtn = gridCard.querySelector('.gem-save-btn');
+                if (gridBtn) {
+                    if (isGemSaved(gemObj.id)) {
+                        gridBtn.textContent = '✓ Saved';
+                        gridBtn.classList.add('btn-saved');
+                    } else {
+                        gridBtn.textContent = '+ Save';
+                        gridBtn.classList.remove('btn-saved');
+                    }
+                }
+            }
         });
     }
 

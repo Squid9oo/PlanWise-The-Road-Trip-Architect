@@ -1449,6 +1449,7 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem(SK_DAYTIMES);
             localStorage.removeItem(SK_DAYCOUNT);
             localStorage.removeItem('planwise_origin_injected'); // Reset the anchor so it respawns next trip
+            localStorage.removeItem('planwise_origin');          // Remove origin coordinates so anchor doesn't re-inject
             localStorage.removeItem('planwise_trip_nights');     // Reset so next trip gets fresh day count
             localStorage.removeItem('planwise_trip_dates');      // Reset travel dates display
             // Keep drive cache — no point re-fetching if user rebuilds same route
