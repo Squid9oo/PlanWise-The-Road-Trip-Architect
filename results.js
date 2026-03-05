@@ -681,6 +681,30 @@ function renderResultsMap() {
     const bounds = new google.maps.LatLngBounds();
     let hasPoints = false;
 
+    // 1. Add Departure Pin
+    if (!isNaN(fromLat) && !isNaN(fromLng)) {
+        const fromPos = { lat: fromLat, lng: fromLng };
+        bounds.extend(fromPos);
+        hasPoints = true;
+        resultsMarkers.push(new google.maps.Marker({
+            position: fromPos, map: resultsMap, title: 'Departure: ' + from, zIndex: 200,
+            icon: { path: google.maps.SymbolPath.CIRCLE, fillColor: '#00d2ff', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2, scale: 12 },
+            label: { text: '🏡', fontSize: '14px' }
+        }));
+    }
+
+    // 2. Add Destination Pin
+    if (!isNaN(toLat) && !isNaN(toLng)) {
+        const toPos = { lat: toLat, lng: toLng };
+        bounds.extend(toPos);
+        hasPoints = true;
+        resultsMarkers.push(new google.maps.Marker({
+            position: toPos, map: resultsMap, title: 'Destination: ' + to, zIndex: 200,
+            icon: { path: google.maps.SymbolPath.CIRCLE, fillColor: '#1a1a2e', fillOpacity: 1, strokeColor: '#fff', strokeWeight: 2, scale: 12 },
+            label: { text: '🏁', fontSize: '14px' }
+        }));
+    }
+
     // Loop through all visible cards to drop pins
     document.querySelectorAll('.feed-card, .gem-card').forEach(card => {
         if (card.style.display === 'none') return;

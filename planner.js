@@ -1015,6 +1015,7 @@ function renderPlannerMap() {
     const bounds   = new google.maps.LatLngBounds();
     let stopNum    = 0;
     let hasPoints  = false;
+    const seenCoords = {}; // Tracks coordinates to fan out overlapping pins
 
     for (let d = 1; d <= dayCount; d++) {
         const stopIds  = (order[d] || []).filter(id => gemMap[id]);
@@ -1023,9 +1024,21 @@ function renderPlannerMap() {
 
         stopIds.forEach((id, idx) => {
             const gem = gemMap[id];
-            const lat = parseFloat(gem.lat);
-            const lng = parseFloat(gem.lng);
+            let lat = parseFloat(gem.lat);
+            let lng = parseFloat(gem.lng);
             if (isNaN(lat) || isNaN(lng)) return;
+
+            // SMART PIN OFFSET: If exact location is used multiple times (e.g. Home), offset slightly in a circle
+            const coordKey = `${lat.toFixed(4)},${lng.toFixed(4)}`;
+            if (seenCoords[coordKey]) {
+                const angle = seenCoords[coordKey] * (Math.PI / 3); // 60-degree increments
+                const offset = 0.0004; // ~40 meters offset so numbers remain readable
+                lat += offset * Math.cos(angle);
+                lng += offset * Math.sin(angle);
+                seenCoords[coordKey]++;
+            } else {
+                seenCoords[coordKey] = 1;
+            }
 
             stopNum++;
             hasPoints = true;
