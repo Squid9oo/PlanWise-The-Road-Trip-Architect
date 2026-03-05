@@ -846,7 +846,7 @@ function openPlaceDetail(placeId, basicPlace) {
     service.getDetails({
         placeId: placeId,
         fields: [
-            'name', 'formatted_address', 'rating', 'user_ratings_total',
+            'place_id', 'name', 'formatted_address', 'rating', 'user_ratings_total',
             'opening_hours', 'formatted_phone_number', 'website',
             'url', 'photos', 'types', 'editorial_summary'
         ],
@@ -960,7 +960,7 @@ function openPlaceDetail(placeId, basicPlace) {
         
         // Package the Google Place data
         const placeObj = {
-            id: place.place_id,
+            id: place.place_id || placeId,
             name: place.name || basicPlace.name,
             location: place.formatted_address || basicPlace.vicinity,
             lat: place.geometry?.location?.lat() || basicPlace.geometry?.location?.lat(),
@@ -979,6 +979,20 @@ function openPlaceDetail(placeId, basicPlace) {
 
         saveBtn.addEventListener('click', function () {
             toggleSaveGem(placeObj, this);
+            // Sync the matching card's save button in the results grid
+            const gridCard = document.querySelector(`.feed-card[data-place-id="${placeObj.id}"]`);
+            if (gridCard) {
+                const gridBtn = gridCard.querySelector('.btn-save');
+                if (gridBtn) {
+                    if (isGemSaved(placeObj.id)) {
+                        gridBtn.textContent = '✓ Saved';
+                        gridBtn.classList.add('btn-saved');
+                    } else {
+                        gridBtn.textContent = '+ Save';
+                        gridBtn.classList.remove('btn-saved');
+                    }
+                }
+            }
         });
         
         actions.appendChild(saveBtn);
