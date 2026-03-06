@@ -1032,260 +1032,72 @@
             .planner-map-container.map-collapsed { height: 0 !important; }
         }
 
-        /* ============================================
-           PRINT / PDF STYLES
-           ============================================ */
+            /* =========================================
+       PRINT / PDF STYLES
+       ========================================= */
+    .print-only-header, .print-only-footer { display: none; }
 
-        /* Print-only elements — hidden on screen */
-        .print-only-header,
-        .print-only-footer {
-            display: none;
-        }
+    @media print {
+      /* --- Print Header --- */
+      .print-only-header { display: block; text-align: center; padding: 0 0 0.3cm 0; border-bottom: 2px solid #0a0a23; margin-bottom: 0.5cm; }
+      .print-brand { font-family: 'Playfair Display', serif; font-size: 20pt; font-weight: 900; color: #0a0a23; }
+      .print-subtitle { font-family: 'DM Sans', sans-serif; font-size: 10pt; color: #666; margin-top: 2px; letter-spacing: 0.1em; text-transform: uppercase; }
+      .print-only-footer { display: none !important; }
 
-        @media print {
+      /* --- Hide UI Fluff --- */
+      .planner-hero, .planner-search-wrapper, .planner-preview-card, .planner-empty-state, .btn-add-day, .btn-remove-stop, .btn-remove-day, .btn-optimize-day, .btn-reorder-group, .btn-maps-link, .btn-collapse-day, .drag-handle, .time-spent-select, .move-day-select, .spend-label, .spend-group, .site-header, .site-footer, .stop-photo, .print-hidden, .btn-export, .btn-clear-trip { display: none !important; }
 
-            /* --- Show print-only branding --- */
-            .print-only-header {
-                display: block;
-                text-align: center;
-                padding: 0.5cm 0 0.3cm;
-                border-bottom: 2px solid #0a0a23;
-                margin-bottom: 0.5cm;
-            }
+      /* --- Reset layout --- */
+      @page { margin: 1cm; }
+      body { background: #fff !important; color: #000 !important; font-size: 10pt; margin: 0; padding: 0; }
 
-            .print-brand {
-                font-family: 'Playfair Display', serif;
-                font-size: 20pt;
-                font-weight: 900;
-                color: #0a0a23;
-            }
+      /* --- Summary Bar --- */
+      .planner-summary-bar { position: static; background: transparent !important; border: none; border-bottom: 2px dashed #ccc; padding: 0 0 0.5cm 0; margin-bottom: 0.5cm; }
+      .summary-bar-inner { justify-content: flex-start; gap: 1.5rem; }
+      .summary-stat { font-size: 10pt !important; color: #000 !important; }
+      .summary-stat strong, .summary-highlight { color: #000 !important; font-size: 9pt; }
 
-            .print-subtitle {
-                font-family: 'DM Sans', sans-serif;
-                font-size: 10pt;
-                color: #666;
-                margin-top: 2px;
-                letter-spacing: 0.1em;
-                text-transform: uppercase;
-            }
+      .planner-main { max-width: 100%; padding: 0; margin: 0; }
+      
+      /* --- Trip Details Form --- */
+      .trip-details-form { margin: 0 0 0.5cm 0; padding: 0; border: none; }
+      .trip-title-input { font-size: 24pt; border: none; margin-bottom: 0.5cm; padding: 0; color: #0a0a23; }
+      .trip-title-input::placeholder, .meta-field input::placeholder { color: transparent; }
+      .meta-field input { border: none; padding: 0; font-size: 10pt; color: #000; font-weight: 600; background: transparent; }
+      .meta-field label { color: #666; font-size: 8pt; margin-bottom: 0; }
 
-            .print-only-footer {
-                display: block;
-                text-align: center;
-                padding: 0.4cm 0;
-                border-top: 1.5px solid #ccc;
-                margin-top: 0.5cm;
-                font-family: 'DM Sans', sans-serif;
-                font-size: 9pt;
-                color: #666;
-            }
+      /* --- Full Page Map Below Details --- */
+      .planner-map-wrapper { display: block !important; border: 2px solid #eaeaea !important; margin: 0 0 0 0 !important; page-break-after: always; }
+      .planner-map-header { display: none !important; }
+      .planner-map-container { height: 16cm !important; width: 100% !important; }
 
-            .print-only-footer strong {
-                color: #0a0a23;
-            }
+      /* --- 2-Column Side-by-Side Grid for Days --- */
+      #planner-content { display: flex !important; flex-wrap: wrap !important; justify-content: space-between !important; }
+      .day-section { width: 48% !important; margin-bottom: 1cm !important; border-top: 2px solid #0a0a23 !important; break-inside: avoid; page-break-inside: avoid; }
+      /* Force page break after every 2 days (even rows) */
+      .day-section:nth-child(even) { page-break-after: always; break-after: page; }
 
-            /* --- Hide interactive / screen-only elements --- */
-            .planner-hero,
-            .planner-search-wrapper,
-            .planner-preview-card,
-            .planner-empty-state,
-            .btn-add-day,
-            .btn-remove-stop,
-            .btn-remove-day,
-            .btn-optimize-day,
-            .btn-reorder-group,
-            .btn-maps-link,
-            .btn-collapse-day,
-            .drag-handle,
-            .time-spent-select,
-            .move-day-select,
-            .spend-label,
-            .spend-group {
-                display: none !important;
-            }
+      /* --- Day Headers --- */
+      .day-header { background: transparent !important; color: #0a0a23 !important; padding: 0.2cm 0 !important; border-bottom: 1px solid #ccc; }
+      .day-badge { background: #0a0a23 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .day-start-time { border: none; background: transparent !important; color: #0a0a23 !important; padding: 0; font-size: 9pt; }
+      .day-start-label { color: #666 !important; }
 
-            /* --- Force collapsed days to show --- */
-            .day-body.day-collapsed {
-                display: block !important;
-            }
+      /* --- Day Body & Stops --- */
+      .day-body { border: none !important; padding: 0.2cm 0 !important; display: block !important; }
+      .stop-card { box-shadow: none !important; border: none !important; transform: none !important; border-bottom: 1px solid #eaeaea !important; border-radius: 0; padding: 0.3cm 0; margin: 0; break-inside: avoid; page-break-inside: avoid; display: flex !important; flex-direction: row !important; align-items: flex-start !important; gap: 0.3cm !important; }
+      .stop-connector, .card-tag { display: none !important; }
+      .stop-info { padding: 0; flex: 1; }
+      .stop-num { background: transparent !important; color: #0a0a23 !important; border: 2px solid #0a0a23; width: 24px; height: 24px; font-size: 9pt; margin: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+      .stop-timing-row { margin-top: 0.2cm; display: flex; gap: 0.3cm; }
+      .arrival-badge, .drive-from-badge { background: transparent !important; border: none !important; color: #444 !important; font-size: 9pt; padding: 0; font-weight: 600; }
+      .drive-from-badge::before { content: "• "; color: #ccc; }
+      .stop-notes-field { border: none !important; background: transparent !important; box-shadow: none !important; padding: 0.1cm 0; font-size: 8.5pt; color: #444; font-style: italic; resize: none; overflow: visible; }
+      .stop-notes-field:empty, .stop-notes-field[value=""] { display: none !important; }
+      .day-body.day-collapsed { display: block !important; }
+      * { transition: none !important; animation: none !important; }
+    }
 
-            /* --- Full Page Map for Print --- */
-            .planner-map-wrapper {
-                display: block !important;
-                page-break-before: always;
-                border: none !important;
-                margin: 0 !important;
-            }
-            .planner-map-header { display: none !important; }
-            .planner-map-container { 
-                height: 26cm !important; 
-                width: 100% !important; 
-            }
-
-            /* --- Reset page layout --- */
-            body {
-                background: #fff !important;
-                color: #000 !important;
-                font-size: 10pt;
-                margin: 0;
-                padding: 0;
-            }
-
-            /* --- Summary bar — Integrated into header --- */
-            .planner-summary-bar {
-                position: static; background: transparent !important; border: none;
-                border-bottom: 2px dashed #ccc; padding: 0 0 0.5cm 0; margin-bottom: 0.5cm;
-            }
-            .summary-bar-inner { justify-content: flex-start; gap: 1.5rem; }
-            .summary-stat { font-size: 10pt !important; }
-
-            .summary-stat,
-            .summary-stat strong,
-            .summary-highlight {
-                color: #000 !important;
-                font-size: 9pt;
-            }
-
-            /* --- Planner main — remove spacing constraints --- */
-            .planner-main {
-                max-width: 100%;
-                padding: 0;
-                margin: 0;
-            }
-
-            /* --- Premium Trip Details Form --- */
-            .trip-details-form { margin: 0 0 1cm 0; padding: 0; border: none; }
-            .trip-title-input { font-size: 24pt; border: none; margin-bottom: 0.5cm; padding: 0; color: #0a0a23; }
-            .trip-title-input::placeholder, .meta-field input::placeholder { color: transparent; }
-            .meta-field input { border: none; padding: 0; font-size: 10pt; color: #000; font-weight: 600; }
-            .meta-field label { color: #666; font-size: 8pt; margin-bottom: 0; }
-
-            /* --- Day header — ink-friendly --- */
-            .day-header {
-                background: #0a0a23 !important;
-                color: #fff !important;
-                padding: 0.25cm 0.4cm;
-                border-radius: 0;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-
-            .day-badge {
-                background: #00d2ff !important;
-                color: #0a0a23 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-
-            .day-start-time {
-                border: none;
-                background: transparent !important;
-                color: #fff !important;
-                padding: 0;
-                font-size: 9pt;
-            }
-
-            .day-start-label {
-                color: rgba(255,255,255,0.7) !important;
-            }
-
-            /* --- Day body --- */
-            .day-body {
-                border: 1px solid #ddd;
-                border-top: none;
-                padding: 0.3cm;
-                border-radius: 0;
-            }
-
-            /* --- Stop card — Excel Cell Layout --- */
-            .stop-card {
-                box-shadow: none !important; border: none !important; transform: none !important;
-                border-bottom: 1px solid #eaeaea !important; border-radius: 0;
-                padding: 0.3cm; margin: 0; cursor: default;
-                break-inside: avoid; page-break-inside: avoid;
-                display: flex !important; flex-direction: column !important; align-items: flex-start !important; gap: 0.15cm !important;
-            }
-
-            .stop-card:hover {
-                box-shadow: none !important;
-                transform: none !important;
-            }
-
-            /* --- Hide fluff and restructure layout --- */
-            .stop-connector, .card-tag { display: none !important; }
-            .stop-photo { display: block !important; width: 60px; min-height: 60px; height: 60px; margin: 0; border-radius: 6px; }
-            .stop-info { padding: 0; flex: 1; }
-
-            /* --- 2-Column Grid for Stops --- */
-            .day-body {
-                display: grid !important;
-                grid-template-columns: 1fr 1fr !important;
-                gap: 0.5cm !important;
-                border: none !important;
-                padding: 0.2cm 0 !important;
-            }
-
-            /* --- Stop number badge --- */
-            .stop-num {
-                background: transparent !important; color: #0a0a23 !important;
-                border: 2px solid #0a0a23; width: 28px; height: 28px;
-                font-size: 10pt; margin: 0;
-            }
-            .stop-timing-row { margin-top: 0.2cm; display: flex; gap: 0.3cm; }
-
-            /* --- Timing badges --- */
-            .arrival-badge, .drive-from-badge {
-                background: transparent !important; border: none !important; 
-                color: #444 !important; font-size: 9pt; padding: 0; font-weight: 600;
-            }
-            .drive-from-badge::before { content: "• "; color: #ccc; }
-
-            /* --- Notes — look like plain text, not a textarea --- */
-            .stop-notes-field {
-                border: none !important;
-                background: transparent !important;
-                box-shadow: none !important;
-                padding: 0.1cm 0;
-                font-size: 8.5pt;
-                color: #444;
-                font-style: italic;
-                resize: none;
-                overflow: visible;
-            }
-
-            .stop-notes-field:empty,
-            .stop-notes-field[value=""] {
-                display: none !important;
-            }
-
-            /* --- Connector between stops --- */
-            .stop-connector {
-                padding: 0.15cm 0 0.15cm 1.5cm;
-            }
-
-            .connector-info {
-                font-size: 8pt;
-                color: #555;
-            }
-
-            /* --- COMPACT ROW LAYOUT (Smart Page Breaks) --- */
-            #planner-content { display: block !important; }
-            .day-section {
-                margin-bottom: 0.5cm; border-top: 2px solid #0a0a23 !important;
-                break-inside: avoid; page-break-inside: avoid; /* Forces unbroken days */
-            }
-            .day-header {
-                background: transparent !important; color: #0a0a23 !important; 
-                padding: 0.2cm 0 !important; border-bottom: 1px solid #ccc;
-            }
-            .day-badge { background: #0a0a23 !important; color: #fff !important; }
-
-            /* --- Remove all transitions and animations --- */
-            * {
-                transition: none !important;
-                animation: none !important;
-            }
-        }
     </style>
 </head>
 <body>
@@ -1353,13 +1165,10 @@
                     <label>Transport Mode</label>
                     <input type="text" placeholder="e.g. Honda City">
                 </div>
-                <div class="meta-field" id="accommodation-container" style="grid-column: 1 / -1;">
-                    <label>Accommodation(s)</label>
-                    <div id="accommodation-list" style="display:flex; flex-direction:column; gap:0.5rem;">
-                        <input type="text" class="accom-input" placeholder="e.g. Day 1 - Hotel A">
-                    </div>
-                    <button type="button" id="btn-add-accom" style="margin-top:0.5rem; background:transparent; color:var(--primary-dark); border:none; font-size:0.85rem; font-weight:700; cursor:pointer; text-align:left; padding:0;">+ Add Hotel Row</button>
-                </div>
+                          <div class="meta-field" id="accommodation-container" style="grid-column: 1 / -1;">
+            <label>Accommodations</label>
+            <input type="text" class="accom-input" placeholder="e.g. Day 1-3 Hotel A, Day 3-5 Hotel B" style="width:100%; border:1px solid var(--border); border-radius:var(--radius-sm); padding:0.5rem; font-family:var(--font-body); font-size:0.9rem; color:var(--body-text);">
+          </div>
             </div>
         </div>
 

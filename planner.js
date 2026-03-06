@@ -558,12 +558,13 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
         if (moveDayEl) moveDayEl.closest('.spend-group').style.display = 'none';
     }
 
-    // Add linked-pair hint on hotel cards
+        // Add linked-pair hint on hotel cards
     if (gem.id.includes('_in') || gem.id.includes('_out') || gem.id.includes('_return')) {
-        const hint = document.createElement('p');
-        hint.style.cssText = 'font-size:0.72rem; color:var(--muted); font-style:italic; margin-top:0.2rem;';
-        hint.textContent = '🔗 Linked stay — removing this also removes all linked check-in, wake-up, and return cards';
-        card.querySelector('.stop-info').appendChild(hint);
+      const hint = document.createElement('p')
+      hint.className = 'print-hidden'
+      hint.style.cssText = `font-size:0.72rem; color:var(--muted); font-style:italic; margin-top:0.2rem;`
+      hint.textContent = `🔗 Linked stay — removing this also removes all linked check-in, wake-up, and return cards`
+      card.querySelector('.stop-info').appendChild(hint)
     }
 
     return card;
@@ -1122,88 +1123,79 @@ function renderPlannerMap() {
     const gemMap   = {};
     gems.forEach(g => { gemMap[g.id] = g; });
 
-    const bounds   = new google.maps.LatLngBounds();
-    let stopNum    = 0;
-    let hasPoints  = false;
-    const seenCoords = {}; // Tracks coordinates to fan out overlapping pins
+      const bounds = new google.maps.LatLngBounds()
+  let stopNum = 0
+  let hasPoints = false
+  const markerGroups = {} // Groups pins by exact location
 
-    for (let d = 1; d <= dayCount; d++) {
-        const stopIds  = (order[d] || []).filter(id => gemMap[id]);
-        const dayColor = DAY_COLORS[(d - 1) % DAY_COLORS.length];
-        const pathCoords = [];
+  for (let d = 1; d <= dayCount; d++) {
+    const stopIds = (order[d] || []).filter(id => gemMap[id])
+    const dayColor = DAY_COLORS[(d - 1) % DAY_COLORS.length]
+    const dayPathCoords = []
+    
+    stopIds.forEach((id) => {
+      const gem = gemMap[id]
+      const lat = parseFloat(gem.lat)
+      const lng = parseFloat(gem.lng)
+      if (isNaN(lat) || isNaN(lng)) return
+      
+      stopNum++ // Keep counting globally so list numbers match map pins exactly
+      
+      // Skip plotting if day is filtered out
+      if (window.activeMapDay !== 'all' && window.activeMapDay !== d) return
+      
+      hasPoints = true
+      const pos = { lat, lng }
+      bounds.extend(pos)
+      dayPathCoords.push(pos)
+      
+      // Group by exact coordinate for shared pins (e.g., "1/8")
+      const coordKey = `${lat.toFixed(4)},${lng.toFixed(4)}`
+      if (!markerGroups[coordKey]) {
+        markerGroups[coordKey] = { pos, stops: [], color: dayColor, gemId: id, name: gem.name }
+      }
+      markerGroups[coordKey].stops.push(stopNum)
+    })
 
-        stopIds.forEach((id, idx) => {
-            const gem = gemMap[id];
-            let lat = parseFloat(gem.lat);
-            let lng = parseFloat(gem.lng);
-            if (isNaN(lat) || isNaN(lng)) return;
-
-            // SMART PIN OFFSET: If exact location is used multiple times (e.g. Home), offset slightly in a circle
-            const coordKey = `${lat.toFixed(4)},${lng.toFixed(4)}`;
-            if (seenCoords[coordKey]) {
-                const angle = seenCoords[coordKey] * (Math.PI / 3); // 60-degree increments
-                const offset = 0.0004; // ~40 meters offset so numbers remain readable
-                lat += offset * Math.cos(angle);
-                lng += offset * Math.sin(angle);
-                seenCoords[coordKey]++;
-            } else {
-                seenCoords[coordKey] = 1;
-            }
-
-            stopNum++; // Keep counting so list numbers match map pins exactly
-            
-            // Skip plotting the actual pin/line if day is filtered out
-            if (window.activeMapDay !== 'all' && window.activeMapDay !== d) return;
-
-            hasPoints = true;
-            const pos = { lat, lng };
-            bounds.extend(pos);
-            pathCoords.push(pos);
-
-            // Numbered marker
-            const marker = new google.maps.Marker({
-                position: pos,
-                map: plannerMap,
-                label: {
-                    text: String(stopNum),
-                    color: '#fff',
-                    fontWeight: '700',
-                    fontSize: '12px',
-                },
-                icon: {
-                    path: google.maps.SymbolPath.CIRCLE,
-                    fillColor: dayColor,
-                    fillOpacity: 1,
-                    strokeColor: '#fff',
-                    strokeWeight: 2,
-                    scale: 16,
-                },
-                title: gem.name || 'Stop ' + stopNum,
-            });
-
-            // Info window on click
-            marker.addListener('click', () => {
-                scrollToStopCard(id);
-            });
-
-            mapMarkers.push(marker);
-        });
-
-        // Draw polyline for this day's route
-        if (pathCoords.length >= 2) {
-            const polyline = new google.maps.Polyline({
-                path: pathCoords,
-                geodesic: true,
-                strokeColor: dayColor,
-                strokeOpacity: 0.85,
-                strokeWeight: 4,
-            });
-            polyline.setMap(plannerMap);
-            mapPolylines.push(polyline);
-        }
+    // Draw polyline for this day's route
+    if (dayPathCoords.length >= 2 && (window.activeMapDay === 'all' || window.activeMapDay === d)) {
+      const polyline = new google.maps.Polyline({
+        path: dayPathCoords,
+        geodesic: true,
+        strokeColor: dayColor,
+        strokeOpacity: 0.85,
+        strokeWeight: 4,
+      })
+      polyline.setMap(plannerMap)
+      mapPolylines.push(polyline)
     }
+  }
 
-    // Fit map to show all pins
+  // Draw grouped markers
+  Object.values(markerGroups).forEach(group => {
+    const labelText = group.stops.join('/')
+    const marker = new google.maps.Marker({
+      position: group.pos,
+      map: plannerMap,
+      label: { text: labelText, color: '#fff', fontWeight: '700', fontSize: group.stops.length > 1 ? '10px' : '12px' },
+      icon: {
+        path: google.maps.SymbolPath.CIRCLE,
+        fillColor: group.color,
+        fillOpacity: 1,
+        strokeColor: '#fff',
+        strokeWeight: 2,
+        scale: group.stops.length > 2 ? 18 : 16,
+      },
+      title: `${group.name} (Stops: ${labelText})`,
+    })
+    
+    // Pan to the FIRST stop in the group when clicked
+    marker.addListener('click', () => scrollToStopCard(group.gemId))
+    mapMarkers.push(marker)
+  })
+
+  // Fit map to show all pins
+
     if (hasPoints) {
         google.maps.event.trigger(plannerMap, 'resize');
         plannerMap.fitBounds(bounds, { top: 40, bottom: 40, left: 40, right: 40 });
@@ -1518,98 +1510,4 @@ function optimizeDayRoute(dayNum) {
 // DOMContentLoaded — Wire static buttons
 // (Dynamic content is wired inside buildStopCard)
 // ==========================================
-document.addEventListener('DOMContentLoaded', () => {
-    // Wire + Add Hotel Row logic
-    const addAccomBtn = document.getElementById('btn-add-accom');
-    if (addAccomBtn) {
-        addAccomBtn.addEventListener('click', () => {
-            const list = document.getElementById('accommodation-list');
-            const rows = list.querySelectorAll('.accom-input');
-            if (rows.length >= 10) return alert('Maximum 10 hotels allowed.');
-
-            const row = document.createElement('div');
-            row.style.cssText = 'display:flex; align-items:center; gap:0.5rem;';
-
-            const newInput = document.createElement('input');
-            newInput.type = 'text';
-            newInput.className = 'accom-input';
-            newInput.placeholder = `e.g. Day ${rows.length + 1} - Hotel ${String.fromCharCode(65 + rows.length)}`;
-            newInput.style.cssText = 'flex:1; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.5rem; font-family: var(--font-body); font-size: 0.9rem; color: var(--body-text);';
-
-            const removeBtn = document.createElement('button');
-            removeBtn.type = 'button';
-            removeBtn.textContent = '✕';
-            removeBtn.style.cssText = 'background:transparent; border:1.5px solid rgba(255,71,126,0.35); color:rgba(255,71,126,0.8); width:32px; height:32px; border-radius:50%; font-size:0.75rem; cursor:pointer; flex-shrink:0; display:flex; align-items:center; justify-content:center; transition:all 0.22s ease;';
-            removeBtn.addEventListener('mouseenter', () => { removeBtn.style.background = 'var(--accent)'; removeBtn.style.borderColor = 'var(--accent)'; removeBtn.style.color = '#fff'; });
-            removeBtn.addEventListener('mouseleave', () => { removeBtn.style.background = 'transparent'; removeBtn.style.borderColor = 'rgba(255,71,126,0.35)'; removeBtn.style.color = 'rgba(255,71,126,0.8)'; });
-            removeBtn.addEventListener('click', () => row.remove());
-
-            row.appendChild(newInput);
-            row.appendChild(removeBtn);
-            list.appendChild(row);
-        });
-    }
-
-    // Inject Travel Dates from search
-    const savedDates = localStorage.getItem('planwise_trip_dates');
-    const datesInput = document.querySelector('.meta-field input[placeholder*="12-14 Nov"]');
-    if (savedDates && datesInput) datesInput.value = savedDates;
-
-    const exportBtn = document.getElementById('btn-export-maps');
-    if (exportBtn) exportBtn.addEventListener('click', exportToMaps);
-
-    // Wire print / save as PDF
-    const printBtn = document.getElementById('btn-print-trip');
-    if (printBtn) printBtn.addEventListener('click', () => window.print());
-
-    // Wire preview close button
-    const previewCloseBtn = document.getElementById('preview-close');
-    if (previewCloseBtn) previewCloseBtn.addEventListener('click', hidePreview);
-
-    const clearBtn = document.getElementById('btn-clear-trip');
-    if (clearBtn) {
-        clearBtn.addEventListener('click', () => {
-            const count = getGems().length;
-            if (count === 0) return;
-            const confirmed = window.confirm(
-                `This will remove all ${count} saved stop${count !== 1 ? 's' : ''} from your trip. Are you sure?`
-            );
-            if (!confirmed) return;
-
-            // Wipe all planner localStorage keys
-            localStorage.removeItem(SK_GEMS);
-            localStorage.removeItem(SK_ORDER);
-            localStorage.removeItem(SK_NOTES);
-            localStorage.removeItem(SK_DURATION);
-            localStorage.removeItem(SK_DAYTIMES);
-            localStorage.removeItem(SK_DAYCOUNT);
-            localStorage.removeItem('planwise_origin_injected'); // Reset the anchor so it respawns next trip
-            localStorage.removeItem('planwise_origin');          // Remove origin coordinates so anchor doesn't re-inject
-            localStorage.removeItem('planwise_trip_nights');     // Reset so next trip gets fresh day count
-            localStorage.removeItem('planwise_trip_dates');      // Reset travel dates display
-            // Keep drive cache — no point re-fetching if user rebuilds same route
-
-            // Reset Trip Details form inputs
-            const tripTitle = document.querySelector('.trip-title-input');
-            if (tripTitle) tripTitle.value = '';
-
-            document.querySelectorAll('.trip-meta-grid .meta-field input').forEach(input => {
-                input.value = '';
-            });
-
-            // Reset accommodation rows back to a single empty row
-            const accomList = document.getElementById('accommodation-list');
-            if (accomList) {
-                accomList.innerHTML = '';
-                const freshInput = document.createElement('input');
-                freshInput.type = 'text';
-                freshInput.className = 'accom-input';
-                freshInput.placeholder = 'e.g. Day 1 - Hotel A';
-                freshInput.style.cssText = 'width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.5rem; font-family: var(--font-body); font-size: 0.9rem; color: var(--body-text);';
-                accomList.appendChild(freshInput);
-            }
-
-            loadPlanner(); // re-renders empty state
-        });
-    }
-});
+// Static logic initialized; dynamic content wired inside buildStopCard
