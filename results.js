@@ -158,11 +158,11 @@ function runPlacesSearch(locations, service, onComplete) {
 
                     // Deduplicate, quality-filter, cap at 60
                     locationResults.forEach(locArray => {
-                        const uniqueLoc = locArray
-                            .filter(p => { if (seen.has(p.place_id)) return false; seen.add(p.place_id); return true; })
-                            .filter(p => p.rating >= 4.0 && p.user_ratings_total >= 100);
-                        finalUnique = finalUnique.concat(uniqueLoc);
-                    });
+                    const uniqueLoc = locArray
+                        .filter(p => { if (seen.has(p.place_id)) return false; seen.add(p.place_id); return true; })
+                        .filter(p => p.rating >= 4.0 && p.user_ratings_total >= 50);
+                    finalUnique = finalUnique.concat(uniqueLoc);
+                });
 
                     // Sort by rating, then cap — Load More handles pagination
                     finalUnique.sort((a, b) => (b.rating || 0) - (a.rating || 0));

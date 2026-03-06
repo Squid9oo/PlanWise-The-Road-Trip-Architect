@@ -554,10 +554,10 @@ function buildStopCard(gem, stopNum, dayNum, noteText, durationMins) {
     }
 
     // Add linked-pair hint on hotel cards
-    if (gem.id.includes('_in') || gem.id.includes('_out')) {
+    if (gem.id.includes('_in') || gem.id.includes('_out') || gem.id.includes('_return')) {
         const hint = document.createElement('p');
         hint.style.cssText = 'font-size:0.72rem; color:var(--muted); font-style:italic; margin-top:0.2rem;';
-        hint.textContent = '🔗 Linked stay — removing this also removes the paired check-in/wake-up card';
+        hint.textContent = '🔗 Linked stay — removing this also removes all linked check-in, wake-up, and return cards';
         card.querySelector('.stop-info').appendChild(hint);
     }
 
@@ -864,15 +864,15 @@ function removeDay(dayNum) {
 // REMOVE STOP
 // ==========================================
 function removeStop(gemId) {
-    let isHotel = gemId.includes('_in') || gemId.includes('_out');
-    let baseId = isHotel ? (gemId.includes('_in') ? gemId.split('_in')[0] : gemId.split('_out')[0]) : null;
+    let isHotel = gemId.includes('_in') || gemId.includes('_out') || gemId.includes('_return');
+    let baseId = isHotel ? (gemId.includes('_in') ? gemId.split('_in')[0] : (gemId.includes('_out') ? gemId.split('_out')[0] : gemId.split('_return')[0])) : null;
 
     if (gemId === 'gem_origin_anchor') localStorage.removeItem('planwise_origin');
 
     // Sweep all associated hotel cards
     let gems = getGems();
     if (isHotel) {
-        gems = gems.filter(g => !(g.id === baseId + '_in' || g.id.startsWith(baseId + '_out')));
+        gems = gems.filter(g => !(g.id === baseId + '_in' || g.id.startsWith(baseId + '_out') || g.id.startsWith(baseId + '_return')));
     } else {
         gems = gems.filter(g => g.id !== gemId);
     }
@@ -881,7 +881,7 @@ function removeStop(gemId) {
     const order = getOrder();
     for (const d in order) {
         if (isHotel) {
-            order[d] = (order[d] || []).filter(id => !(id === baseId + '_in' || id.startsWith(baseId + '_out')));
+            order[d] = (order[d] || []).filter(id => !(id === baseId + '_in' || id.startsWith(baseId + '_out') || id.startsWith(baseId + '_return')));
         } else {
             order[d] = (order[d] || []).filter(id => id !== gemId);
         }
@@ -1277,7 +1277,11 @@ function showPlacePreview(place) {
 
     // Action buttons — one "Add to Day X" per day + Hotel button
     const dayCount = getDayCount();
-    let html = '';
+    let html = `
+        <p style="width: 100%; font-size: 0.75rem; color: var(--muted); margin-bottom: 0.5rem; font-style: italic;">
+            💡 <strong>Overnight stay?</strong> Use Add as Hotel. <br><strong>Midday refresh stop?</strong> Add it to a day like a normal place.
+        </p>
+    `;
     for (let d = 1; d <= dayCount; d++) {
         html += `<button class="btn-preview-day" data-day="${d}">+ Day ${d}</button>`;
     }
@@ -1410,6 +1414,18 @@ function confirmAddAsHotel(place, inDay, outDay) {
         if (!gems.find(g => g.id === wakeUp.id)) gems.push(wakeUp);
         if (!order[d]) order[d] = [];
         order[d].unshift(wakeId);
+
+        // Auto-add hotel-return card into the last slot of Days (except Check-out day)
+        if (d < outDay) {
+            const returnId = baseId + '_return_' + d;
+            const returnCard = {
+                id: returnId, name: '🛏️ Return to Hotel: ' + place.name,
+                location: place.formatted_address || '', lat: place.geometry.location.lat(),
+                lng: place.geometry.location.lng(), photo: photo, category: 'wellness'
+            };
+            if (!gems.find(g => g.id === returnCard.id)) gems.push(returnCard);
+            order[d].push(returnId);
+        }
     }
 
     localStorage.setItem(SK_GEMS, JSON.stringify(gems));
