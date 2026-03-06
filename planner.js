@@ -1518,8 +1518,12 @@ document.addEventListener('DOMContentLoaded', () => {
 window.addEventListener('beforeprint', () => {
   // 1. Force map resize and recenter so it fills the print container without white gaps
   if (plannerMap && window.plannerMapBounds) {
-    google.maps.event.trigger(plannerMap, 'resize')
-    plannerMap.fitBounds(window.plannerMapBounds, { top: 40, bottom: 40, left: 40, right: 40 })
+    // Set the height explicitly in JS right before triggering the resize
+    const mapContainer = document.getElementById('planner-map');
+    if (mapContainer) mapContainer.style.height = '12cm';
+    
+    google.maps.event.trigger(plannerMap, 'resize');
+    plannerMap.fitBounds(window.plannerMapBounds, { top: 40, bottom: 40, left: 40, right: 40 });
   }
   
   // 2. Hide empty notes fields, and auto-expand filled ones so text doesn't scroll/cut off
