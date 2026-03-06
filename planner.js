@@ -262,17 +262,19 @@ function renderPlanner() {
     updateSummaryBar();
     wireDragDrop();
     
-    // HIDE TIME SPENT ON FINAL STOP: 
-    // The very last card of the trip represents arrival at the final destination
-    const allStops = document.querySelectorAll('.stop-card');
-    if (allStops.length > 0) {
-        const lastStop = allStops[allStops.length - 1];
-        const spendGroup = lastStop.querySelector('.spend-group');
-        // Don't hide if the last card happens to be a hotel check-in/out
-        if (spendGroup && !lastStop.dataset.gemId.endsWith('_in') && !lastStop.dataset.gemId.endsWith('_out')) {
-            spendGroup.style.display = 'none';
+    // HIDE TIME SPENT ON FINAL STOP OF EACH DAY: 
+    // The last card of any day represents arriving at a hotel or rest point
+    document.querySelectorAll('.day-section').forEach(daySection => {
+        const dayStops = daySection.querySelectorAll('.stop-card');
+        if (dayStops.length > 0) {
+            const lastStop = dayStops[dayStops.length - 1];
+            // Don't hide if the last card happens to be a hotel check-in/out
+            if (!lastStop.dataset.gemId.endsWith('_in') && !lastStop.dataset.gemId.endsWith('_out')) {
+                const timeSelect = lastStop.querySelector('.time-spent-select');
+                if (timeSelect) timeSelect.closest('.spend-group').style.display = 'none';
+            }
         }
-    }
+    });
     
     // Redraw map pins and lines whenever planner re-renders
     if (plannerMap) {
@@ -1087,6 +1089,22 @@ function renderPlannerMap() {
     const gems     = getGems();
     const order    = getOrder();
     const dayCount = getDayCount();
+    
+    // --- MAP DAY TOGGLES UI ---
+    window.activeMapDay = window.activeMapDay || 'all';
+    let tgl = document.getElementById('map-day-toggles');
+    if (!tgl) {
+        tgl = document.createElement('div'); tgl.id = 'map-day-toggles';
+        tgl.style.cssText = 'position:absolute; top:12px; left:50%; transform:translateX(-50%); z-index:10; display:flex; gap:6px; background:var(--surface); padding:6px; border-radius:36px; box-shadow:0 4px 12px rgba(0,0,0,0.15);';
+        document.getElementById('planner-map').parentElement.appendChild(tgl);
+    }
+    tgl.innerHTML = `<button class="map-tgl" data-day="all" style="border:none; border-radius:20px; padding:4px 12px; font-weight:700; cursor:pointer; background:${window.activeMapDay === 'all' ? 'var(--primary-dark)' : 'transparent'}; color:${window.activeMapDay === 'all' ? '#fff' : 'var(--body-text)'};">All Days</button>` + 
+        Array.from({length: dayCount}, (_, i) => `<button class="map-tgl" data-day="${i+1}" style="border:none; border-radius:20px; padding:4px 12px; font-weight:700; cursor:pointer; background:${window.activeMapDay === i+1 ? 'var(--primary-dark)' : 'transparent'}; color:${window.activeMapDay === i+1 ? '#fff' : 'var(--body-text)'};">Day ${i+1}</button>`).join('');
+    tgl.querySelectorAll('.map-tgl').forEach(b => b.addEventListener('click', (e) => {
+        window.activeMapDay = e.target.dataset.day === 'all' ? 'all' : parseInt(e.target.dataset.day, 10);
+        renderPlannerMap();
+    }));
+
     const gemMap   = {};
     gems.forEach(g => { gemMap[g.id] = g; });
 
@@ -1118,7 +1136,11 @@ function renderPlannerMap() {
                 seenCoords[coordKey] = 1;
             }
 
-            stopNum++;
+            stopNum++; // Keep counting so list numbers match map pins exactly
+            
+            // Skip plotting the actual pin/line if day is filtered out
+            if (window.activeMapDay !== 'all' && window.activeMapDay !== d) return;
+
             hasPoints = true;
             const pos = { lat, lng };
             bounds.extend(pos);
@@ -1303,8 +1325,8 @@ function showPlacePreview(place) {
             let outDayOpts = '';
             // Max Check-in is Day Count (You can't check in after you go home)
             for(let d=1; d<=dayCount; d++) inDayOpts += `<option value="${d}">Day ${d}</option>`;
-            // Check-out can be up to Day Count + 1 (Waking up the morning after the trip ends)
-            for(let d=2; d<=dayCount+1; d++) outDayOpts += `<option value="${d}">Day ${d}</option>`;
+            // Check-out max is Day Count (capped at the exact end of the trip)
+            for(let d=2; d<=dayCount; d++) outDayOpts += `<option value="${d}">Day ${d}</option>`;
             
             actionsEl.innerHTML = `
                 <div style="display:flex; gap:0.5rem; align-items:center; width:100%; margin-top:0.5rem; flex-wrap:wrap; background:var(--surface); padding:0.5rem; border-radius:var(--radius-sm); border:1px solid var(--border);">
