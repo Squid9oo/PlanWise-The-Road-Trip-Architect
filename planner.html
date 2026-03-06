@@ -1105,6 +1105,8 @@
       /* --- TIME SPENT & NOTES REVEALED --- */
       .stop-bottom-row { margin-top: 0.2cm; display: block !important; }
       .spend-group { display: inline-flex !important; align-items: center; gap: 0.15cm; margin-bottom: 0.15cm; }
+      /* Hide the second spend-group which contains "Move to Day X" */
+      .spend-group:nth-child(2) { display: none !important; }
       .spend-label { font-size: 8.5pt !important; color: #666 !important; text-transform: none !important; }
       .time-spent-select { -webkit-appearance: none; appearance: none; border: none !important; background: transparent !important; padding: 0 !important; font-size: 8.5pt !important; font-weight: 700 !important; color: #0a0a23 !important; }
 
