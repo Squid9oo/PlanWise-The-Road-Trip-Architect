@@ -1521,48 +1521,71 @@ window.prepareAndPrint = function() {
   const mapContainer = document.getElementById('planner-map');
   const origHeight = mapContainer.style.height;
 
+  // --- Find the Print button and show loading spinner ---
+  const printBtn = document.querySelector('[onclick="prepareAndPrint()"]');
+  const origBtnText = printBtn ? printBtn.textContent : '';
+  if (printBtn) {
+    printBtn.textContent = 'Preparing map…';
+    printBtn.classList.add('btn-printing');
+  }
+
   // 0. Force-expand map if it was collapsed
   const wasCollapsed = mapContainer.classList.contains('map-collapsed');
   if (wasCollapsed) mapContainer.classList.remove('map-collapsed');
 
-  // 1. Hide day-toggle buttons inside the map (they look bad on paper)
+  // 1. Hide day-toggle buttons inside the map (messy on paper)
   const dayToggles = document.getElementById('map-day-toggles');
   if (dayToggles) dayToggles.style.display = 'none';
 
-  // 2. Pre-expand the map container to the exact print size
+  // 2. Pre-expand the map to print size
   mapContainer.style.height = '12cm';
-  if (plannerMap && window.plannerMapBounds) {
+  if (plannerMap) {
     google.maps.event.trigger(plannerMap, 'resize');
+  }
+  if (plannerMap && window.plannerMapBounds) {
     plannerMap.fitBounds(window.plannerMapBounds, { top: 40, bottom: 40, left: 40, right: 40 });
   }
 
-  // 3. Wait for ALL map tiles to finish loading, THEN print
-  //    Safety net: if tiles never fire (offline/error), print after 3.5s anyway
   let printed = false;
 
   function doPrint() {
-    if (printed) return;   // Only fire once
+    if (printed) return;
     printed = true;
 
-    window.print();        // Browser pauses here while dialog is open
+    window.print();
 
-    // 4. Restore everything after the dialog closes
+    // Restore everything after dialog closes
     mapContainer.style.height = origHeight || '340px';
     if (wasCollapsed) mapContainer.classList.add('map-collapsed');
     if (dayToggles) dayToggles.style.display = 'flex';
+    if (printBtn) {
+      printBtn.textContent = origBtnText;
+      printBtn.classList.remove('btn-printing');
+    }
     if (plannerMap && window.plannerMapBounds) {
       google.maps.event.trigger(plannerMap, 'resize');
       plannerMap.fitBounds(window.plannerMapBounds, { top: 40, bottom: 40, left: 40, right: 40 });
     }
   }
 
-  // Primary trigger: Google Maps says "all tiles are loaded"
-  if (plannerMap) {
-    google.maps.event.addListenerOnce(plannerMap, 'tilesloaded', doPrint);
-  }
+  // 3. Wait 400ms for the resize to physically take effect,
+  //    THEN listen for tilesloaded (so we catch the NEW tiles, not stale ones),
+  //    THEN add a 600ms paint buffer before printing.
+  setTimeout(() => {
+    if (plannerMap) {
+      // Force a second fitBounds so Maps re-requests tiles at the new size
+      google.maps.event.trigger(plannerMap, 'resize');
+      plannerMap.fitBounds(window.plannerMapBounds, { top: 40, bottom: 40, left: 40, right: 40 });
 
-  // Safety net: if tilesloaded never fires, print after 3.5 seconds
-  setTimeout(doPrint, 3500);
+      google.maps.event.addListenerOnce(plannerMap, 'tilesloaded', () => {
+        // Extra 600ms buffer — lets the browser fully paint all tiles
+        setTimeout(doPrint, 600);
+      });
+    }
+
+    // Safety net: if tilesloaded never fires, print after 5 seconds total
+    setTimeout(doPrint, 5000);
+  }, 400);
 };
 
 window.addEventListener('beforeprint', () => {

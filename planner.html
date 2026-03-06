@@ -952,9 +952,34 @@
             .planner-hero-text h1 { font-size: 1.6rem; }
         }
 
+        /* --- Print Button Loading State --- */
+        .btn-printing {
+            pointer-events: none;
+            opacity: 0.85;
+            position: relative;
+        }
+
+        .btn-printing::after {
+            content: '';
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2.5px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            margin-left: 0.5rem;
+            vertical-align: middle;
+            animation: btnSpin 0.7s linear infinite;
+        }
+
+        @keyframes btnSpin {
+            to { transform: rotate(360deg); }
+        }
+
         /* Reduce motion */
         @media (prefers-reduced-motion: reduce) {
             .stop-card, .btn-add-day, .btn-export { transition: none !important; }
+            .btn-printing::after { animation: none !important; }
         }
 
         /* --- TRIP MAP --- */
