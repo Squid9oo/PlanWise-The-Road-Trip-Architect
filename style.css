@@ -2207,3 +2207,38 @@ input:focus-visible {
         font-size: 0.78rem;
     }
 }
+
+/* --- SESSION 32: PRINT LAYOUT & UI FIXES --- */
+
+/* Colorize the manual search heading */
+h2:has(+ p), 
+h3:has(+ p) {
+    color: var(--primary-dark);
+}
+
+@media print {
+    /* Hide map toggles so they don't block the header */
+    #map-day-toggles {
+        display: none !important;
+    }
+    
+    /* Hide interactive UI buttons from paper */
+    #btn-add-accom,
+    .btn-remove-day, 
+    .btn-optimize-day {
+        display: none !important;
+    }
+
+    /* Force background images (stop photos) to print */
+    .stop-photo {
+        print-color-adjust: exact !important;
+        -webkit-print-color-adjust: exact !important;
+    }
+
+    /* Fix the massive gap on Page 1 */
+    .trip-details-form {
+        margin-bottom: 20px !important;
+        page-break-after: avoid;
+        break-after: avoid;
+    }
+}

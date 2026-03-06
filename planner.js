@@ -280,6 +280,9 @@ function renderPlanner() {
     if (plannerMap) {
         setTimeout(renderPlannerMap, 100);
     }
+    
+    // INSTANT MATH: Calculate immediately using cached data so the UI doesn't freeze
+    calculateCascadingTimes();
 }
 
 // ==========================================
@@ -743,6 +746,10 @@ function calculateCascadingTimes() {
                     : null;
                 const data = key ? cache[key] : null;
 
+                // Instantly update the connector line UI to match the cache
+                const connector = document.querySelector(`.stop-connector[data-from-id="${gemId}"][data-to-id="${stopIds[i + 1]}"]`);
+                if (connector && data) connector.querySelector('.connector-text').textContent = `⏱ ${data.text} · ${data.distText}`;
+
                 const driveMins = data ? data.mins : 45; // 45 min fallback if API not loaded yet
                 current.setMinutes(current.getMinutes() + driveMins);
 
@@ -1095,8 +1102,11 @@ function renderPlannerMap() {
     let tgl = document.getElementById('map-day-toggles');
     if (!tgl) {
         tgl = document.createElement('div'); tgl.id = 'map-day-toggles';
-        tgl.style.cssText = 'position:absolute; top:12px; left:50%; transform:translateX(-50%); z-index:10; display:flex; gap:6px; background:var(--surface); padding:6px; border-radius:36px; box-shadow:0 4px 12px rgba(0,0,0,0.15);';
-        document.getElementById('planner-map').parentElement.appendChild(tgl);
+        tgl.style.cssText = 'display:flex; gap:6px; background:var(--surface); padding:6px; border-radius:36px; box-shadow:0 4px 12px rgba(0,0,0,0.15); margin-top:12px; z-index:5;';
+        // Inject directly into Google Maps native UI layer
+        if (plannerMap) {
+            plannerMap.controls[google.maps.ControlPosition.TOP_CENTER].push(tgl);
+        }
     }
     tgl.innerHTML = `<button class="map-tgl" data-day="all" style="border:none; border-radius:20px; padding:4px 12px; font-weight:700; cursor:pointer; background:${window.activeMapDay === 'all' ? 'var(--primary-dark)' : 'transparent'}; color:${window.activeMapDay === 'all' ? '#fff' : 'var(--body-text)'};">All Days</button>` + 
         Array.from({length: dayCount}, (_, i) => `<button class="map-tgl" data-day="${i+1}" style="border:none; border-radius:20px; padding:4px 12px; font-weight:700; cursor:pointer; background:${window.activeMapDay === i+1 ? 'var(--primary-dark)' : 'transparent'}; color:${window.activeMapDay === i+1 ? '#fff' : 'var(--body-text)'};">Day ${i+1}</button>`).join('');
