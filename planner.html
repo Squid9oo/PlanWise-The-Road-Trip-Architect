@@ -1232,15 +1232,14 @@
                 <div class="planner-map-container" id="planner-map" style="height:340px;"></div>
             </div>
 
-            <!-- Day sections injected here by planner.js -->
-            <div id="planner-content"></div>
-            
-            <div style="margin-top: 2rem; display: flex; justify-content: center;">
-                <button class="btn-export" onclick="window.print()" style="background:var(--dark); color:#fff; padding: 0.85rem 2.5rem; font-size: 1rem; font-weight: 700; border: none; border-radius: var(--radius-xl); cursor: pointer; box-shadow: var(--shadow-md);">🖨️ Print / Save PDF</button>
-            </div>
-        </div>
+                  <!-- Day sections injected here by planner.js -->
+      <div id="planner-content"></div>
 
-    </main>
+      <div style="margin-top: 2rem; display: flex; justify-content: center;">
+        <button class="btn-export" onclick="prepareAndPrint()" style="background:var(--dark); color:#fff; padding: 0.85rem 2.5rem; font-size: 1rem; font-weight: 700; border: none; border-radius: var(--radius-xl); cursor: pointer; box-shadow: var(--shadow-md);">Print / Save PDF</button>
+      </div>
+    </div>
+  </main>
 
     <!-- FOOTER -->
     <footer class="site-footer">

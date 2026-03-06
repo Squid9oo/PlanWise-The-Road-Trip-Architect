@@ -1515,34 +1515,49 @@ document.addEventListener('DOMContentLoaded', () => {
 })
 
 // --- PRINT LAYOUT HELPERS ---
-window.addEventListener('beforeprint', () => {
-  // 1. Force map resize and recenter so it fills the print container without white gaps
+
+// Custom print function triggered by the button
+window.prepareAndPrint = function() {
+  const mapContainer = document.getElementById('planner-map');
+  const origHeight = mapContainer.style.height;
+  
+  // 1. Pre-expand the map on screen to the exact print size (12cm)
+  mapContainer.style.height = '12cm';
   if (plannerMap && window.plannerMapBounds) {
-    // Set the height explicitly in JS right before triggering the resize
-    const mapContainer = document.getElementById('planner-map');
-    if (mapContainer) mapContainer.style.height = '12cm';
-    
     google.maps.event.trigger(plannerMap, 'resize');
     plannerMap.fitBounds(window.plannerMapBounds, { top: 40, bottom: 40, left: 40, right: 40 });
   }
-  
-  // 2. Hide empty notes fields, and auto-expand filled ones so text doesn't scroll/cut off
+
+  // 2. Wait 800ms for Google to download the missing image tiles, THEN print
+  setTimeout(() => {
+    window.print(); // Browser execution pauses here while the PDF dialog is open
+    
+    // 3. The moment the dialog is closed, restore the map to its normal screen size
+    mapContainer.style.height = origHeight || '340px';
+    if (plannerMap && window.plannerMapBounds) {
+      google.maps.event.trigger(plannerMap, 'resize');
+      plannerMap.fitBounds(window.plannerMapBounds, { top: 40, bottom: 40, left: 40, right: 40 });
+    }
+  }, 800);
+};
+
+window.addEventListener('beforeprint', () => {
+  // Hide empty notes fields, and auto-expand filled ones so text doesn't scroll/cut off
   document.querySelectorAll('.stop-notes-field').forEach(ta => {
     if (!ta.value.trim()) {
-      ta.dataset.printHidden = 'true'
-      ta.style.setProperty('display', 'none', 'important')
+      ta.dataset.printHidden = 'true';
+      ta.style.setProperty('display', 'none', 'important');
     } else {
-      ta.style.height = 'auto'
-      ta.style.height = (ta.scrollHeight) + 'px'
+      ta.style.height = 'auto';
+      ta.style.height = (ta.scrollHeight) + 'px';
     }
-  })
-})
+  });
+});
 
 window.addEventListener('afterprint', () => {
   // Restore empty notes fields for screen view
   document.querySelectorAll('.stop-notes-field[data-print-hidden="true"]').forEach(ta => {
-    ta.style.display = ''
-    ta.dataset.printHidden = ''
-  })
-})
-
+    ta.style.display = '';
+    ta.dataset.printHidden = '';
+  });
+});
