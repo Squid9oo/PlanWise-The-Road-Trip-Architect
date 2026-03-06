@@ -1044,15 +1044,16 @@
       .print-subtitle { font-family: 'DM Sans', sans-serif; font-size: 10pt; color: #666; margin-top: 2px; letter-spacing: 0.1em; text-transform: uppercase; }
       
       /* --- Fixed Footer for all pages --- */
-      .print-only-footer { display: block !important; position: fixed; bottom: 0; left: 0; width: 100%; text-align: center; padding: 0.4cm 0; border-top: 1px solid #ccc; background: #fff; font-family: 'DM Sans', sans-serif; font-size: 9pt; color: #666; z-index: 1000; }
-      .print-only-footer strong { color: #0a0a23; }
+      .print-only-footer { display: block !important; position: fixed !important; bottom: 0 !important; left: 0 !important; width: 100% !important; text-align: center !important; padding: 0.3cm 0 !important; border-top: 1.5px dashed #ccc !important; background: #fff !important; font-family: 'DM Sans', sans-serif !important; font-size: 9pt !important; color: #666 !important; z-index: 9999 !important; }
+      .print-only-footer p { margin: 0 !important; }
+      .print-only-footer strong { color: #0a0a23 !important; }
 
       /* --- Hide UI Fluff --- */
       .planner-hero, .planner-search-wrapper, .planner-preview-card, .planner-empty-state, .btn-add-day, .btn-remove-stop, .btn-remove-day, .btn-optimize-day, .btn-reorder-group, .btn-maps-link, .btn-collapse-day, .drag-handle, .move-day-select, .site-header, .site-footer, .stop-photo, .print-hidden, .btn-export, .btn-clear-trip { display: none !important; }
 
       /* --- Reset layout --- */
       @page { margin: 1cm 1cm 1.5cm 1cm; }
-      body { background: #fff !important; color: #000 !important; font-size: 10pt; margin: 0; padding: 0; }
+      body { background: #fff !important; color: #000 !important; font-size: 10pt; margin: 0; padding: 0; padding-bottom: 2cm !important; } /* Pad body so it doesn't collide with footer */
 
       /* --- Summary Bar --- */
       .planner-summary-bar { position: static; background: transparent !important; border: none; border-bottom: 2px dashed #ccc; padding: 0 0 0.5cm 0; margin-bottom: 0.5cm; }
@@ -1072,7 +1073,8 @@
       /* --- Full Page Map Below Details --- */
       .planner-map-wrapper { display: block !important; border: 2px solid #eaeaea !important; margin: 0 0 0 0 !important; page-break-after: always; break-after: page; }
       .planner-map-header { display: none !important; }
-      .planner-map-container { height: 16cm !important; width: 100% !important; }
+      /* Reduced from 16cm to 12cm so it fits beautifully on Page 1 */
+      .planner-map-container { height: 12cm !important; width: 100% !important; }
 
       /* --- 2-Column Side-by-Side Grid for Days (Inline-Block approach for perfect page breaks) --- */
       #planner-content { display: block !important; font-size: 0; }
