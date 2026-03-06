@@ -1520,25 +1520,49 @@ document.addEventListener('DOMContentLoaded', () => {
 window.prepareAndPrint = function() {
   const mapContainer = document.getElementById('planner-map');
   const origHeight = mapContainer.style.height;
-  
-  // 1. Pre-expand the map on screen to the exact print size (12cm)
+
+  // 0. Force-expand map if it was collapsed
+  const wasCollapsed = mapContainer.classList.contains('map-collapsed');
+  if (wasCollapsed) mapContainer.classList.remove('map-collapsed');
+
+  // 1. Hide day-toggle buttons inside the map (they look bad on paper)
+  const dayToggles = document.getElementById('map-day-toggles');
+  if (dayToggles) dayToggles.style.display = 'none';
+
+  // 2. Pre-expand the map container to the exact print size
   mapContainer.style.height = '12cm';
   if (plannerMap && window.plannerMapBounds) {
     google.maps.event.trigger(plannerMap, 'resize');
     plannerMap.fitBounds(window.plannerMapBounds, { top: 40, bottom: 40, left: 40, right: 40 });
   }
 
-  // 2. Wait 800ms for Google to download the missing image tiles, THEN print
-  setTimeout(() => {
-    window.print(); // Browser execution pauses here while the PDF dialog is open
-    
-    // 3. The moment the dialog is closed, restore the map to its normal screen size
+  // 3. Wait for ALL map tiles to finish loading, THEN print
+  //    Safety net: if tiles never fire (offline/error), print after 3.5s anyway
+  let printed = false;
+
+  function doPrint() {
+    if (printed) return;   // Only fire once
+    printed = true;
+
+    window.print();        // Browser pauses here while dialog is open
+
+    // 4. Restore everything after the dialog closes
     mapContainer.style.height = origHeight || '340px';
+    if (wasCollapsed) mapContainer.classList.add('map-collapsed');
+    if (dayToggles) dayToggles.style.display = 'flex';
     if (plannerMap && window.plannerMapBounds) {
       google.maps.event.trigger(plannerMap, 'resize');
       plannerMap.fitBounds(window.plannerMapBounds, { top: 40, bottom: 40, left: 40, right: 40 });
     }
-  }, 800);
+  }
+
+  // Primary trigger: Google Maps says "all tiles are loaded"
+  if (plannerMap) {
+    google.maps.event.addListenerOnce(plannerMap, 'tilesloaded', doPrint);
+  }
+
+  // Safety net: if tilesloaded never fires, print after 3.5 seconds
+  setTimeout(doPrint, 3500);
 };
 
 window.addEventListener('beforeprint', () => {
