@@ -157,10 +157,18 @@ function runPlacesSearch(locations, service, onComplete) {
                     const seen = new Set();
 
                     // Deduplicate, quality-filter, cap at 60
-                    locationResults.forEach(locArray => {
+                locationResults.forEach(locArray => {
                     const uniqueLoc = locArray
                         .filter(p => { if (seen.has(p.place_id)) return false; seen.add(p.place_id); return true; })
-                        .filter(p => p.rating >= 4.0 && p.user_ratings_total >= 50);
+                        .filter(p => p.rating >= 4.0 && p.user_ratings_total >= 50)
+                        .filter(p => {
+                            const compound = (p.plus_code?.compound_code || '').toLowerCase();
+                            const vicinity = (p.vicinity || '').toLowerCase();
+                            if (compound.includes('malaysia')) return true; // Explicitly Malaysia
+                            if (compound.includes('singapore') || compound.includes('thailand') || compound.includes('indonesia') || compound.includes('brunei')) return false;
+                            if (vicinity.includes('singapore') || vicinity.includes('thailand') || vicinity.includes('indonesia') || vicinity.includes('brunei')) return false;
+                            return true; // Keep if unsure, to avoid false positives
+                        });
                     finalUnique = finalUnique.concat(uniqueLoc);
                 });
 
