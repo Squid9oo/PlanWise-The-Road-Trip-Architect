@@ -1097,17 +1097,21 @@ function renderPlannerMap() {
     const order    = getOrder();
     const dayCount = getDayCount();
     
-    // --- MAP DAY TOGGLES UI ---
-    window.activeMapDay = window.activeMapDay || 'all';
-    let tgl = document.getElementById('map-day-toggles');
-    if (!tgl) {
-        tgl = document.createElement('div'); tgl.id = 'map-day-toggles';
-        tgl.style.cssText = 'display:flex; gap:6px; background:var(--surface); padding:6px; border-radius:36px; box-shadow:0 4px 12px rgba(0,0,0,0.15); margin-top:12px; z-index:5;';
-        // Inject directly into Google Maps native UI layer
-        if (plannerMap) {
-            plannerMap.controls[google.maps.ControlPosition.TOP_CENTER].push(tgl);
-        }
+      // --- MAP DAY TOGGLES UI ---
+  window.activeMapDay = window.activeMapDay || 'all'
+  let tgl = window.mapDayTogglesEl || document.getElementById('map-day-toggles')
+  if (!tgl) {
+    tgl = document.createElement('div')
+    tgl.id = 'map-day-toggles'
+    window.mapDayTogglesEl = tgl
+    tgl.style.cssText = `display:flex; gap:6px; background:var(--surface); padding:6px; border-radius:36px; box-shadow:0 4px 12px rgba(0,0,0,0.15); margin-top:12px; z-index:5;`
+    // Inject directly into Google Maps native UI layer
+    if (plannerMap) {
+      plannerMap.controls[google.maps.ControlPosition.TOP_CENTER].clear()
+      plannerMap.controls[google.maps.ControlPosition.TOP_CENTER].push(tgl)
     }
+  }
+
     tgl.innerHTML = `<button class="map-tgl" data-day="all" style="border:none; border-radius:20px; padding:4px 12px; font-weight:700; cursor:pointer; background:${window.activeMapDay === 'all' ? 'var(--primary-dark)' : 'transparent'}; color:${window.activeMapDay === 'all' ? '#fff' : 'var(--body-text)'};">All Days</button>` + 
         Array.from({length: dayCount}, (_, i) => `<button class="map-tgl" data-day="${i+1}" style="border:none; border-radius:20px; padding:4px 12px; font-weight:700; cursor:pointer; background:${window.activeMapDay === i+1 ? 'var(--primary-dark)' : 'transparent'}; color:${window.activeMapDay === i+1 ? '#fff' : 'var(--body-text)'};">Day ${i+1}</button>`).join('');
     tgl.querySelectorAll('.map-tgl').forEach(b => b.addEventListener('click', (e) => {
