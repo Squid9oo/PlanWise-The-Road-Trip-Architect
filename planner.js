@@ -1517,75 +1517,102 @@ document.addEventListener('DOMContentLoaded', () => {
 // --- PRINT LAYOUT HELPERS ---
 
 // Custom print function triggered by the button
+// ==========================================
+// STATIC MAP URL BUILDER (for print)
+// Uses Google Static Maps API — renders a flat image
+// with day-colored markers + route polylines.
+// Prints perfectly every time, no tile issues.
+// ==========================================
+const STATIC_DAY_COLORS = ['0x00d2ffFF', '0x27ae60FF', '0xe67e22FF', '0x8e44adFF', '0xff477eFF', '0xd35400FF'];
+
+function buildStaticMapUrl() {
+    const gems     = getGems();
+    const order    = getOrder();
+    const dayCount = getDayCount();
+    const gemMap   = {};
+    gems.forEach(g => { gemMap[g.id] = g; });
+
+    const parts = [
+        'size=640x480',
+        'scale=2',
+        'maptype=roadmap',
+        'style=feature:poi|visibility:off',
+        'style=feature:transit|visibility:off',
+        'key=AIzaSyCtHBA74KW3ZS8WE8OKUr6tWy2MHFHxGw8'
+    ];
+
+    let stopNum = 0;
+
+    for (let d = 1; d <= dayCount; d++) {
+        const stopIds = (order[d] || []).filter(id => gemMap[id]);
+        const color   = STATIC_DAY_COLORS[(d - 1) % STATIC_DAY_COLORS.length];
+        const coords  = [];
+
+        stopIds.forEach(id => {
+            const gem = gemMap[id];
+            if (!gem || isNaN(parseFloat(gem.lat))) return;
+            stopNum++;
+            coords.push(`${parseFloat(gem.lat).toFixed(5)},${parseFloat(gem.lng).toFixed(5)}`);
+        });
+
+        // Day markers — grouped by day colour
+        if (coords.length > 0) {
+            parts.push(`markers=color:${color}|size:small|${coords.join('|')}`);
+        }
+
+        // Day route polyline
+        if (coords.length >= 2) {
+            parts.push(`path=color:${color}|weight:4|${coords.join('|')}`);
+        }
+    }
+
+    return 'https://maps.googleapis.com/maps/api/staticmap?' + parts.join('&');
+}
+
 window.prepareAndPrint = function() {
-  const mapContainer = document.getElementById('planner-map');
-  const origHeight = mapContainer.style.height;
-
-  // --- Find the Print button and show loading spinner ---
-  const printBtn = document.querySelector('[onclick="prepareAndPrint()"]');
-  const origBtnText = printBtn ? printBtn.textContent : '';
-  if (printBtn) {
-    printBtn.textContent = 'Preparing map…';
-    printBtn.classList.add('btn-printing');
-  }
-
-  // 0. Force-expand map if it was collapsed
-  const wasCollapsed = mapContainer.classList.contains('map-collapsed');
-  if (wasCollapsed) mapContainer.classList.remove('map-collapsed');
-
-  // 1. Hide day-toggle buttons inside the map (messy on paper)
-  const dayToggles = document.getElementById('map-day-toggles');
-  if (dayToggles) dayToggles.style.display = 'none';
-
-  // 2. Pre-expand the map to print size
-  mapContainer.style.height = '12cm';
-  if (plannerMap) {
-    google.maps.event.trigger(plannerMap, 'resize');
-  }
-  if (plannerMap && window.plannerMapBounds) {
-    plannerMap.fitBounds(window.plannerMapBounds, { top: 40, bottom: 40, left: 40, right: 40 });
-  }
-
-  let printed = false;
-
-  function doPrint() {
-    if (printed) return;
-    printed = true;
-
-    window.print();
-
-    // Restore everything after dialog closes
-    mapContainer.style.height = origHeight || '340px';
-    if (wasCollapsed) mapContainer.classList.add('map-collapsed');
-    if (dayToggles) dayToggles.style.display = 'flex';
+    // --- Show loading spinner on the Print button ---
+    const printBtn    = document.querySelector('[onclick="prepareAndPrint()"]');
+    const origBtnText = printBtn ? printBtn.textContent : '';
     if (printBtn) {
-      printBtn.textContent = origBtnText;
-      printBtn.classList.remove('btn-printing');
-    }
-    if (plannerMap && window.plannerMapBounds) {
-      google.maps.event.trigger(plannerMap, 'resize');
-      plannerMap.fitBounds(window.plannerMapBounds, { top: 40, bottom: 40, left: 40, right: 40 });
-    }
-  }
-
-  // 3. Wait 400ms for the resize to physically take effect,
-  //    THEN listen for tilesloaded (so we catch the NEW tiles, not stale ones),
-  //    THEN add a 600ms paint buffer before printing.
-  setTimeout(() => {
-    if (plannerMap) {
-      // Force a second fitBounds so Maps re-requests tiles at the new size
-      google.maps.event.trigger(plannerMap, 'resize');
-      plannerMap.fitBounds(window.plannerMapBounds, { top: 40, bottom: 40, left: 40, right: 40 });
-
-      google.maps.event.addListenerOnce(plannerMap, 'tilesloaded', () => {
-        // Extra 600ms buffer — lets the browser fully paint all tiles
-        setTimeout(doPrint, 600);
-      });
+        printBtn.textContent = 'Preparing map…';
+        printBtn.classList.add('btn-printing');
     }
 
-    // Safety net: if tilesloaded never fires, print after 5 seconds total
-    setTimeout(doPrint, 5000);
-  }, 400);
+    // --- Build static map image for print ---
+    const staticImg = document.getElementById('planner-map-static');
+    const mapUrl    = buildStaticMapUrl();
+    let printed     = false;
+
+    function doPrint() {
+        if (printed) return;
+        printed = true;
+
+        window.print();
+
+        // Restore button after dialog closes
+        if (printBtn) {
+            printBtn.textContent = origBtnText;
+            printBtn.classList.remove('btn-printing');
+        }
+    }
+
+    // Load the static image, then print once it's ready
+    staticImg.onload = function() {
+        // Small buffer to let browser paint the image
+        setTimeout(doPrint, 200);
+    };
+
+    staticImg.onerror = function() {
+        // If Static Maps fails, fall back to printing anyway
+        console.warn('Static map failed to load — printing without map image.');
+        doPrint();
+    };
+
+    // Kick off the image download
+    staticImg.src = mapUrl;
+
+    // Safety net: print after 4 seconds even if image hasn't loaded
+    setTimeout(doPrint, 4000);
 };
 
 window.addEventListener('beforeprint', () => {
