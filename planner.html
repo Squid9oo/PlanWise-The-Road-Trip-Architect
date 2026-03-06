@@ -1032,7 +1032,7 @@
             .planner-map-container.map-collapsed { height: 0 !important; }
         }
 
-            /* =========================================
+        /* =========================================
        PRINT / PDF STYLES
        ========================================= */
     .print-only-header, .print-only-footer { display: none; }
@@ -1042,13 +1042,16 @@
       .print-only-header { display: block; text-align: center; padding: 0 0 0.3cm 0; border-bottom: 2px solid #0a0a23; margin-bottom: 0.5cm; }
       .print-brand { font-family: 'Playfair Display', serif; font-size: 20pt; font-weight: 900; color: #0a0a23; }
       .print-subtitle { font-family: 'DM Sans', sans-serif; font-size: 10pt; color: #666; margin-top: 2px; letter-spacing: 0.1em; text-transform: uppercase; }
-      .print-only-footer { display: none !important; }
+      
+      /* --- Fixed Footer for all pages --- */
+      .print-only-footer { display: block !important; position: fixed; bottom: 0; left: 0; width: 100%; text-align: center; padding: 0.4cm 0; border-top: 1px solid #ccc; background: #fff; font-family: 'DM Sans', sans-serif; font-size: 9pt; color: #666; z-index: 1000; }
+      .print-only-footer strong { color: #0a0a23; }
 
       /* --- Hide UI Fluff --- */
-      .planner-hero, .planner-search-wrapper, .planner-preview-card, .planner-empty-state, .btn-add-day, .btn-remove-stop, .btn-remove-day, .btn-optimize-day, .btn-reorder-group, .btn-maps-link, .btn-collapse-day, .drag-handle, .time-spent-select, .move-day-select, .spend-label, .spend-group, .site-header, .site-footer, .stop-photo, .print-hidden, .btn-export, .btn-clear-trip { display: none !important; }
+      .planner-hero, .planner-search-wrapper, .planner-preview-card, .planner-empty-state, .btn-add-day, .btn-remove-stop, .btn-remove-day, .btn-optimize-day, .btn-reorder-group, .btn-maps-link, .btn-collapse-day, .drag-handle, .move-day-select, .site-header, .site-footer, .stop-photo, .print-hidden, .btn-export, .btn-clear-trip { display: none !important; }
 
       /* --- Reset layout --- */
-      @page { margin: 1cm; }
+      @page { margin: 1cm 1cm 1.5cm 1cm; }
       body { background: #fff !important; color: #000 !important; font-size: 10pt; margin: 0; padding: 0; }
 
       /* --- Summary Bar --- */
@@ -1067,19 +1070,19 @@
       .meta-field label { color: #666; font-size: 8pt; margin-bottom: 0; }
 
       /* --- Full Page Map Below Details --- */
-      .planner-map-wrapper { display: block !important; border: 2px solid #eaeaea !important; margin: 0 0 0 0 !important; page-break-after: always; }
+      .planner-map-wrapper { display: block !important; border: 2px solid #eaeaea !important; margin: 0 0 0 0 !important; page-break-after: always; break-after: page; }
       .planner-map-header { display: none !important; }
       .planner-map-container { height: 16cm !important; width: 100% !important; }
 
-      /* --- 2-Column Side-by-Side Grid for Days --- */
-      #planner-content { display: flex !important; flex-wrap: wrap !important; justify-content: space-between !important; }
-      .day-section { width: 48% !important; margin-bottom: 1cm !important; border-top: 2px solid #0a0a23 !important; break-inside: avoid; page-break-inside: avoid; }
-      /* Force page break after every 2 days (even rows) */
-      .day-section:nth-child(even) { page-break-after: always; break-after: page; }
+      /* --- 2-Column Side-by-Side Grid for Days (Inline-Block approach for perfect page breaks) --- */
+      #planner-content { display: block !important; font-size: 0; }
+      .day-section { width: 48% !important; display: inline-block !important; vertical-align: top; margin-bottom: 1cm !important; border-top: 2px solid #0a0a23 !important; break-inside: avoid; page-break-inside: avoid; font-size: 10pt; }
+      .day-section:nth-child(odd) { margin-right: 4% !important; }
+      .day-section:nth-child(even) { page-break-after: always !important; break-after: page !important; margin-right: 0 !important; }
 
       /* --- Day Headers --- */
-      .day-header { background: transparent !important; color: #0a0a23 !important; padding: 0.2cm 0 !important; border-bottom: 1px solid #ccc; }
-      .day-badge { background: #0a0a23 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .day-header { background: transparent !important; color: #0a0a23 !important; padding: 0.2cm 0 !important; border-bottom: 1px solid #ccc; display: flex; justify-content: space-between; }
+      .day-badge { background: #0a0a23 !important; color: #fff !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; padding: 0.1cm 0.4cm; border-radius: 12px; font-weight: 700; }
       .day-start-time { border: none; background: transparent !important; color: #0a0a23 !important; padding: 0; font-size: 9pt; }
       .day-start-label { color: #666 !important; }
 
@@ -1088,17 +1091,28 @@
       .stop-card { box-shadow: none !important; border: none !important; transform: none !important; border-bottom: 1px solid #eaeaea !important; border-radius: 0; padding: 0.3cm 0; margin: 0; break-inside: avoid; page-break-inside: avoid; display: flex !important; flex-direction: row !important; align-items: flex-start !important; gap: 0.3cm !important; }
       .stop-connector, .card-tag { display: none !important; }
       .stop-info { padding: 0; flex: 1; }
-      .stop-num { background: transparent !important; color: #0a0a23 !important; border: 2px solid #0a0a23; width: 24px; height: 24px; font-size: 9pt; margin: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
-      .stop-timing-row { margin-top: 0.2cm; display: flex; gap: 0.3cm; }
+      .stop-num { background: transparent !important; color: #0a0a23 !important; border: 2px solid #0a0a23; width: 24px; height: 24px; font-size: 9pt; margin: 0; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold; flex-shrink: 0; }
+      
+      .stop-name { font-size: 10pt; font-weight: 700; color: #000; margin-bottom: 2px; }
+      .stop-location { font-size: 8pt; color: #555; }
+      
+      .stop-timing-row { margin-top: 0.2cm; display: flex; gap: 0.3cm; align-items: center; }
       .arrival-badge, .drive-from-badge { background: transparent !important; border: none !important; color: #444 !important; font-size: 9pt; padding: 0; font-weight: 600; }
       .drive-from-badge::before { content: "• "; color: #ccc; }
-      .stop-notes-field { border: none !important; background: transparent !important; box-shadow: none !important; padding: 0.1cm 0; font-size: 8.5pt; color: #444; font-style: italic; resize: none; overflow: visible; }
-      .stop-notes-field:empty, .stop-notes-field[value=""] { display: none !important; }
+
+      /* --- TIME SPENT & NOTES REVEALED --- */
+      .stop-bottom-row { margin-top: 0.2cm; display: block !important; }
+      .spend-group { display: inline-flex !important; align-items: center; gap: 0.15cm; margin-bottom: 0.15cm; }
+      .spend-label { font-size: 8.5pt !important; color: #666 !important; text-transform: none !important; }
+      .time-spent-select { -webkit-appearance: none; appearance: none; border: none !important; background: transparent !important; padding: 0 !important; font-size: 8.5pt !important; font-weight: 700 !important; color: #0a0a23 !important; }
+
+      .stop-notes-field { box-sizing: border-box; border: 1px dashed #ccc !important; background: transparent !important; box-shadow: none !important; padding: 0.2cm !important; font-size: 8.5pt !important; color: #444 !important; font-style: italic !important; resize: none !important; overflow: visible !important; width: 100% !important; margin-top: 0.1cm !important; border-radius: 4px !important; }
+
       .day-body.day-collapsed { display: block !important; }
       * { transition: none !important; animation: none !important; }
     }
+  </style>
 
-    </style>
 </head>
 <body>
 

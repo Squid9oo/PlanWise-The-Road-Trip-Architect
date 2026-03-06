@@ -1194,11 +1194,11 @@ function renderPlannerMap() {
     mapMarkers.push(marker)
   })
 
-  // Fit map to show all pins
-
-    if (hasPoints) {
-        google.maps.event.trigger(plannerMap, 'resize');
-        plannerMap.fitBounds(bounds, { top: 40, bottom: 40, left: 40, right: 40 });
+    // Fit map to show all pins
+  if (hasPoints) {
+    window.plannerMapBounds = bounds
+    google.maps.event.trigger(plannerMap, 'resize')
+    plannerMap.fitBounds(bounds, { top: 40, bottom: 40, left: 40, right: 40 })
         
         // Prevent over-zoom when stops are close together
         const listener = google.maps.event.addListener(plannerMap, 'idle', () => {
@@ -1510,4 +1510,35 @@ function optimizeDayRoute(dayNum) {
 // DOMContentLoaded — Wire static buttons
 // (Dynamic content is wired inside buildStopCard)
 // ==========================================
-// Static logic initialized; dynamic content wired inside buildStopCard
+document.addEventListener('DOMContentLoaded', () => {
+  // Static logic initialized; dynamic content wired inside buildStopCard
+})
+
+// --- PRINT LAYOUT HELPERS ---
+window.addEventListener('beforeprint', () => {
+  // 1. Force map resize and recenter so it fills the print container without white gaps
+  if (plannerMap && window.plannerMapBounds) {
+    google.maps.event.trigger(plannerMap, 'resize')
+    plannerMap.fitBounds(window.plannerMapBounds, { top: 40, bottom: 40, left: 40, right: 40 })
+  }
+  
+  // 2. Hide empty notes fields, and auto-expand filled ones so text doesn't scroll/cut off
+  document.querySelectorAll('.stop-notes-field').forEach(ta => {
+    if (!ta.value.trim()) {
+      ta.dataset.printHidden = 'true'
+      ta.style.setProperty('display', 'none', 'important')
+    } else {
+      ta.style.height = 'auto'
+      ta.style.height = (ta.scrollHeight) + 'px'
+    }
+  })
+})
+
+window.addEventListener('afterprint', () => {
+  // Restore empty notes fields for screen view
+  document.querySelectorAll('.stop-notes-field[data-print-hidden="true"]').forEach(ta => {
+    ta.style.display = ''
+    ta.dataset.printHidden = ''
+  })
+})
+
