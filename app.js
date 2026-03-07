@@ -1060,7 +1060,7 @@ function getTikTokVideoId(url) {
 }
 
 // --- Get thumbnail URL (async, cached in localStorage indefinitely) ---
-async function getGemThumbnail(socialLink) {
+async function getGemThumbnail(socialLink, lat, lng) {
     if (!socialLink) return null;
 
     // Check thumbnail cache — avoids repeated TikTok oEmbed calls on every page load
@@ -1087,6 +1087,13 @@ async function getGemThumbnail(socialLink) {
         }
     }
 
+    // FALLBACK: For Instagram/XHS/unknown platforms, try Google Places photo
+    if (!url && lat && lng && typeof google !== 'undefined' && google.maps) {
+        try {
+            url = await fetchPlacesPhotoUrl(parseFloat(lat), parseFloat(lng));
+        } catch (_) {}
+    }
+
     // Save to cache so next page load is instant
     if (url) {
         try {
@@ -1097,6 +1104,35 @@ async function getGemThumbnail(socialLink) {
     }
 
     return url;
+}
+
+// --- Fetch a Google Places photo near a coordinate (for gems with no extractable thumbnail) ---
+let _thumbPlacesService = null;
+async function fetchPlacesPhotoUrl(lat, lng) {
+    if (!_thumbPlacesService) {
+        const mapEl = document.getElementById('hidden-map');
+        if (!mapEl) return null;
+        const map = new google.maps.Map(mapEl, { center: { lat, lng }, zoom: 15 });
+        _thumbPlacesService = new google.maps.places.PlacesService(map);
+    }
+
+    return new Promise((resolve) => {
+        _thumbPlacesService.nearbySearch({
+            location: { lat, lng },
+            radius: 200,
+        }, (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+                // Find the first result that has a photo
+                for (const place of results) {
+                    if (place.photos && place.photos.length > 0) {
+                        resolve(place.photos[0].getUrl({ maxWidth: 500, maxHeight: 400 }));
+                        return;
+                    }
+                }
+            }
+            resolve(null);
+        });
+    });
 }
 
 // --- Cache keys for performance ---
@@ -1127,7 +1163,7 @@ async function fetchApprovedGems() {
 // --- Build a gem card DOM element (async) ---
 async function buildGemCard(gem) {
     const platform  = detectPlatform(gem.socialLink);
-    const thumbnail = await getGemThumbnail(gem.socialLink);
+    const thumbnail = await getGemThumbnail(gem.socialLink, gem.lat, gem.lng);
 
     // Handle comma-separated categories e.g. "food,beach,family"
     const categories = gem.category
