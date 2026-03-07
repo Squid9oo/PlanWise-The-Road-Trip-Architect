@@ -1448,10 +1448,170 @@ async function openGemPanel(gem, thumbnail) {
 
     overlay.classList.add('active');
     document.body.style.overflow = 'hidden';
+
+    // --- ENRICHMENT: Fetch Google Places details for this gem ---
+    enrichGemPanel(gem);
+}
+
+// --- Fetch + render Google Places data inside the gem panel ---
+async function enrichGemPanel(gem) {
+    const enrichEl   = document.getElementById('gem-enrich');
+    const loadingEl  = document.getElementById('gem-enrich-loading');
+    const contentEl  = document.getElementById('gem-enrich-content');
+
+    if (!enrichEl || !gem.lat || !gem.lng) return;
+
+    // Reset state
+    enrichEl.style.display   = 'flex';
+    loadingEl.style.display  = 'flex';
+    contentEl.style.display  = 'none';
+
+    try {
+        const mapEl  = document.getElementById('hidden-map');
+        const map    = new google.maps.Map(mapEl, {
+            center: { lat: parseFloat(gem.lat), lng: parseFloat(gem.lng) },
+            zoom: 15
+        });
+        const service = new google.maps.places.PlacesService(map);
+
+        // Step 1: Find the place by name near the gem's coordinates
+        const searchName = gem.locationName || gem.name;
+        const placeId = await new Promise((resolve) => {
+            service.textSearch({
+                query: searchName,
+                location: { lat: parseFloat(gem.lat), lng: parseFloat(gem.lng) },
+                radius: 2000,
+            }, (results, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK && results && results.length > 0) {
+                    resolve(results[0].place_id);
+                } else {
+                    resolve(null);
+                }
+            });
+        });
+
+        if (!placeId) {
+            enrichEl.style.display = 'none';
+            return;
+        }
+
+        // Step 2: Fetch full details
+        const place = await new Promise((resolve) => {
+            service.getDetails({
+                placeId: placeId,
+                fields: [
+                    'name', 'formatted_address', 'rating', 'user_ratings_total',
+                    'opening_hours', 'formatted_phone_number', 'website',
+                    'url', 'photos'
+                ],
+            }, (result, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK && result) {
+                    resolve(result);
+                } else {
+                    resolve(null);
+                }
+            });
+        });
+
+        if (!place) {
+            enrichEl.style.display = 'none';
+            return;
+        }
+
+        // Step 3: Render enrichment content
+        loadingEl.style.display = 'none';
+        contentEl.style.display = 'flex';
+        contentEl.style.flexDirection = 'column';
+        contentEl.style.gap = '0.75rem';
+
+        // Photos (up to 3)
+        const photosEl = document.getElementById('gem-enrich-photos');
+        photosEl.innerHTML = '';
+        const photos = place.photos ? place.photos.slice(0, 3) : [];
+        if (photos.length > 0) {
+            photos.forEach(photo => {
+                const div = document.createElement('div');
+                div.className = 'gem-enrich-photo';
+                div.style.backgroundImage = `url('${photo.getUrl({ maxWidth: 400 })}')`;
+                photosEl.appendChild(div);
+            });
+            photosEl.style.display = 'flex';
+        } else {
+            photosEl.style.display = 'none';
+        }
+
+        // Address
+        const addressEl = document.getElementById('gem-enrich-address');
+        addressEl.textContent = place.formatted_address || '';
+        addressEl.style.display = place.formatted_address ? 'block' : 'none';
+
+        // Rating
+        const ratingEl = document.getElementById('gem-enrich-rating');
+        if (place.rating) {
+            const stars = Math.round(place.rating);
+            const starHtml = Array.from({ length: 5 }, (_, i) =>
+                `<span class="rating-star">${i < stars ? '★' : '☆'}</span>`
+            ).join('');
+            ratingEl.innerHTML = `
+                <div class="rating-stars">${starHtml}</div>
+                <span>${place.rating}</span>
+                <span class="rating-count">(${place.user_ratings_total || 0} reviews)</span>
+            `;
+            ratingEl.style.display = 'flex';
+        } else {
+            ratingEl.style.display = 'none';
+        }
+
+        // Opening Hours
+        const hoursSection = document.getElementById('gem-enrich-hours');
+        const hoursList    = document.getElementById('gem-enrich-hours-list');
+        if (place.opening_hours && place.opening_hours.weekday_text) {
+            hoursSection.style.display = 'block';
+            hoursList.innerHTML = '';
+            const today = new Date().getDay();
+            place.opening_hours.weekday_text.forEach((line, i) => {
+                const li = document.createElement('li');
+                li.textContent = line;
+                if ((i + 1) % 7 === today % 7) li.classList.add('today');
+                hoursList.appendChild(li);
+            });
+        } else {
+            hoursSection.style.display = 'none';
+        }
+
+        // Contact
+        const contactSection = document.getElementById('gem-enrich-contact');
+        const contactLinks   = document.getElementById('gem-enrich-contact-links');
+        contactLinks.innerHTML = '';
+        let hasContact = false;
+
+        if (place.formatted_phone_number) {
+            hasContact = true;
+            contactLinks.innerHTML += `<a href="tel:${place.formatted_phone_number}">📞 ${place.formatted_phone_number}</a>`;
+        }
+        if (place.website) {
+            hasContact = true;
+            contactLinks.innerHTML += `<a href="${place.website}" target="_blank" rel="noopener">🌐 Visit Website</a>`;
+        }
+        contactSection.style.display = hasContact ? 'block' : 'none';
+
+        // Update the Maps button to use the Places URL if available
+        const mapsLink = document.getElementById('gem-panel-maps');
+        if (place.url && mapsLink) {
+            mapsLink.href = place.url;
+            mapsLink.style.display = 'inline-block';
+        }
+
+    } catch (err) {
+        // Fail silently — gem panel still works fine without enrichment
+        enrichEl.style.display = 'none';
+        console.warn('Gem enrichment failed:', err);
+    }
 }
 
 // --- Close gem detail panel ---
 function closeGemPanel() {
+
     const overlay = document.getElementById('gem-panel-overlay');
     if (!overlay) return;
     // Clear embed so video stops playing

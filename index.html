@@ -397,6 +397,28 @@
                     <p class="gem-panel-location" id="gem-panel-location"></p>
                     <p class="gem-panel-handle" id="gem-panel-handle"></p>
                     <p class="gem-panel-hours" id="gem-panel-hours" style="display:none;"></p>
+
+                    <!-- ENRICHMENT: Google Places data (auto-fetched when panel opens) -->
+                    <div class="gem-enrich" id="gem-enrich" style="display:none;">
+                        <div class="gem-enrich-loading" id="gem-enrich-loading">
+                            <div class="loading-spinner" style="width:20px;height:20px;border-width:2px;"></div>
+                            <span>Fetching place details...</span>
+                        </div>
+                        <div class="gem-enrich-content" id="gem-enrich-content" style="display:none;">
+                            <div class="gem-enrich-photos" id="gem-enrich-photos"></div>
+                            <p class="gem-enrich-address" id="gem-enrich-address"></p>
+                            <div class="gem-enrich-rating" id="gem-enrich-rating"></div>
+                            <div class="gem-enrich-hours" id="gem-enrich-hours" style="display:none;">
+                                <p class="gem-enrich-section-title">🕐 Opening Hours</p>
+                                <ul class="gem-enrich-hours-list" id="gem-enrich-hours-list"></ul>
+                            </div>
+                            <div class="gem-enrich-contact" id="gem-enrich-contact" style="display:none;">
+                                <p class="gem-enrich-section-title">📞 Contact</p>
+                                <div class="gem-enrich-contact-links" id="gem-enrich-contact-links"></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="gem-panel-actions">
                         <a class="btn-panel-maps" id="gem-panel-maps" href="#" target="_blank" rel="noopener" style="display:none;">🗺️ Open in Google Maps</a>
                         <button class="btn-panel-save" id="gem-panel-save">+ Save</button>

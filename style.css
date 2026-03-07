@@ -1890,6 +1890,125 @@ input:focus-visible {
     .gem-card { transition: none !important; }
 }
 
+/* ============================================
+   GEM PANEL ENRICHMENT — Google Places data
+   ============================================ */
+.gem-enrich {
+    border-top: 1px solid var(--border);
+    padding-top: 0.85rem;
+    margin-top: 0.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.gem-enrich-loading {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    padding: 0.5rem 0;
+}
+
+.gem-enrich-photos {
+    display: flex;
+    gap: 4px;
+    height: 90px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.gem-enrich-photo {
+    flex: 1;
+    background-size: cover;
+    background-position: center;
+    min-width: 0;
+    border-radius: var(--radius-sm);
+}
+
+.gem-enrich-address {
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.4;
+}
+
+.gem-enrich-rating {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--body-text);
+}
+
+.gem-enrich-rating .rating-stars {
+    display: flex;
+    gap: 2px;
+}
+
+.gem-enrich-rating .rating-star {
+    color: #f4a623;
+    font-size: 0.95rem;
+}
+
+.gem-enrich-rating .rating-count {
+    font-size: 0.78rem;
+    color: var(--muted);
+    font-weight: 400;
+}
+
+.gem-enrich-section-title {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.3rem;
+}
+
+.gem-enrich-hours-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.gem-enrich-hours-list li {
+    font-size: 0.8rem;
+    color: var(--body-text);
+    line-height: 1.5;
+}
+
+.gem-enrich-hours-list li.today {
+    font-weight: 700;
+    color: var(--dark);
+}
+
+.gem-enrich-contact-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.gem-enrich-contact-links a {
+    font-size: 0.82rem;
+    color: var(--primary-dark);
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color var(--transition);
+}
+
+.gem-enrich-contact-links a:hover {
+    color: var(--accent);
+}
+
+/* Mobile: photos row shorter */
+@media (max-width: 639px) {
+    .gem-enrich-photos { height: 70px; }
+}
+
 /* --- SMALL CATEGORY TAGS (gem cards — up to 3) --- */
 .card-tag--small {
     font-size: 0.6rem;
