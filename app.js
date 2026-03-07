@@ -1032,6 +1032,9 @@ function detectPlatform(url) {
     if (!url) return null;
     if (url.includes('youtube.com') || url.includes('youtu.be')) return 'youtube';
     if (url.includes('tiktok.com')) return 'tiktok';
+    if (url.includes('instagram.com')) return 'instagram';
+    if (url.includes('xiaohongshu.com') || url.includes('xhslink.com')) return 'xhs';
+    if (url.includes('facebook.com') || url.includes('fb.watch')) return 'facebook';
     return null;
 }
 
@@ -1060,7 +1063,7 @@ function getTikTokVideoId(url) {
 }
 
 // --- Get thumbnail URL (async, cached in localStorage indefinitely) ---
-async function getGemThumbnail(socialLink, lat, lng) {
+async function getGemThumbnail(socialLink, lat, lng, placeName) {
     if (!socialLink) return null;
 
     // Check thumbnail cache — avoids repeated TikTok oEmbed calls on every page load
@@ -1090,7 +1093,7 @@ async function getGemThumbnail(socialLink, lat, lng) {
     // FALLBACK: For Instagram/XHS/unknown platforms, try Google Places photo
     if (!url && lat && lng && typeof google !== 'undefined' && google.maps) {
         try {
-            url = await fetchPlacesPhotoUrl(parseFloat(lat), parseFloat(lng));
+            url = await fetchPlacesPhotoUrl(parseFloat(lat), parseFloat(lng), placeName);
         } catch (_) {}
     }
 
@@ -1106,9 +1109,9 @@ async function getGemThumbnail(socialLink, lat, lng) {
     return url;
 }
 
-// --- Fetch a Google Places photo near a coordinate (for gems with no extractable thumbnail) ---
+// --- Fetch a Google Places photo using gem name + coordinates (for gems with no extractable thumbnail) ---
 let _thumbPlacesService = null;
-async function fetchPlacesPhotoUrl(lat, lng) {
+async function fetchPlacesPhotoUrl(lat, lng, placeName) {
     if (!_thumbPlacesService) {
         const mapEl = document.getElementById('hidden-map');
         if (!mapEl) return null;
@@ -1116,13 +1119,35 @@ async function fetchPlacesPhotoUrl(lat, lng) {
         _thumbPlacesService = new google.maps.places.PlacesService(map);
     }
 
+    // Strategy 1: Text search by name (finds the actual place, not a random neighbour)
+    if (placeName) {
+        const textResult = await new Promise((resolve) => {
+            _thumbPlacesService.textSearch({
+                query: placeName,
+                location: { lat, lng },
+                radius: 2000,
+            }, (results, status) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+                    for (const place of results) {
+                        if (place.photos && place.photos.length > 0) {
+                            resolve(place.photos[0].getUrl({ maxWidth: 500, maxHeight: 400 }));
+                            return;
+                        }
+                    }
+                }
+                resolve(null);
+            });
+        });
+        if (textResult) return textResult;
+    }
+
+    // Strategy 2: Fall back to nearby search if text search finds nothing
     return new Promise((resolve) => {
         _thumbPlacesService.nearbySearch({
             location: { lat, lng },
             radius: 200,
         }, (results, status) => {
             if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-                // Find the first result that has a photo
                 for (const place of results) {
                     if (place.photos && place.photos.length > 0) {
                         resolve(place.photos[0].getUrl({ maxWidth: 500, maxHeight: 400 }));
@@ -1163,7 +1188,7 @@ async function fetchApprovedGems() {
 // --- Build a gem card DOM element (async) ---
 async function buildGemCard(gem) {
     const platform  = detectPlatform(gem.socialLink);
-    const thumbnail = await getGemThumbnail(gem.socialLink, gem.lat, gem.lng);
+    const thumbnail = await getGemThumbnail(gem.socialLink, gem.lat, gem.lng, gem.locationName || gem.name);
 
     // Handle comma-separated categories e.g. "food,beach,family"
     const categories = gem.category
@@ -1181,8 +1206,11 @@ async function buildGemCard(gem) {
         wellness:'#1a9e8f', shopping:'#d35400',
     };
     const platformMeta = {
-        youtube: { label: '▶ YouTube', bg: '#FF0000' },
-        tiktok:  { label: '♪ TikTok',  bg: '#010101' },
+        youtube:  { label: '▶ YouTube',   bg: '#FF0000' },
+        tiktok:   { label: '♪ TikTok',    bg: '#010101' },
+        instagram:{ label: '📸 Instagram', bg: '#C13584' },
+        xhs:      { label: '📕 XHS',      bg: '#FF2442' },
+        facebook: { label: 'f Facebook',   bg: '#1877F2' },
     };
 
     const platMeta = platformMeta[platform] || { label: '🔗 Social', bg: '#555' };
@@ -1301,6 +1329,24 @@ async function openGemPanel(gem, thumbnail) {
                     </a>
                 </div>`;
         }
+    } else if (platform === 'instagram' || platform === 'xhs' || platform === 'facebook') {
+        // These platforms block embedding — show thumbnail + external link
+        const platformLabels = {
+            instagram: { icon: '📸', name: 'Instagram' },
+            xhs:       { icon: '📕', name: 'XHS' },
+            facebook:  { icon: 'f',  name: 'Facebook' },
+        };
+        const pl = platformLabels[platform] || { icon: '🔗', name: 'Social' };
+        const thumb = thumbnail
+            ? `<div class="gem-panel-thumb" style="background-image:url('${thumbnail}')"></div>`
+            : `<div class="gem-panel-thumb gem-panel-thumb--empty">${pl.icon}</div>`;
+        embedSection.innerHTML = `
+            <div class="gem-panel-tiktok-cta">
+                ${thumb}
+                <a href="${gem.socialLink}" target="_blank" rel="noopener" class="btn-watch-tiktok">
+                    ${pl.icon} View on ${pl.name}
+                </a>
+            </div>`;
     }
 
     // --- Tags ---

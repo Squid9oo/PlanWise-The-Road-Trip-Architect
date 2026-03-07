@@ -1511,7 +1511,37 @@ function optimizeDayRoute(dayNum) {
 // (Dynamic content is wired inside buildStopCard)
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-  // Static logic initialized; dynamic content wired inside buildStopCard
+
+    // --- Export to Google Maps ---
+    const exportBtn = document.getElementById('btn-export-maps');
+    if (exportBtn) exportBtn.addEventListener('click', exportToMaps);
+
+    // --- Clear Trip ---
+    const clearBtn = document.getElementById('btn-clear-trip');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+            // Custom confirm — count gems first
+            const gems = getGems();
+            if (gems.length === 0) return;
+
+            const yes = confirm(`This will remove all ${gems.length} saved stops and reset your trip. Are you sure?`);
+            if (!yes) return;
+
+            // Wipe all planner localStorage keys
+            [SK_GEMS, SK_ORDER, SK_NOTES, SK_DURATION, SK_DAYTIMES, SK_DAYCOUNT,
+             SK_DRIVECACHE, 'planwise_origin', 'planwise_trip_nights', 'planwise_trip_dates'
+            ].forEach(k => localStorage.removeItem(k));
+
+            // Reset Trip Details form
+            const titleInput = document.querySelector('.trip-title-input');
+            if (titleInput) titleInput.value = '';
+            document.querySelectorAll('.trip-meta-grid input').forEach(input => input.value = '');
+            document.querySelectorAll('.accom-input').forEach(input => input.value = '');
+
+            // Reload the planner
+            loadPlanner();
+        });
+    }
 })
 
 // --- PRINT LAYOUT HELPERS ---
